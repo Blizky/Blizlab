@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8" />
+  <title>BGone – Offline AI Background Remover</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg-main: #020509;
+      --bg-card: #050a12;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+
+      --accent: #0099cc;
+      --accent-soft: rgba(0, 153, 204, 0.18);
+      --accent-strong: #00c0ff;
+
+      --title: #ffcc33;
+      --text: #fdfdf9;
+      --muted: #9ea4c5;
+      --danger: #ff4f6a;
+
+      --checker-a: #181c27;
+      --checker-b: #10131f;
+
+      --page-bg: radial-gradient(circle at top, #1b2437 0, #020509 45%, #000 100%);
+      --shell-bg: radial-gradient(circle at top left, #121a2b 0, #050a12 55%, #020509 100%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0.75rem;
+    }
+
+    .page-alert {
+      width: 100%;
+      max-width: 1180px;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-alert-inner {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(90deg, rgba(255, 204, 51, 0.12), rgba(0, 0, 0, 0.9));
+      padding: 0.35rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.78rem;
+    }
+
+    .page-alert-label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      color: var(--title);
+      font-weight: 700;
+      padding-right: 0.6rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .page-alert-text {
+      color: var(--muted);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .page-alert-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .page-alert-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.25rem 0.7rem;
+      font-size: 0.75rem;
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .page-alert-btn:hover { background: rgba(0, 0, 0, 0.75); border-color: var(--accent); }
+
+    .page-alert-progress {
+      width: 110px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: none;
+    }
+    .page-alert-progress-inner {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+      transition: width 0.15s linear;
+    }
+
+    .page-alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.6);
+      background: #666;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+      display: none;
+    }
+    .page-alert-dot.ready {
+      background: #35d96b;
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(53, 217, 107, 0.9);
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      background: var(--shell-bg);
+      border-radius: 24px;
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 1rem 1.25rem 0.5rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .title-block { display: flex; flex-direction: column; gap: 0.1rem; }
+    .title-main {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--title);
+      text-transform: uppercase;
+    }
+    .title-main span.small-cap { text-transform: none; }
+    .title-sub { font-size: 0.9rem; color: var(--muted); }
+
+    .status-chip {
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(4, 8, 18, 0.9);
+      max-width: 420px;
+      text-align: right;
+      white-space: normal;
+    }
+
+    main {
+      padding: 0.5rem 1.25rem 1.1rem;
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 0.85rem;
+      height: 100%;
+    }
+
+    .side { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 18px;
+      padding: 0.7rem 0.85rem 0.85rem;
+      border: 1px solid var(--border-subtle);
+      box-shadow: none;
+    }
+    .card h2 {
+      margin: 0 0 0.45rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.2rem;
+    }
+
+    /* --- Buttons, pill style --- */
+    button,
+    .fake-input {
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(3, 7, 16, 0.96);
+      color: var(--text);
+      font-size: 0.8rem;
+      padding: 0.45rem 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        transform 0.05s ease,
+        box-shadow 0.16s ease;
+      white-space: nowrap;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+    }
+
+    button:hover,
+    .fake-input:hover {
+      background: rgba(7, 13, 28, 0.98);
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(0, 153, 204, 0.6);
+    }
+
+    button:active,
+    .fake-input:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #001018;
+      border-color: transparent;
+      font-weight: 600;
+      box-shadow: 0 8px 18px rgba(0, 153, 204, 0.4);
+    }
+    button.primary:hover {
+      box-shadow: 0 10px 24px rgba(0, 153, 204, 0.55);
+    }
+    button.primary[disabled] {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    button.danger {
+      background: rgba(255, 79, 106, 0.12);
+      border-color: rgba(255, 79, 106, 0.8);
+      color: var(--danger);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+    }
+    button.danger:hover {
+      background: rgba(255, 79, 106, 0.18);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 79, 106, 0.7);
+    }
+
+    button.small {
+      padding-inline: 0.75rem;
+      font-size: 0.76rem;
+    }
+
+    input[type="file"] { display: none; }
+    input[type="range"] { width: 100%; }
+
+    .pill-toggle {
+      display: flex;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .pill-toggle button {
+      border-radius: 0;
+      border: none;
+      flex: 1;
+      justify-content: center;
+      padding-inline: 0.4rem;
+      font-size: 0.78rem;
+      background: transparent;
+      box-shadow: none;
+    }
+    .pill-toggle button.active {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
+    .hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      line-height: 1.45;
+    }
+
+    .progress-text {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      min-height: 1em;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--accent-strong);
+      animation: spin 0.7s linear infinite;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .canvas-wrap {
+      background: repeating-conic-gradient(
+        var(--checker-a) 0% 25%,
+        var(--checker-b) 0% 50%
+      ) 50% / 20px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: none;
+    }
+
+    .canvas-wrap.hide-cursor canvas {
+      cursor: none;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      background: transparent;
+      image-rendering: auto;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Brush preview circle */
+    .brush-preview {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0, 153, 204, 0.9);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.9),
+        0 0 12px rgba(0, 153, 204, 0.9);
+      background: rgba(0, 0, 0, 0.1);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      display: none;
+      mix-blend-mode: screen;
+    }
+
+    .brush-preview.restore {
+      border-color: rgba(255, 204, 51, 0.95);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.9),
+        0 0 12px rgba(255, 204, 51, 0.9);
+    }
+
+    .overlay-msg {
+      position: absolute;
+      bottom: 0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(5, 8, 17, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.78rem;
+      color: var(--muted);
+      pointer-events: none;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(30, 10, 12, 0.9);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.78rem;
+      z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+    }
+    .toast.error {
+      background: rgba(60, 10, 16, 0.9);
+      border-color: rgba(255, 79, 106, 0.7);
+    }
+
+    footer {
+      padding: 0.2rem 1.3rem 0.75rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      opacity: 0.85;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 900px) {
+      header { flex-direction: column; align-items: flex-start; }
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        height: auto;
+      }
+      .canvas-wrap { min-height: 260px; }
+      footer { flex-direction: column; }
+    }
+
+    /* --- Bottom-right language/theme bar --- */
+    .settings-bar {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(3, 6, 16, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+    }
+
+    .settings-chip {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 0.25rem 0.7rem;
+      min-width: 38px;
+      font-size: 0.78rem;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        transform 0.05s ease;
+    }
+
+    .settings-chip:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+    .settings-chip:active { transform: scale(0.96); }
+
+    .settings-chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    .settings-icon {
+      padding-inline: 0.4rem;
+      width: 32px;
+    }
+
+    body.theme-light {
+      --bg-main: #f5f5fb;
+      --bg-card: #ffffff;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --accent: #0078a8;
+      --accent-soft: rgba(0, 120, 168, 0.12);
+      --accent-strong: #00a7ff;
+
+      --title: #0099cc;
+      --text: #14151a;
+      --muted: #4f556b;
+      --danger: #c02b3f;
+
+      --checker-a: #e3e4f0;
+      --checker-b: #cfd1e2;
+
+      --page-bg: radial-gradient(circle at top, #ffffff 0, #e2e6f5 50%, #cfd2e5 100%);
+      --shell-bg: radial-gradient(circle at top left, #ffffff 0, #f0f3ff 55%, #e2e6f5 100%);
+
+      color: var(--text);
+    }
+
+    body.theme-light .shell {
+      box-shadow: 0 22px 55px rgba(15, 19, 40, 0.28),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+
+    body.theme-light .page-alert-inner {
+      background: linear-gradient(
+        90deg,
+        rgba(255, 204, 51, 0.16),
+        rgba(255, 255, 255, 0.96)
+      );
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    body.theme-light .page-alert-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.12);
+      color: var(--text);
+    }
+    body.theme-light .page-alert-btn:hover {
+      background: rgba(255, 255, 255, 1);
+      border-color: var(--accent);
+    }
+
+    body.theme-light .status-chip {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.08);
+      color: var(--muted);
+    }
+
+    body.theme-light .card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    body.theme-light .canvas-wrap {
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    body.theme-light .overlay-msg {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    body.theme-light button,
+    body.theme-light .fake-input {
+      background: #f8f9ff;
+      border-color: rgba(0, 0, 0, 0.08);
+      color: var(--text);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
+    }
+    body.theme-light button:hover,
+    body.theme-light .fake-input:hover {
+      background: #ffffff;
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 0 0 1px rgba(0, 120, 168, 0.4);
+    }
+    body.theme-light button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #fdfdf9;
+      box-shadow: 0 8px 18px rgba(0, 120, 168, 0.45);
+    }
+    body.theme-light button.danger {
+      background: rgba(255, 79, 106, 0.07);
+      border-color: rgba(255, 79, 106, 0.8);
+      color: var(--danger);
+    }
+
+    body.theme-light .spinner {
+      border-color: rgba(0, 0, 0, 0.08);
+      border-top-color: var(--accent-strong);
+    }
+
+    body.theme-light .brush-preview {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(0, 120, 168, 0.8);
+    }
+    body.theme-light .brush-preview.restore {
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(255, 204, 51, 0.9);
+    }
+
+    body.theme-light .toast {
+      background: rgba(255, 255, 255, 0.98);
+      color: #14151a;
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+    body.theme-light .toast.error {
+      background: rgba(255, 230, 236, 0.98);
+      border-color: rgba(192, 43, 63, 0.7);
+    }
+
+    body.theme-light .settings-bar {
+      background: rgba(255, 255, 255, 0.96);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 18px 40px rgba(15, 19, 40, 0.22);
+    }
+
+    body.theme-light .settings-chip {
+      border-color: rgba(0, 0, 0, 0.14);
+      background: rgba(0, 0, 0, 0.02);
+      color: var(--text);
+    }
+
+    body.theme-light .settings-chip.active {
+      background: rgba(0, 120, 168, 0.12);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    /* Focus visibility */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+  </style>
+
+<link rel="icon" type="image/svg+xml" 
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' ry='14' fill='%230099CC'/%3E%3Cg transform='translate(18,18) rotate(-28 14 14)'%3E%3Crect x='2' y='6' width='28' height='18' rx='4' ry='4' fill='%23FFCC33'/%3E%3Crect x='2' y='16' width='28' height='6' fill='%23D9A61F' opacity='0.75'/%3E%3Crect x='18' y='6' width='12' height='18' fill='%23000000' opacity='0.18'/%3E%3C/g%3E%3C/svg%3E">
+
+</head>
+<body>
+  <!-- Top-of-page note -->
+  <div class="page-alert" role="region" aria-label="Model download status">
+    <div class="page-alert-inner">
+      <span class="page-alert-label" id="pageAlertLabel">Note</span>
+      <span class="page-alert-text" id="topMessage">
+        To use BGone, click “Download model” once to install the AI in this browser (~40 MB).
+      </span>
+      <div class="page-alert-status">
+        <button class="page-alert-btn" id="btnPreload" aria-label="Download AI model">
+          Download model
+        </button>
+        <div class="page-alert-progress" id="topProgressWrap" aria-hidden="true">
+          <div class="page-alert-progress-inner" id="topProgress"></div>
+        </div>
+        <div
+          class="page-alert-dot"
+          id="topReadyDot"
+          aria-hidden="true"
+          title="Model ready"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <header>
+      <div class="title-block">
+        <div class="title-main">BG<span class="small-cap">one</span></div>
+        <div class="title-sub" id="titleSub">
+          Offline AI background remover with manual brush refinement.
+        </div>
+      </div>
+      <div
+        class="status-chip"
+        id="status"
+        role="status"
+        aria-live="polite"
+      >
+        Load an image to begin.
+      </div>
+    </header>
+
+    <main>
+      <aside class="side" aria-label="Controls">
+        <!-- IMAGE CARD -->
+        <div class="card">
+          <h2 id="imageCardTitle">Image</h2>
+          <label for="fileInput" id="labelLoadSource">Load source</label>
+          <div class="btn-row">
+            <label
+              class="fake-input"
+              for="fileInput"
+              id="labelChooseImage"
+              tabindex="0"
+              aria-label="Choose image"
+              >Choose image…</label
+            >
+            <button id="btnClear" class="danger small" aria-label="Clear image">
+              Clear
+            </button>
+          </div>
+          <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+            aria-label="Image file input"
+          />
+          <div class="btn-row" style="margin-top: 0.5rem">
+            <button
+              id="btnRemove"
+              class="primary"
+              aria-label="Auto remove background"
+            >
+              Auto remove background
+            </button>
+          </div>
+          <div class="btn-row" style="margin-top: 0.3rem">
+            <button id="btnDownload" class="small" disabled aria-label="Download PNG">
+              Download PNG
+            </button>
+          </div>
+          <div id="progressText" class="progress-text" aria-live="polite"></div>
+          <div id="spinner" class="spinner" aria-hidden="true"></div>
+        </div>
+
+        <!-- BRUSH CARD -->
+        <div class="card">
+          <h2 id="brushCardTitle">Brush</h2>
+          <label for="brushSize" id="labelBrushSize">Brush size</label>
+          <input
+            id="brushSize"
+            type="range"
+            min="5"
+            max="120"
+            value="28"
+            aria-label="Brush size"
+          />
+          <div class="pill-toggle" role="tablist" aria-label="Brush mode">
+            <button
+              id="modeErase"
+              class="active"
+              data-mode="erase"
+              role="tab"
+              aria-selected="true"
+            >
+              Erase
+            </button>
+            <button
+              id="modeRestore"
+              data-mode="restore"
+              role="tab"
+              aria-selected="false"
+            >
+              Restore
+            </button>
+          </div>
+          <div class="hint" id="brushHint">
+            After auto-removal, paint directly on the image:<br />
+            • <strong>Erase</strong> hides pixels (more transparency).<br />
+            • <strong>Restore</strong> brings back the original pixels.<br />
+            Shortcuts: <strong>E</strong> erase, <strong>R</strong> restore,
+            <strong>Z</strong> undo, <strong>Y</strong> redo.
+          </div>
+        </div>
+
+        <!-- INFO CARD -->
+        <div class="card">
+          <h2 id="infoCardTitle">Info</h2>
+          <div class="hint" id="infoHint">
+            • Everything runs in your browser; images are never uploaded.<br />
+            • Once the model is downloaded, BGone can work offline.<br />
+            • Checkerboard = transparent areas in the exported PNG.
+          </div>
+        </div>
+      </aside>
+
+      <section class="canvas-wrap" aria-label="Canvas area">
+        <canvas id="canvas" aria-label="Result canvas"></canvas>
+        <div class="brush-preview" id="brushPreview"></div>
+        <div class="overlay-msg" id="overlayMsg">
+          Drop an image here, or use “Choose image…” on the left.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+<div class="footer-left">
+      <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">☕️ Buy me a Ko-fi</a>
+    </div>
+    <div class="footer-center" id="footerText"></div>
+    <div class="footer-right" id="footerRightText">
+      Made by Alex with ❤️ – See also
+      <a href="https://blizky.github.io/OctoFind/" target="_blank" rel="noopener noreferrer">OctoFind</a>
+      |
+      <a href="https://blizky.github.io/BGone/" target="_blank" rel="noopener noreferrer">BGone</a>
+      |
+      <a href="https://blizky.github.io/Retroit/" target="_blank" rel="noopener noreferrer">RetroIt</a>
+    </div>
+    </footer>
+  </div>
+
+  <!-- Bottom-right language/theme bar -->
+  <div class="settings-bar" aria-label="Display and language settings">
+    <button
+      id="langEnBtn"
+      class="settings-chip"
+      type="button"
+      aria-label="Switch to English"
+    >
+      EN
+    </button>
+    <button
+      id="langEsBtn"
+      class="settings-chip"
+      type="button"
+      aria-label="Cambiar a español"
+    >
+      ES
+    </button>
+    <button
+      id="themeToggleBtn"
+      class="settings-chip settings-icon"
+      type="button"
+      aria-label="Toggle theme"
+    >
+      🌙
+    </button>
+  </div>
+
+  <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
+  <script type="module">
+    import { removeBackground, preload } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm";
+
+    // --- Language & theme state ---
+    const LANG_KEY = "bgoneLang";
+    const THEME_KEY = "bgoneTheme";
+
+    let currentLang = localStorage.getItem(LANG_KEY) === "es" ? "es" : "en";
+    let currentTheme =
+      localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
+
+    const TEXTS = {
+      en: {
+        noteLabel: "Note",
+        topNote:
+          "To use BGone, click “Download model” once to install the AI in this browser (~40 MB).",
+        topDownloading:
+          "Downloading AI model… this is a one-time download in this browser.",
+        topModelReady:
+          "Model cached in this browser. BGone can now work offline.",
+        headerSubtitle:
+          "Offline AI background remover with manual brush refinement.",
+        statusInitial: "Load an image to begin.",
+        imageCardTitle: "Image",
+        labelLoadSource: "Load source",
+        labelChooseImage: "Choose image…",
+        btnClear: "Clear",
+        btnRemove: "Auto remove background",
+        btnDownload: "Download PNG",
+        brushCardTitle: "Brush",
+        labelBrushSize: "Brush size",
+        modeErase: "Erase",
+        modeRestore: "Restore",
+        brushHint:
+          "After auto-removal, paint directly on the image:<br>• <strong>Erase</strong> hides pixels (more transparency).<br>• <strong>Restore</strong> brings back the original pixels.<br>Shortcuts: <strong>E</strong> erase, <strong>R</strong> restore, <strong>Z</strong> undo, <strong>Y</strong> redo.",
+        infoCardTitle: "Info",
+        infoHint:
+          "• Everything runs in your browser; images are never uploaded.<br>• Once the model is downloaded, BGone can work offline.<br>• Checkerboard = transparent areas in the exported PNG.",
+        overlayInitial:
+          "Drop an image here, or use “Choose image…” on the left.",
+        overlayDrop: "Drop image to load.",
+        footerLeft:
+          "Made with love by Alex – <a href=\"https://ko-fi.com/blizky\" target=\"_blank\" rel=\"noreferrer\">buy me a Ko-fi</a>.",
+        footerRightPrefix: "Made by Alex Blizky – see also ",
+        btnPreload: "Download model"
+      },
+      es: {
+        noteLabel: "Nota",
+        topNote:
+          "Para usar BGone, haz clic una vez en “Download model” para instalar la IA en este navegador (~40 MB).",
+        topDownloading:
+          "Descargando el modelo de IA… es una descarga única en este navegador.",
+        topModelReady:
+          "Modelo en caché en este navegador. BGone ahora puede funcionar sin conexión.",
+        headerSubtitle:
+          "Removedor de fondo con IA, todo local, con pincel para retoque fino.",
+        statusInitial: "Carga una imagen para empezar.",
+        imageCardTitle: "Imagen",
+        labelLoadSource: "Cargar imagen",
+        labelChooseImage: "Elegir imagen…",
+        btnClear: "Limpiar",
+        btnRemove: "Quitar fondo automáticamente",
+        btnDownload: "Descargar PNG",
+        brushCardTitle: "Pincel",
+        labelBrushSize: "Tamaño del pincel",
+        modeErase: "Borrar",
+        modeRestore: "Restaurar",
+        brushHint:
+          "Después de quitar el fondo, pinta directamente sobre la imagen:<br>• <strong>Borrar</strong> oculta píxeles (más transparencia).<br>• <strong>Restaurar</strong> recupera los píxeles originales.<br>Atajos: <strong>E</strong> borrar, <strong>R</strong> restaurar, <strong>Z</strong> deshacer, <strong>Y</strong> rehacer.",
+        infoCardTitle: "Info",
+        infoHint:
+          "• Todo se ejecuta en tu navegador; las imágenes nunca se suben.<br>• Una vez descargado el modelo, BGone puede funcionar sin conexión.<br>• El patrón de cuadros = áreas transparentes en el PNG exportado.",
+        overlayInitial:
+          "Suelta una imagen aquí o usa “Elegir imagen…” a la izquierda.",
+        overlayDrop: "Suelta la imagen para cargarla.",
+        footerLeft:
+          "Hecho con cariño por Alex – <a href=\"https://ko-fi.com/blizky\" target=\"_blank\" rel=\"noreferrer\">invítame un Ko-fi</a>.",
+        footerRightPrefix: "Hecho por Alex Blizky – mira también ",
+        btnPreload: "Download model"
+      }
+    };
+
+    function getText(key) {
+      const dict = TEXTS[currentLang] || TEXTS.en;
+      return dict[key] || TEXTS.en[key] || "";
+    }
+
+    function applyTheme() {
+      if (currentTheme === "light") {
+        document.body.classList.add("theme-light");
+      } else {
+        document.body.classList.remove("theme-light");
+      }
+      updateSettingsLabels();
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLang === "es" ? "es" : "en";
+
+      if (window.pageAlertLabel)
+        pageAlertLabel.textContent = getText("noteLabel");
+      if (window.topMessage) {
+        const modelReady = localStorage.getItem(MODEL_READY_KEY) === "1";
+        topMessage.textContent = modelReady
+          ? getText("topModelReady")
+          : getText("topNote");
+      }
+      if (window.titleSub) titleSub.textContent = getText("headerSubtitle");
+      if (window.imageCardTitle)
+        imageCardTitle.textContent = getText("imageCardTitle");
+      if (window.labelLoadSource)
+        labelLoadSource.textContent = getText("labelLoadSource");
+      if (window.labelChooseImage)
+        labelChooseImage.textContent = getText("labelChooseImage");
+      if (window.btnClear) btnClear.textContent = getText("btnClear");
+      if (window.btnRemove) btnRemove.textContent = getText("btnRemove");
+      if (window.btnDownload) btnDownload.textContent = getText("btnDownload");
+      if (window.brushCardTitle)
+        brushCardTitle.textContent = getText("brushCardTitle");
+      if (window.labelBrushSize)
+        labelBrushSize.textContent = getText("labelBrushSize");
+      if (window.modeErase) modeErase.textContent = getText("modeErase");
+      if (window.modeRestore) modeRestore.textContent = getText("modeRestore");
+      if (window.brushHint) brushHint.innerHTML = getText("brushHint");
+      if (window.infoCardTitle)
+        infoCardTitle.textContent = getText("infoCardTitle");
+      if (window.infoHint) infoHint.innerHTML = getText("infoHint");
+      if (window.overlayMsg)
+        overlayMsg.textContent = getText("overlayInitial");
+      if (window.footerLeft) footerLeft.innerHTML = getText("footerLeft");
+      if (window.footerRight) {
+        footerRight.firstChild &&
+          (footerRight.firstChild.textContent = getText("footerRightPrefix"));
+      }
+      if (window.btnPreload) btnPreload.textContent = getText("btnPreload");
+      if (window.statusEl) statusEl.textContent = getText("statusInitial");
+
+      updateSettingsLabels();
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang === "es" ? "es" : "en";
+      localStorage.setItem(LANG_KEY, currentLang);
+      applyLanguage();
+    }
+
+    function setTheme(theme) {
+      currentTheme = theme === "light" ? "light" : "dark";
+      localStorage.setItem(THEME_KEY, currentTheme);
+      applyTheme();
+    }
+
+    // --- DOM refs ---
+    const fileInput = document.getElementById("fileInput");
+    const btnClear = document.getElementById("btnClear");
+    const btnRemove = document.getElementById("btnRemove");
+    const btnDownload = document.getElementById("btnDownload");
+    const btnPreload = document.getElementById("btnPreload");
+    const topMessage = document.getElementById("topMessage");
+    const topProgressWrap = document.getElementById("topProgressWrap");
+    const topProgress = document.getElementById("topProgress");
+    const topReadyDot = document.getElementById("topReadyDot");
+    const statusEl = document.getElementById("status");
+    const overlayMsg = document.getElementById("overlayMsg");
+    const progressText = document.getElementById("progressText");
+    const spinner = document.getElementById("spinner");
+    const brushSizeEl = document.getElementById("brushSize");
+    const modeEraseBtn = document.getElementById("modeErase");
+    const modeRestoreBtn = document.getElementById("modeRestore");
+    const toastEl = document.getElementById("toast");
+    const pageAlertLabel = document.getElementById("pageAlertLabel");
+    const titleSub = document.getElementById("titleSub");
+    const imageCardTitle = document.getElementById("imageCardTitle");
+    const labelLoadSource = document.getElementById("labelLoadSource");
+    const labelChooseImage = document.getElementById("labelChooseImage");
+    const brushCardTitle = document.getElementById("brushCardTitle");
+    const labelBrushSize = document.getElementById("labelBrushSize");
+    const brushHint = document.getElementById("brushHint");
+    const infoCardTitle = document.getElementById("infoCardTitle");
+    const infoHint = document.getElementById("infoHint");
+    const footerLeft = document.getElementById("footerLeft");
+    const footerRight = document.getElementById("footerRight");
+
+    const langEnBtn = document.getElementById("langEnBtn");
+    const langEsBtn = document.getElementById("langEsBtn");
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const canvasWrap = document.querySelector(".canvas-wrap");
+    const brushPreview = document.getElementById("brushPreview");
+
+    function updateSettingsLabels() {
+      if (!langEnBtn || !langEsBtn || !themeToggleBtn) return;
+
+      langEnBtn.classList.toggle("active", currentLang === "en");
+      langEsBtn.classList.toggle("active", currentLang === "es");
+
+      themeToggleBtn.textContent = currentTheme === "dark" ? "🌙" : "☀";
+    }
+
+    // Offscreen originals and mask
+    const originalCanvas = document.createElement("canvas");
+    const originalCtx = originalCanvas.getContext("2d");
+    const maskCanvas = document.createElement("canvas");
+    const maskCtx = maskCanvas.getContext("2d");
+
+    // State
+    const MODEL_READY_KEY = "bgoneModelReady";
+    let hasImage = false;
+    let working = false;
+    let brushMode = "erase";
+    let painting = false;
+    let lastPointer = null;
+
+    // History (mask snapshots)
+    const history = { stack: [], redos: [], limit: 30 };
+    function pushHistory() {
+      if (!hasImage) return;
+      try {
+        const snap = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+        history.stack.push(snap);
+        if (history.stack.length > history.limit) history.stack.shift();
+        history.redos.length = 0;
+      } catch (_e) {}
+    }
+    function undo() {
+      if (history.stack.length <= 1) return;
+      const current = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+      const prev = history.stack[history.stack.length - 2];
+      history.redos.push(current);
+      history.stack.pop();
+      maskCtx.putImageData(prev, 0, 0);
+      render();
+      setStatus("Undid last stroke.");
+    }
+    function redo() {
+      if (history.redos.length === 0) return;
+      const redoImg = history.redos.pop();
+      history.stack.push(redoImg);
+      maskCtx.putImageData(redoImg, 0, 0);
+      render();
+      setStatus("Redid stroke.");
+    }
+
+    // UI helpers
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+    function setWorking(flag) {
+      working = flag;
+      btnRemove.disabled = flag || !hasImage;
+      fileInput.disabled = flag;
+      btnPreload.disabled = flag;
+      if (spinner) {
+        spinner.style.display = flag ? "inline-block" : "none";
+      }
+    }
+    function setDownloadEnabled(flag) {
+      btnDownload.disabled = !flag;
+    }
+    function setTopProgress(pct) {
+      if (pct == null || isNaN(pct)) {
+        topProgress.style.width = "0%";
+        return;
+      }
+      const clamped = Math.max(0, Math.min(100, pct));
+      topProgress.style.width = clamped + "%";
+    }
+    function showModelReadyUI() {
+      btnPreload.style.display = "none";
+      topProgressWrap.style.display = "none";
+      topReadyDot.style.display = "block";
+      topReadyDot.classList.add("ready");
+      topMessage.textContent = getText("topModelReady");
+      setTopProgress(0);
+    }
+    function showToast(msg, type = "info", ttl = 3500) {
+      toastEl.textContent = msg;
+      toastEl.classList.toggle("error", type === "error");
+      toastEl.style.display = "block";
+      setTimeout(() => {
+        toastEl.style.display = "none";
+      }, ttl);
+    }
+
+    function checkModelReady() {
+      if (localStorage.getItem(MODEL_READY_KEY) === "1") showModelReadyUI();
+    }
+    function markModelReady() {
+      localStorage.setItem(MODEL_READY_KEY, "1");
+      showModelReadyUI();
+    }
+
+    // Fit dimensions preserving aspect ratio
+    function fitImageDimensions(imgWidth, imgHeight, maxWidth = 1400, maxHeight = 900) {
+      let w = imgWidth,
+        h = imgHeight;
+      const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+      return { w, h };
+    }
+
+    // Render: original + mask
+    function render() {
+      if (!hasImage) return;
+      const w = canvas.width,
+        h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(originalCanvas, 0, 0, w, h);
+
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(maskCanvas, 0, 0, w, h);
+
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    function initMaskFromImage(img) {
+      const w = canvas.width,
+        h = canvas.height;
+      maskCanvas.width = w;
+      maskCanvas.height = h;
+      maskCtx.clearRect(0, 0, w, h);
+      maskCtx.fillStyle = "#fff";
+      maskCtx.fillRect(0, 0, w, h);
+      pushHistory();
+    }
+    function initMaskFromResultBlob(blob) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const resultImg = new Image();
+        resultImg.onload = () => {
+          URL.revokeObjectURL(url);
+          const w = canvas.width;
+          const h = canvas.height;
+
+          const temp = document.createElement("canvas");
+          temp.width = w;
+          temp.height = h;
+          const tctx = temp.getContext("2d");
+          tctx.drawImage(resultImg, 0, 0, w, h);
+
+          const imgData = tctx.getImageData(0, 0, w, h);
+          const maskData = maskCtx.createImageData(w, h);
+          const src = imgData.data;
+          const dst = maskData.data;
+
+          for (let i = 0; i < src.length; i += 4) {
+            const a = src[i + 3];
+            dst[i] = 255;
+            dst[i + 1] = 255;
+            dst[i + 2] = 255;
+            dst[i + 3] = a;
+          }
+          maskCtx.putImageData(maskData, 0, 0);
+          pushHistory();
+          resolve();
+        };
+        resultImg.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Error rendering result."));
+        };
+        resultImg.src = url;
+      });
+    }
+
+    async function loadFile(file) {
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+
+        const { w, h } = fitImageDimensions(img.width, img.height);
+        canvas.width = w;
+        canvas.height = h;
+        originalCanvas.width = w;
+        originalCanvas.height = h;
+
+        originalCtx.clearRect(0, 0, w, h);
+        originalCtx.drawImage(img, 0, 0, w, h);
+
+        hasImage = true;
+        setWorking(false);
+        setDownloadEnabled(true);
+        overlayMsg.style.display = "none";
+        setStatus(`Image loaded (${img.width} × ${img.height}).`);
+        progressText.textContent = "";
+
+        initMaskFromImage(img);
+        render();
+      };
+      img.onerror = () => {
+        setStatus("Error loading image.");
+        showToast("Could not load that image. Try a different file.", "error");
+      };
+      img.src = url;
+    }
+
+    // Pointer helpers
+    function getCanvasPointer(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / rect.width) * canvas.width;
+      const y = ((evt.clientY - rect.top) / rect.height) * canvas.height;
+      return { x, y };
+    }
+
+    function showBrushPreview() {
+      if (!hasImage || working) return;
+      if (canvasWrap) canvasWrap.classList.add("hide-cursor");
+      brushPreview.style.display = "block";
+      updateBrushPreviewStyle();
+    }
+
+    function hideBrushPreview() {
+      if (canvasWrap) canvasWrap.classList.remove("hide-cursor");
+      brushPreview.style.display = "none";
+    }
+
+    function updateBrushPreviewStyle() {
+      if (!brushPreview) return;
+      brushPreview.classList.toggle("restore", brushMode === "restore");
+    }
+
+    function updateBrushPreview(evt) {
+      if (!hasImage || !brushPreview || working) return;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      const wrapRect = canvasWrap.getBoundingClientRect();
+
+      const radius = parseInt(brushSizeEl.value, 10) || 1;
+      const scaleX = canvasRect.width / canvas.width || 1;
+      const size = radius * 2 * scaleX;
+
+      const x = evt.clientX - wrapRect.left;
+      const y = evt.clientY - wrapRect.top;
+
+      brushPreview.style.width = `${size}px`;
+      brushPreview.style.height = `${size}px`;
+      brushPreview.style.left = `${x}px`;
+      brushPreview.style.top = `${y}px`;
+      brushPreview.style.display = "block";
+    }
+
+    function drawStamp(x, y, radius) {
+      maskCtx.save();
+      maskCtx.lineCap = "round";
+      maskCtx.lineJoin = "round";
+      maskCtx.fillStyle = "#fff";
+      maskCtx.strokeStyle = "#fff";
+
+      if (brushMode === "erase") {
+        maskCtx.globalCompositeOperation = "destination-out";
+      } else {
+        maskCtx.globalCompositeOperation = "source-over";
+      }
+
+      maskCtx.beginPath();
+      maskCtx.arc(x, y, radius, 0, Math.PI * 2);
+      maskCtx.fill();
+      maskCtx.restore();
+    }
+
+    function drawStroke(from, to, radius) {
+      maskCtx.save();
+      maskCtx.lineCap = "round";
+      maskCtx.lineJoin = "round";
+      maskCtx.lineWidth = radius * 2;
+      maskCtx.strokeStyle = "#fff";
+      if (brushMode === "erase") {
+        maskCtx.globalCompositeOperation = "destination-out";
+      } else {
+        maskCtx.globalCompositeOperation = "source-over";
+      }
+      maskCtx.beginPath();
+      maskCtx.moveTo(from.x, from.y);
+      maskCtx.lineTo(to.x, to.y);
+      maskCtx.stroke();
+      maskCtx.restore();
+    }
+
+    function startPaint(evt) {
+      if (!hasImage || working) return;
+      painting = true;
+      canvas.setPointerCapture(evt.pointerId);
+      const p = getCanvasPointer(evt);
+      lastPointer = { x: p.x, y: p.y };
+      const radius = parseInt(brushSizeEl.value, 10);
+      drawStamp(p.x, p.y, radius);
+      render();
+      updateBrushPreview(evt);
+      evt.preventDefault();
+    }
+
+    function movePaint(evt) {
+      if (!hasImage) return;
+      updateBrushPreview(evt);
+      if (!painting) return;
+      const p = getCanvasPointer(evt);
+      const radius = parseInt(brushSizeEl.value, 10);
+      drawStroke(lastPointer, { x: p.x, y: p.y }, radius);
+      lastPointer = { x: p.x, y: p.y };
+      render();
+      evt.preventDefault();
+    }
+
+    function endPaint(evt) {
+      if (!painting) return;
+      painting = false;
+      lastPointer = null;
+      pushHistory();
+      evt && evt.preventDefault();
+    }
+
+    function downloadPNG() {
+      if (!hasImage) return;
+      const tmp = document.createElement("canvas");
+      tmp.width = canvas.width;
+      tmp.height = canvas.height;
+      const tctx = tmp.getContext("2d");
+
+      tctx.drawImage(originalCanvas, 0, 0, tmp.width, tmp.height);
+      tctx.globalCompositeOperation = "destination-in";
+      tctx.drawImage(maskCanvas, 0, 0, tmp.width, tmp.height);
+      tctx.globalCompositeOperation = "source-over";
+
+      tmp.toBlob(
+        (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "bgone.png";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        },
+        "image/png"
+      );
+    }
+
+    // Events
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      loadFile(file);
+    });
+
+    ["dragenter", "dragover"].forEach((name) => {
+      canvas.addEventListener(
+        name,
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasImage) overlayMsg.textContent = getText("overlayDrop");
+        },
+        { passive: false }
+      );
+    });
+    ["dragleave", "drop"].forEach((name) => {
+      canvas.addEventListener(
+        name,
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasImage) overlayMsg.textContent = getText("overlayInitial");
+        },
+        { passive: false }
+      );
+    });
+    canvas.addEventListener(
+      "drop",
+      (e) => {
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        loadFile(file);
+      },
+      { passive: false }
+    );
+
+    btnClear.addEventListener("click", () => {
+      hasImage = false;
+      canvas.width = 0;
+      canvas.height = 0;
+      originalCanvas.width = 0;
+      originalCanvas.height = 0;
+      maskCanvas.width = 0;
+      maskCanvas.height = 0;
+      overlayMsg.style.display = "block";
+      overlayMsg.textContent = getText("overlayInitial");
+      setStatus("Cleared.");
+      progressText.textContent = "";
+      setDownloadEnabled(false);
+      history.stack.length = 0;
+      history.redos.length = 0;
+      hideBrushPreview();
+    });
+
+    btnPreload.addEventListener("click", async () => {
+      setWorking(true);
+      topMessage.textContent = getText("topDownloading");
+      topProgressWrap.style.display = "block";
+      setTopProgress(5);
+      progressText.textContent = "Preloading AI model…";
+      try {
+        const config = {
+          debug: true,
+          progress: (key, current, total) => {
+            if (!total) return;
+            const pct = (current / total) * 100;
+            progressText.textContent = `Downloading ${key}: ${pct.toFixed(
+              1
+            )}%`;
+            setTopProgress(pct);
+          }
+        };
+        await preload(config);
+        markModelReady();
+        progressText.textContent = "";
+        setStatus("Model downloaded. Ready to remove backgrounds.");
+        showToast("Model downloaded. BGone works offline now.");
+      } catch (err) {
+        const msg =
+          (err && (err.message || err.toString?.())) || "Unknown error";
+        topMessage.textContent = "Error downloading model: " + msg;
+        topProgressWrap.style.display = "none";
+        setTopProgress(0);
+        showToast("Model download failed. Please try again.", "error");
+      } finally {
+        setWorking(false);
+      }
+    });
+
+    btnRemove.addEventListener("click", async () => {
+      if (!hasImage || working) return;
+      setWorking(true);
+      setStatus("Removing background…");
+      progressText.textContent = "Preparing image…";
+
+      try {
+        const blob = await new Promise((resolve) =>
+          originalCanvas.toBlob(resolve, "image/png")
+        );
+        if (!blob) throw new Error("Canvas export returned null blob.");
+
+        const config = {
+          debug: true,
+          progress: (key, current, total) => {
+            if (!total) return;
+            const pct = (current / total) * 100;
+            progressText.textContent = `Downloading ${key}: ${pct.toFixed(
+              1
+            )}%`;
+          }
+        };
+
+        const outBlob = await removeBackground(blob, config);
+        progressText.textContent = "Applying mask…";
+
+        await initMaskFromResultBlob(outBlob);
+        render();
+        setStatus("Background removed. Use the brush to refine, then download PNG.");
+        progressText.textContent = "";
+        markModelReady();
+      } catch (err) {
+        const msg =
+          (err && (err.message || err.toString?.())) || "Unknown error";
+        setStatus("Error removing background: " + msg);
+        progressText.textContent = "";
+        showToast(
+          "Background removal failed. Try re-downloading the model or another image.",
+          "error"
+        );
+      } finally {
+        setWorking(false);
+      }
+    });
+
+    canvas.addEventListener("pointerdown", startPaint, { passive: false });
+    canvas.addEventListener("pointermove", movePaint, { passive: false });
+    canvas.addEventListener("pointerup", endPaint, { passive: false });
+    canvas.addEventListener("pointercancel", endPaint, { passive: false });
+    canvas.addEventListener("pointerleave", (e) => {
+      endPaint(e);
+      hideBrushPreview();
+    });
+
+    canvas.addEventListener("pointerenter", (e) => {
+      if (!hasImage) return;
+      showBrushPreview();
+      updateBrushPreview(e);
+    });
+
+    function setBrushMode(mode) {
+      brushMode = mode;
+      const eraseActive = mode === "erase";
+      modeEraseBtn.classList.toggle("active", eraseActive);
+      modeRestoreBtn.classList.toggle("active", !eraseActive);
+      modeEraseBtn.setAttribute("aria-selected", eraseActive ? "true" : "false");
+      modeRestoreBtn.setAttribute(
+        "aria-selected",
+        eraseActive ? "false" : "true"
+      );
+      updateBrushPreviewStyle();
+    }
+    modeEraseBtn.addEventListener("click", () => setBrushMode("erase"));
+    modeRestoreBtn.addEventListener("click", () => setBrushMode("restore"));
+
+    window.addEventListener("keydown", (e) => {
+      if (working) return;
+      switch (e.key.toLowerCase()) {
+        case "e":
+          setBrushMode("erase");
+          setStatus("Brush: Erase");
+          break;
+        case "r":
+          setBrushMode("restore");
+          setStatus("Brush: Restore");
+          break;
+        case "z":
+          undo();
+          break;
+        case "y":
+          redo();
+          break;
+        default:
+          break;
+      }
+    });
+
+    btnDownload.addEventListener("click", downloadPNG);
+
+    langEnBtn.addEventListener("click", () => setLanguage("en"));
+    langEsBtn.addEventListener("click", () => setLanguage("es"));
+    themeToggleBtn.addEventListener("click", () => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      setTheme(nextTheme);
+    });
+
+    applyTheme();
+    applyLanguage();
+    setDownloadEnabled(false);
+    checkModelReady();
+    updateBrushPreviewStyle();
+  </script>
+</body>
+</html>
