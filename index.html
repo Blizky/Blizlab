@@ -5,10 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blizlab Tools</title>
 <style>
+    :root {
+        --blizlab-blue: #0099CC;
+        --blizlab-yellow: #FFCC33;
+        --bg-deep: #0A0019;
+        --card-bg: #141328;
+        --card-header-bg: #1c1a36;
+        --button-blue: #005b80;
+    }
+
     body {
         margin: 0;
         font-family: Arial, sans-serif;
-        background: #0A0019;
+        background: var(--blizlab-blue);
         color: #FDFDF9;
     }
 
@@ -17,8 +26,8 @@
         display: flex;
         align-items: center;
         padding: 12px 20px;
-        background: #0099CC;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+        background: #004766; /* darker blue/gray */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.35);
     }
 
     .topbar img {
@@ -27,15 +36,22 @@
     }
 
     .title {
-        font-size: 1.5rem;
+        font-size: 1.7rem;
         font-weight: bold;
         letter-spacing: 1px;
+        color: var(--blizlab-yellow);
+    }
+
+    /* Page wrapper so cards sit on a darker panel */
+    .page-wrap {
+        background: radial-gradient(circle at top, #18213f 0, var(--bg-deep) 40%, #050312 100%);
+        padding: 40px 0 60px;
     }
 
     /* Grid Layout */
     .grid {
         max-width: 1100px;
-        margin: 40px auto;
+        margin: 0 auto;
         padding: 0 20px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -44,54 +60,80 @@
 
     /* Cards */
     .card {
-        background: #1b1533;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+        background: var(--card-bg);
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.45);
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: transform 0.2s ease;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
 
     .card:hover {
         transform: translateY(-4px);
+        box-shadow: 0 16px 34px rgba(0,0,0,0.55);
+    }
+
+    .card-header {
+        background: var(--card-header-bg);
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        color: #c9c6e8;
     }
 
     .card img {
         width: 100%;
         aspect-ratio: 4 / 3;
         object-fit: cover;
-        background: #333;
+        background: #3a3a3a;
+        display: block;
     }
 
     .card-content {
-        padding: 20px;
+        padding: 18px 18px 22px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
     }
 
     .card-title {
         font-size: 1.3rem;
         margin-bottom: 10px;
         font-weight: bold;
+        color: var(--blizlab-yellow);
     }
 
     .card-desc {
         font-size: 0.95rem;
         margin-bottom: 18px;
         color: #d8d4e3;
+        flex: 1;
     }
 
     .card a {
         text-decoration: none;
-        display: inline-block;
-        background: #A8FF5A;
-        color: #0A0019;
-        padding: 10px 15px;
-        border-radius: 8px;
+        text-align: center;
+        background: var(--button-blue);
+        color: #ffffff;
+        padding: 10px 16px;
+        border-radius: 999px;
         font-weight: bold;
+        display: block;
+        margin: 0 auto;
+        min-width: 140px;
     }
 
     .card a:hover {
-        background: #8be84c;
+        background: #0073a5;
+    }
+
+    @media (max-width: 600px) {
+        .title {
+            font-size: 1.4rem;
+        }
+        .topbar img {
+            height: 40px;
+        }
     }
 </style>
 </head>
@@ -103,45 +145,50 @@
     <div class="title">Blizlab Tools</div>
 </div>
 
-<!-- Cards Grid -->
-<div class="grid">
+<div class="page-wrap">
+    <!-- Cards Grid -->
+    <div class="grid">
 
-    <!-- OctoFind -->
-    <div class="card">
-        <img src="octofind_cover.jpg" alt="OctoFind Cover">
-        <div class="card-content">
-            <div class="card-title">OctoFind</div>
-            <div class="card-desc">
-                Multi-site search tool. Open multiple video, photo, and public-domain sites at once.
+        <!-- OctoFind -->
+        <div class="card">
+            <div class="card-header">OctoFind Cover</div>
+            <img src="octofind_cover.jpg" alt="OctoFind Cover" loading="lazy">
+            <div class="card-content">
+                <div class="card-title">OctoFind</div>
+                <div class="card-desc">
+                    Multi-site search tool. Open multiple video, photo, and public-domain sites at once.
+                </div>
+                <a href="octofind/">Open OctoFind</a>
             </div>
-            <a href="octofind/">Open OctoFind</a>
         </div>
-    </div>
 
-    <!-- BGone -->
-    <div class="card">
-        <img src="bgone_cover.jpg" alt="BGone Cover">
-        <div class="card-content">
-            <div class="card-title">BGone</div>
-            <div class="card-desc">
-                Remove image backgrounds locally in your browser. Includes brush, restore, and lasso tools.
+        <!-- BGone -->
+        <div class="card">
+            <div class="card-header">BGone Cover</div>
+            <img src="bgone_cover.jpg" alt="BGone Cover" loading="lazy">
+            <div class="card-content">
+                <div class="card-title">BGone</div>
+                <div class="card-desc">
+                    Remove image backgrounds locally in your browser. Includes brush, restore, and lasso tools.
+                </div>
+                <a href="bgone/">Open BGone</a>
             </div>
-            <a href="bgone/">Open BGone</a>
         </div>
-    </div>
 
-    <!-- RetroIt -->
-    <div class="card">
-        <img src="retroit_cover.jpg" alt="RetroIt Cover">
-        <div class="card-content">
-            <div class="card-title">RetroIt</div>
-            <div class="card-desc">
-                Apply charming retro effects to your images in a single offline HTML tool.
+        <!-- RetroIt -->
+        <div class="card">
+            <div class="card-header">RetroIt Cover</div>
+            <img src="retroit_cover.jpg" alt="RetroIt Cover" loading="lazy">
+            <div class="card-content">
+                <div class="card-title">RetroIt</div>
+                <div class="card-desc">
+                    Apply charming retro effects to your images in a single offline HTML tool.
+                </div>
+                <a href="retroit/">Open RetroIt</a>
             </div>
-            <a href="retroit/">Open RetroIt</a>
         </div>
-    </div>
 
+    </div>
 </div>
 
 </body>
