@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Octofind - Multi-site media search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- UI fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700&display=swap" rel="stylesheet">
+
+<style>
+/* Brand palette -------------------------------------------------- */
+:root {
+  --bl-blue:#0099CC;
+  --bl-yellow:#FFCC33;
+  --bl-white:#FDFDF9;
+  --bl-ink:#041824;
+
+  /* Dark (night) defaults */
+  --bg-main: radial-gradient(circle at top, #032032 0%, #020813 45%, #01040a 100%);
+  --text-main: var(--bl-white);
+  --text-muted: #96a6b8;
+  --accent-primary: var(--bl-yellow);
+  --accent-secondary: var(--bl-blue);
+  --accent-soft: rgba(0,153,204,0.20);
+  --card-bg: rgba(3,12,24,0.96);
+  --border-soft: rgba(255,255,255,0.12);
+  --border-strong: rgba(0,153,204,0.70);
+  --chip-bg: #071727;
+  --chip-off: rgba(255,255,255,0.06);
+  --search-bg:#020d16;
+}
+
+body.theme-light {
+  --bg-main: radial-gradient(circle at top, #E8F6FB 0%, #F4FBFF 40%, #E9F2F7 100%);
+  --text-main:#102028;
+  --text-muted:#5b6a74;
+  --accent-primary: #0099CC; /* title blue in day mode */
+  --accent-secondary: #0077AA;
+  --accent-soft: rgba(0,119,170,0.10);
+  --card-bg: rgba(255,255,255,0.98);
+  --border-soft: rgba(0,0,0,0.10);
+  --border-strong: rgba(0,119,170,0.55);
+  --chip-bg:#F3FAFF;
+  --chip-off: rgba(0,0,0,0.05);
+  --search-bg:#FFFFFF;
+}
+
+/* Base layout -------------------------------------------------- */
+*{box-sizing:border-box;}
+html,body{height:100%;}
+
+body{
+  margin:0;
+  font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:var(--bg-main);
+  color:var(--text-main);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:32px 16px;
+  transition:background .35s ease, color .2s ease;
+}
+
+/* Top warning banner ------------------------------------------- */
+.top-banner{
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:40;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:6px 14px;
+  font-size:12px;
+  background:linear-gradient(90deg, rgba(255,204,51,0.22), rgba(255,204,51,0.06));
+  color:var(--accent-primary);
+  border-bottom:1px solid rgba(255,204,51,0.75);
+  backdrop-filter:blur(6px);
+}
+body.theme-light .top-banner{
+  background:linear-gradient(90deg, rgba(255,204,51,0.20), rgba(255,204,51,0.04));
+  color:#8a6a00;
+  border-bottom-color:rgba(218,165,32,0.8);
+}
+.top-banner.hidden{display:none;}
+.top-banner .warn-main{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.top-banner .warn-emoji{
+  font-size:14px;
+}
+.top-banner button{
+  border-radius:999px;
+  border:1px solid currentColor;
+  background:transparent;
+  color:inherit;
+  padding:4px 10px;
+  font-size:11px;
+  cursor:pointer;
+}
+
+/* Shell -------------------------------------------------------- */
+.shell{
+  width:min(1100px,100%);
+  background:var(--card-bg);
+  border-radius:24px;
+  padding:20px 22px 26px;
+  border:1px solid var(--border-soft);
+  box-shadow:0 18px 50px rgba(0,0,0,.45);
+  margin-top:32px; /* so it doesn't hide under banner */
+}
+
+/* Header -------------------------------------------------- */
+.top-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.title-wrap{
+  display:flex;
+  flex-direction:column;
+}
+.title{
+  margin:0;
+  font-family:"League Spartan", Inter, system-ui, sans-serif;
+  font-size: clamp(34px,4.4vw,48px);
+  letter-spacing:.08em;           /* a bit tighter */
+  text-transform:uppercase;
+  color:var(--accent-primary);
+}
+.subtitle{
+  margin:4px 0 0;
+  font-size:14px;
+  color:var(--text-muted);
+}
+
+/* Pills / buttons -------------------------------------------------- */
+.pill-group{
+  display:flex;
+  align-items:center;
+  gap:0;
+  padding:3px;
+  border-radius:999px;
+  background:rgba(0,0,0,.15);
+  border:1px solid var(--border-soft);
+}
+body.theme-light .pill-group{
+  background:rgba(255,255,255,.9);
+}
+.pill-group button{
+  border:0;
+  background:transparent;
+  color:var(--text-main);
+  font-size:12px;
+  padding:7px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.pill-group button span.flag{font-size:14px;}
+.pill-group button.active{
+  background:var(--accent-soft);
+  border:1px solid var(--border-strong);
+}
+
+.btn-ghost{
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:rgba(0,0,0,.18);
+  color:var(--text-main);
+  padding:7px 14px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+body.theme-light .btn-ghost{
+  background:#f4fbff;
+}
+.btn-ghost span.icon{font-size:14px;}
+
+/* Theme toggle small pills */
+.theme-toggle button{
+  padding:6px 11px;
+  font-size:0;
+}
+.theme-toggle svg{
+  width:16px;
+  height:16px;
+}
+
+/* Search area -------------------------------------------------- */
+.search-card{
+  margin-top:18px;
+  border-radius:18px;
+  border:1px solid var(--border-soft);
+  background:linear-gradient(135deg, var(--accent-soft), transparent);
+  padding:16px 16px 13px;
+}
+.search-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+.input-wrap{
+  flex:1 1 260px;
+  min-width:220px;
+  max-width:640px;
+  position:relative;
+}
+.input-wrap input{
+  width:100%;
+  padding:12px 14px 12px 40px;
+  border-radius:14px;
+  border:1.5px solid var(--border-strong);
+  background:var(--search-bg);
+  color:var(--text-main);
+  font-size:15px;
+}
+.input-wrap input::placeholder{color:var(--text-muted);}
+.search-icon{
+  position:absolute;
+  left:11px; top:50%; transform:translateY(-50%);
+  width:18px; height:18px;
+  color:var(--text-muted);
+}
+.btn-main{
+  border-radius:14px;
+  border:1px solid var(--border-soft);
+  background:var(--chip-bg);
+  color:var(--text-main);
+  padding:9px 14px;
+  font-size:13px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.btn-main span.dot{
+  width:7px; height:7px; border-radius:50%;
+}
+.btn-main.videos span.dot{background:var(--accent-secondary);}
+.btn-main.photos span.dot{background:var(--accent-primary);}
+.btn-main.public span.dot{background:#ff6b81;}
+.btn-main.png span.dot{background:#ffffff;}
+
+.search-hint{
+  margin-top:6px;
+  font-size:12px;
+  color:var(--text-muted);
+}
+
+/* Category chips -------------------------------------------------- */
+.groups{
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap:16px 20px;
+  margin-top:24px;
+}
+.group-title{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  color:var(--accent-secondary);
+  margin-bottom:6px;
+}
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.chip{
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:var(--chip-bg);
+  font-size:12px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--text-main);
+}
+.chip.off{
+  opacity:.4;
+  background:var(--chip-off);
+}
+.chip-dot{
+  width:7px; height:7px; border-radius:50%;
+  background:var(--accent-secondary);
+}
+.chip.off .chip-dot{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.4);
+}
+
+.tip-line{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--text-muted);
+}
+
+/* Footer -------------------------------------------------- */
+.footer-bar{
+  margin-top:18px;
+  font-size:12px;
+  color:var(--text-muted);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.footer-left{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:6px;
+}
+.footer-left a{
+  color:var(--accent-secondary);
+  text-decoration:none;
+}
+body.theme-light .footer-left a{
+  color:var(--bl-blue);
+}
+.footer-left .version{
+  font-family:monospace;
+  opacity:.55;
+  font-size:11px;
+}
+
+.footer-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+/* Modal -------------------------------------------------- */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+.modal-backdrop.show{display:flex;}
+
+.modal{
+  width:min(640px,100% - 32px);
+  max-height:80vh;
+  background:var(--card-bg);
+  border-radius:18px;
+  border:1px solid var(--border-strong);
+  padding:16px 18px 14px;
+  box-shadow:0 18px 40px rgba(0,0,0,.7);
+  display:flex;
+  flex-direction:column;
+}
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.modal-title{
+  margin:0;
+  font-size:16px;
+  font-weight:600;
+}
+.modal-body{
+  flex:1;
+  overflow:auto;
+  padding-right:4px;
+}
+.site-row{
+  display:grid;
+  grid-template-columns:minmax(90px,1.2fr) minmax(140px,2.2fr) minmax(90px,1fr) auto;
+  gap:6px;
+  align-items:center;
+  padding:4px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+body.theme-light .site-row{
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+.site-row input[type=text],
+.site-row select{
+  width:100%;
+  padding:5px 7px;
+  border-radius:6px;
+  border:1px solid var(--border-soft);
+  background:var(--chip-bg);
+  color:var(--text-main);
+  font-size:12px;
+}
+.site-row .small-check{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  color:var(--text-muted);
+}
+.site-row .small-check input{
+  width:13px; height:13px;
+}
+.site-row button.remove{
+  border-radius:999px;
+  border:1px solid rgba(255,80,110,.7);
+  background:rgba(120,10,30,.6);
+  color:#ffe2ea;
+  padding:3px 7px;
+  font-size:11px;
+  cursor:pointer;
+}
+body.theme-light .site-row button.remove{
+  background:#ffe6eb;
+  color:#7b0a1e;
+}
+
+.modal-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+  font-size:11px;
+  color:var(--text-muted);
+}
+.btn-small{
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:var(--chip-bg);
+  color:var(--text-main);
+  font-size:12px;
+  padding:5px 10px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+/* Responsive -------------------------------------------------- */
+@media (max-width:720px){
+  body{padding:18px 8px;}
+  .shell{padding:16px 14px 20px; margin-top:40px;}
+  .site-row{
+    grid-template-columns:minmax(130px,2fr) minmax(130px,2fr);
+    grid-auto-rows:auto;
+  }
+  .footer-bar{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+</style>
+
+<link rel="icon" 
+      type="image/svg+xml" 
+      href='data:image/svg+xml;utf8,
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="%230099CC"/>
+  <circle cx="28" cy="28" r="14" stroke="%23FFCC33" stroke-width="6" fill="none"/>
+  <line x1="38" y1="38" x2="50" y2="50" stroke="%23FFCC33" stroke-width="6" stroke-linecap="round"/>
+</svg>'>
+
+</head>
+<body>
+
+<!-- Popup warning at very top -->
+<div class="top-banner hidden" id="popupWarn">
+  <div class="warn-main">
+    <span class="warn-emoji">⚠️</span>
+    <span id="popupWarnText">
+      To open multiple sites at once, please allow pop-ups for this page.
+    </span>
+  </div>
+  <button id="popupWarnBtn">Got it</button>
+</div>
+
+<div class="shell">
+  <!-- HEADER -->
+  <header class="top-row">
+    <div class="title-wrap">
+      <h1 class="title">OctoFind</h1>
+      <p class="subtitle" id="subtitle">
+        Search all your favorite free media sites at once — videos, photos, public domain and PNG cutouts.
+      </p>
+    </div>
+  </header>
+
+  <!-- SEARCH -->
+  <section class="search-card">
+    <div class="search-row">
+      <label class="input-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input id="q" type="text" placeholder="Search term (e.g., forest)" />
+      </label>
+      <button class="btn-main videos" id="btnVideosMain"><span class="dot"></span><span>Videos</span></button>
+      <button class="btn-main photos" id="btnPhotosMain"><span class="dot"></span><span>Photos</span></button>
+      <button class="btn-main public" id="btnPublicMain"><span class="dot"></span><span>Public</span></button>
+      <button class="btn-main png" id="btnPNGsMain"><span class="dot"></span><span>PNGs</span></button>
+    </div>
+    <div class="search-hint" id="searchHint">
+      Press Enter to search Videos, or click a button to choose a category.
+    </div>
+  </section>
+
+  <!-- GROUPS -->
+  <section class="groups">
+    <div>
+      <div class="group-title" id="videosTitle">VIDEOS</div>
+      <div class="chips" id="chips-videos"></div>
+    </div>
+    <div>
+      <div class="group-title" id="photosTitle">PHOTOS</div>
+      <div class="chips" id="chips-photos"></div>
+    </div>
+    <div>
+      <div class="group-title" id="publicTitle">PUBLIC DOMAIN</div>
+      <div class="chips" id="chips-public"></div>
+    </div>
+    <div>
+      <div class="group-title" id="pngTitle">PNGS (TRANSPARENT)</div>
+      <div class="chips" id="chips-png"></div>
+    </div>
+  </section>
+
+  <p class="tip-line" id="tipLine">
+    Tip: click a site name to enable/disable it for that category. Only enabled sites will open.
+  </p>
+
+  <!-- FOOTER (controls + credits) -->
+  <div class="footer-bar">
+    <div class="footer-left">
+
+      Made by Alex with ❤️ – See also
+      <a href="https://blizky.github.io/OctoFind/" target="_blank" rel="noopener noreferrer">OctoFind</a>
+      |
+      <a href="https://blizky.github.io/BGone/" target="_blank" rel="noopener noreferrer">BGone</a>
+      |
+      <a href="https://blizky.github.io/Retroit/" target="_blank" rel="noopener noreferrer">RetroIt</a>
+      
+    </div>
+
+    <div class="footer-controls">
+      <!-- Manage sites first -->
+      <button class="btn-ghost" id="btn-manage">
+        <span class="icon">⚙️</span>
+        <span id="manageLabel">Manage sites</span>
+      </button>
+
+      <!-- Language toggle -->
+      <div class="pill-group" id="lang-group">
+        <button id="lang-en" class="active"><span class="flag">🇺🇸</span><span>EN</span></button>
+        <button id="lang-es"><span class="flag">🇪🇸</span><span>ES</span></button>
+      </div>
+
+      <!-- Night / Day with icons -->
+      <div class="pill-group theme-toggle" id="theme-group">
+        <button id="btn-night" class="active" title="Night mode" aria-label="Night mode">
+          <!-- Moon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.8A8 8 0 0 1 11.2 3 6.5 6.5 0 1 0 21 12.8z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="btn-day" title="Day mode" aria-label="Day mode">
+          <!-- Sun -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                  stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE MODAL -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modalTitle">Manage search sites</h2>
+      <button class="btn-small" id="btn-close-modal">Close</button>
+    </div>
+    <div class="modal-body" id="sites-container"></div>
+    <div class="modal-foot">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-small" id="btn-add-site">+ Add site</button>
+        <button class="btn-small" id="btn-save-sites">Save</button>
+        <button class="btn-small" id="btn-export-sites">Export</button>
+        <button class="btn-small" id="btn-import-sites">Import</button>
+      </div>
+      <span id="modalFootNote">Use <code>%S</code> in the URL where the search term should go.</span>
+    </div>
+  </div>
+</div>
+<input type="file" id="import-file" accept="application/json" style="display:none">
+
+<script>
+const KEY_SITES  = "ms-sites-v4";
+const KEY_THEME  = "ms-theme";
+const KEY_LANG   = "ms-lang";
+const KEY_POPUP  = "ms-popup-seen";
+
+const DEFAULT_SITES = [
+  { id:"pixabay_v",  name:"Pixabay (video)", category:"videos",
+    url:"https://pixabay.com/videos/search/%S/", enabled:true },
+  { id:"pexels_v",   name:"Pexels (video)", category:"videos",
+    url:"https://www.pexels.com/search/videos/%S/", enabled:true },
+  { id:"mixkit_v",   name:"Mixkit", category:"videos",
+    url:"https://mixkit.co/free-stock-video/%S/", enabled:true },
+  { id:"freepik_v",  name:"Freepik (FREE video)", category:"videos",
+    url:"https://www.freepik.com/search?format=search&last_filter=selection&last_value=1&query=%S&selection=1&type=video",
+    enabled:true },
+
+  { id:"pixabay_p",  name:"Pixabay (photo)", category:"photos",
+    url:"https://pixabay.com/images/search/%S/", enabled:true },
+  { id:"pexels_p",   name:"Pexels (photo)", category:"photos",
+    url:"https://www.pexels.com/search/%S/", enabled:true },
+  { id:"unsplash_p", name:"Unsplash", category:"photos",
+    url:"https://unsplash.com/s/photos/%S", enabled:true },
+  { id:"freepik_p",  name:"Freepik (FREE photos)", category:"photos",
+    url:"https://www.freepik.com/search?format=search&last_filter=selection&last_value=1&query=%S&selection=1&type=photo",
+    enabled:true },
+  { id:"Openverse_p",  name:"Openverse", category:"photos",
+    url:"https://openverse.org/search/image?q=%S", enabled:false },
+
+  { id:"picryl_pd",  name:"Picryl (PD)", category:"public",
+    url:"https://picryl.com/search?q=%S", enabled:true },
+  { id:"commons_pd", name:"Wikimedia Commons", category:"public",
+    url:"https://commons.wikimedia.org/w/index.php?search=%S&title=Special%3AMediaSearch&type=image",
+    enabled:true },
+
+  { id:"kindpng_png", name:"KindPNG", category:"png",
+    url:"https://www.kindpng.com/free/%S/", enabled:true },
+  { id:"rawpixel_png", name:"Rawpixel", category:"png",
+    url:"https://www.rawpixel.com/search/%S", enabled:true },
+  { id:"pngegg_png",  name:"PngEgg", category:"png",
+    url:"https://www.pngegg.com/en/search?q=%S", enabled:true }
+];
+
+let sites = loadSites();
+
+/* i18n -------------------------------------------------------- */
+const I18N = {
+  en: {
+    subtitle: "Search all your favorite free media sites at once — videos, photos, public domain and PNG cutouts.",
+    searchPlaceholder: "Search term (e.g., forest)",
+    searchHint: "Press Enter to search Videos, or click a button to choose a category.",
+    videosTitle: "VIDEOS",
+    photosTitle: "PHOTOS",
+    publicTitle: "PUBLIC DOMAIN",
+    pngTitle: "PNGS (TRANSPARENT)",
+    btnVideos: "Videos",
+    btnPhotos: "Photos",
+    btnPublic: "Public",
+    btnPNGs: "PNGs",
+    tipLine: "Tip: click a site name to enable/disable it for that category. Only enabled sites will open.",
+    manageLabel: "Manage sites",
+    modalTitle: "Manage search sites",
+    btnClose: "Close",
+    btnAdd: "+ Add site",
+    btnSave: "Save",
+    btnExport: "Export",
+    btnImport: "Import",
+    modalFoot: "Use %S in the URL where the search term should go.",
+    creditsLabel: "Made by Alex Blizky · feedback:",
+    popupText: "To open multiple sites at once, please allow pop-ups for this page.",
+    popupBtn: "Got it"
+  },
+  es: {
+    subtitle: "Busca en varios sitios de medios gratuitos a la vez — videos, fotos, dominio público y recortes PNG.",
+    searchPlaceholder: "Término de búsqueda (ej.: bosque)",
+    searchHint: "Pulsa Enter para buscar Videos o usa los botones para elegir categoría.",
+    videosTitle: "VIDEOS",
+    photosTitle: "FOTOS",
+    publicTitle: "DOMINIO PÚBLICO",
+    pngTitle: "PNGS (TRANSPARENTES)",
+    btnVideos: "Videos",
+    btnPhotos: "Fotos",
+    btnPublic: "Público",
+    btnPNGs: "PNGs",
+    tipLine: "Tip: haz clic en el nombre del sitio para activarlo o desactivarlo. Solo se abrirán los sitios activos.",
+    manageLabel: "Administrar sitios",
+    modalTitle: "Administrar sitios de búsqueda",
+    btnClose: "Cerrar",
+    btnAdd: "+ Agregar sitio",
+    btnSave: "Guardar",
+    btnExport: "Exportar",
+    btnImport: "Importar",
+    modalFoot: "Usa %S en la URL donde debe ir el término de búsqueda.",
+    creditsLabel: "Hecho por Alex Blizky · contacto:",
+    popupText: "Para abrir varios sitios a la vez, permite las ventanas emergentes (pop-ups) de esta página.",
+    popupBtn: "Entendido"
+  }
+};
+
+function applyLang(lang){
+  const d = I18N[lang] || I18N.en;
+  subtitle.textContent = d.subtitle;
+  q.placeholder = d.searchPlaceholder;
+  searchHint.textContent = d.searchHint;
+  videosTitle.textContent = d.videosTitle;
+  photosTitle.textContent = d.photosTitle;
+  publicTitle.textContent = d.publicTitle;
+  pngTitle.textContent = d.pngTitle;
+  btnVideosMain.lastElementChild.textContent = d.btnVideos;
+  btnPhotosMain.lastElementChild.textContent = d.btnPhotos;
+  btnPublicMain.lastElementChild.textContent = d.btnPublic;
+  btnPNGsMain.lastElementChild.textContent = d.btnPNGs;
+  tipLine.textContent = d.tipLine;
+  manageLabel.textContent = d.manageLabel;
+  modalTitle.textContent = d.modalTitle;
+  btnCloseModal.textContent = d.btnClose;
+  btnAddSite.textContent = d.btnAdd;
+  btnSaveSites.textContent = d.btnSave;
+  btnExportSites.textContent = d.btnExport;
+  btnImportSites.textContent = d.btnImport;
+  modalFootNote.innerHTML = d.modalFoot.replace("%S","<code>%S</code>");
+  creditsLabel.textContent = d.creditsLabel;
+  popupWarnText.textContent = d.popupText;
+  popupWarnBtn.textContent = d.popupBtn;
+
+  localStorage.setItem(KEY_LANG, lang);
+  langEn.classList.toggle("active", lang==="en");
+  langEs.classList.toggle("active", lang==="es");
+}
+
+/* storage ------------------------------------------------------ */
+function loadSites(){
+  try{
+    const raw = localStorage.getItem(KEY_SITES);
+    if(!raw) return structuredClone(DEFAULT_SITES);
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed) || !parsed.length) return structuredClone(DEFAULT_SITES);
+    return parsed;
+  }catch(e){
+    console.warn("Failed to load sites, using defaults", e);
+    return structuredClone(DEFAULT_SITES);
+  }
+}
+function saveSites(){
+  try{ localStorage.setItem(KEY_SITES, JSON.stringify(sites)); }
+  catch(e){ console.warn("Failed to save sites", e); }
+}
+
+/* chips -------------------------------------------------------- */
+function renderChips(){
+  const containers = {
+    videos: document.getElementById("chips-videos"),
+    photos: document.getElementById("chips-photos"),
+    public: document.getElementById("chips-public"),
+    png:    document.getElementById("chips-png")
+  };
+  Object.values(containers).forEach(c => c.innerHTML="");
+  for(const s of sites){
+    const parent = containers[s.category];
+    if(!parent) continue;
+    const chip = document.createElement("button");
+    chip.type="button";
+    chip.className="chip"+(s.enabled ? "" : " off");
+    chip.dataset.siteId = s.id;
+    chip.innerHTML = `<span class="chip-dot"></span><span>${s.name}</span>`;
+    chip.onclick = () => toggleSiteEnabled(s.id);
+    parent.appendChild(chip);
+  }
+}
+function toggleSiteEnabled(id){
+  const idx = sites.findIndex(s => s.id===id);
+  if(idx===-1) return;
+  sites[idx].enabled = !sites[idx].enabled;
+  saveSites();
+  renderChips();
+}
+
+/* search ------------------------------------------------------- */
+function searchCategory(category){
+  const term = q.value.trim();
+  if(!term) return;
+  const encoded = encodeURIComponent(term);
+  const list = sites.filter(s => s.category===category && s.enabled);
+  if(!list.length){
+    alert("No sites enabled for this category.");
+    return;
+  }
+  for(const s of list){
+    let url=s.url || "";
+    if(url.includes("%S")) url=url.replace(/%S/g,encoded);
+    window.open(url,"_blank");
+  }
+}
+function handleKey(e){ if(e.key==="Enter") searchCategory("videos"); }
+
+/* theme -------------------------------------------------------- */
+function setTheme(mode){
+  if(mode==="light"){
+    document.body.classList.add("theme-light");
+    btnDay.classList.add("active");
+    btnNight.classList.remove("active");
+  }else{
+    document.body.classList.remove("theme-light");
+    btnNight.classList.add("active");
+    btnDay.classList.remove("active");
+  }
+  localStorage.setItem(KEY_THEME, mode);
+}
+
+/* modal -------------------------------------------------------- */
+function renderManageRows(){
+  sitesContainer.innerHTML="";
+  sites.forEach((s,index)=>addRowForSite(s,index));
+}
+function addRowForSite(site,index){
+  const row=document.createElement("div");
+  row.className="site-row";
+  row.dataset.index=index;
+  row.innerHTML=`
+    <input type="text" class="mf-name" value="${site.name.replace(/"/g,'&quot;')}" />
+    <input type="text" class="mf-url" value="${site.url.replace(/"/g,'&quot;')}" />
+    <select class="mf-cat">
+      <option value="videos"${site.category==="videos"?" selected":""}>Videos</option>
+      <option value="photos"${site.category==="photos"?" selected":""}>Photos</option>
+      <option value="public"${site.category==="public"?" selected":""}>Public</option>
+      <option value="png"${site.category==="png"?" selected":""}>PNGs</option>
+    </select>
+    <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+      <label class="small-check">
+        <input type="checkbox" class="mf-enabled"${site.enabled?" checked":""}/> on
+      </label>
+      <button class="remove">✕</button>
+    </div>`;
+  row.querySelector("button.remove").onclick=()=>{
+    const idx=Number(row.dataset.index);
+    if(!Number.isNaN(idx)){
+      sites.splice(idx,1);
+      renderManageRows();
+    }
+  };
+  sitesContainer.appendChild(row);
+}
+
+/* export/import ------------------------------------------------- */
+function exportSites(){
+  try{
+    const data=JSON.stringify(sites,null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="multi-search-sites.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    alert("Could not export sites.");
+  }
+}
+function importSitesFromFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) throw new Error("Not an array");
+      const allowedCats=new Set(["videos","photos","public","png"]);
+      const cleaned=data.map((s,i)=>({
+        id:s.id||("import_"+Date.now()+"_"+i),
+        name:String(s.name||"Untitled"),
+        url:String(s.url||"").trim(),
+        category:allowedCats.has(s.category)?s.category:"photos",
+        enabled:Boolean(s.enabled)
+      })).filter(s=>s.url);
+      if(!cleaned.length) throw new Error("No valid entries");
+      sites=cleaned;
+      saveSites();
+      renderChips();
+      renderManageRows();
+      alert("Sites imported successfully.");
+    }catch(err){
+      console.error(err);
+      alert("Could not import this file. Is it a Multi-Search export?");
+    }finally{
+      importFile.value="";
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* DOM refs ------------------------------------------------------ */
+const subtitle      = document.getElementById("subtitle");
+const q             = document.getElementById("q");
+const searchHint    = document.getElementById("searchHint");
+const videosTitle   = document.getElementById("videosTitle");
+const photosTitle   = document.getElementById("photosTitle");
+const publicTitle   = document.getElementById("publicTitle");
+const pngTitle      = document.getElementById("pngTitle");
+const btnVideosMain = document.getElementById("btnVideosMain");
+const btnPhotosMain = document.getElementById("btnPhotosMain");
+const btnPublicMain = document.getElementById("btnPublicMain");
+const btnPNGsMain   = document.getElementById("btnPNGsMain");
+const tipLine       = document.getElementById("tipLine");
+const manageLabel   = document.getElementById("manageLabel");
+const creditsLabel  = document.getElementById("creditsLabel");
+const modalTitle    = document.getElementById("modalTitle");
+const btnCloseModal = document.getElementById("btn-close-modal");
+const btnAddSite    = document.getElementById("btn-add-site");
+const btnSaveSites  = document.getElementById("btn-save-sites");
+const btnExportSites= document.getElementById("btn-export-sites");
+const btnImportSites= document.getElementById("btn-import-sites");
+const modalFootNote = document.getElementById("modalFootNote");
+const btnManage     = document.getElementById("btn-manage");
+const backdrop      = document.getElementById("modal-backdrop");
+const sitesContainer= document.getElementById("sites-container");
+const importFile    = document.getElementById("import-file");
+const btnNight      = document.getElementById("btn-night");
+const btnDay        = document.getElementById("btn-day");
+const langEn        = document.getElementById("lang-en");
+const langEs        = document.getElementById("lang-es");
+const popupWarn     = document.getElementById("popupWarn");
+const popupWarnText = document.getElementById("popupWarnText");
+const popupWarnBtn  = document.getElementById("popupWarnBtn");
+
+/* events -------------------------------------------------------- */
+btnVideosMain.onclick = ()=>searchCategory("videos");
+btnPhotosMain.onclick = ()=>searchCategory("photos");
+btnPublicMain.onclick = ()=>searchCategory("public");
+btnPNGsMain.onclick   = ()=>searchCategory("png");
+q.addEventListener("keydown", handleKey);
+
+btnNight.onclick = ()=>setTheme("dark");
+btnDay.onclick   = ()=>setTheme("light");
+
+btnManage.onclick = ()=>{
+  renderManageRows();
+  backdrop.classList.add("show");
+};
+btnCloseModal.onclick = ()=>backdrop.classList.remove("show");
+backdrop.addEventListener("click",e=>{
+  if(e.target===backdrop) backdrop.classList.remove("show");
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") backdrop.classList.remove("show");
+});
+
+btnAddSite.onclick = ()=>{
+  sites.push({
+    id:"custom_"+Date.now(),
+    name:"New site",
+    url:"https://example.com/search/%S",
+    category:"photos",
+    enabled:true
+  });
+  renderManageRows();
+};
+btnSaveSites.onclick = ()=>{
+  const rows=[...sitesContainer.querySelectorAll(".site-row")];
+  const updated=[];
+  for(const row of rows){
+    const idx=Number(row.dataset.index);
+    const original=sites[idx]||{};
+    const name=row.querySelector(".mf-name").value.trim()||"Untitled";
+    const url=row.querySelector(".mf-url").value.trim();
+    const cat=row.querySelector(".mf-cat").value;
+    const enabled=row.querySelector(".mf-enabled").checked;
+    if(!url) continue;
+    updated.push({
+      id: original.id||("custom_"+Date.now()+"_"+Math.random().toString(16).slice(2)),
+      name,url,category:cat,enabled
+    });
+  }
+  sites=updated;
+  saveSites();
+  renderChips();
+  backdrop.classList.remove("show");
+};
+btnExportSites.onclick = exportSites;
+btnImportSites.onclick = ()=>importFile.click();
+importFile.addEventListener("change",e=>{
+  const file=e.target.files[0];
+  if(file) importSitesFromFile(file);
+});
+
+/* language toggle */
+langEn.onclick = ()=>applyLang("en");
+langEs.onclick = ()=>applyLang("es");
+
+/* popup banner ------------------------------------------------- */
+popupWarnBtn.onclick = ()=>{
+  popupWarn.classList.add("hidden");
+  localStorage.setItem(KEY_POPUP,"1");
+};
+
+/* init --------------------------------------------------------- */
+renderChips();
+setTheme(localStorage.getItem(KEY_THEME) || "dark");
+
+// initial language: stored -> browser -> EN
+const storedLang = localStorage.getItem(KEY_LANG);
+const browserLang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+const initialLang = storedLang || (browserLang.startsWith("es") ? "es" : "en");
+applyLang(initialLang);
+
+// show popup once per browser
+if(localStorage.getItem(KEY_POPUP)==="1"){
+  popupWarn.classList.add("hidden");
+}else{
+  popupWarn.classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
