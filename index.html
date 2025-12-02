@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blizlab Tools</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0A0019;
+        color: #FDFDF9;
+    }
+
+    /* Top Bar */
+    .topbar {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        background: #0099CC;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    }
+
+    .topbar img {
+        height: 48px;
+        margin-right: 12px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* Grid Layout */
+    .grid {
+        max-width: 1100px;
+        margin: 40px auto;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+    }
+
+    /* Cards */
+    .card {
+        background: #1b1533;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+    }
+
+    .card img {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        background: #333;
+    }
+
+    .card-content {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+
+    .card-desc {
+        font-size: 0.95rem;
+        margin-bottom: 18px;
+        color: #d8d4e3;
+    }
+
+    .card a {
+        text-decoration: none;
+        display: inline-block;
+        background: #A8FF5A;
+        color: #0A0019;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+
+    .card a:hover {
+        background: #8be84c;
+    }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <img src="Blizlab_logo.png" alt="Blizlab Logo">
+    <div class="title">Blizlab Tools</div>
+</div>
+
+<!-- Cards Grid -->
+<div class="grid">
+
+    <!-- OctoFind -->
+    <div class="card">
+        <img src="octofind_cover.jpg" alt="OctoFind Cover">
+        <div class="card-content">
+            <div class="card-title">OctoFind</div>
+            <div class="card-desc">
+                Multi-site search tool. Open multiple video, photo, and public-domain sites at once.
+            </div>
+            <a href="octofind/">Open OctoFind</a>
+        </div>
+    </div>
+
+    <!-- BGone -->
+    <div class="card">
+        <img src="bgone_cover.jpg" alt="BGone Cover">
+        <div class="card-content">
+            <div class="card-title">BGone</div>
+            <div class="card-desc">
+                Remove image backgrounds locally in your browser. Includes brush, restore, and lasso tools.
+            </div>
+            <a href="bgone/">Open BGone</a>
+        </div>
+    </div>
+
+    <!-- RetroIt -->
+    <div class="card">
+        <img src="retroit_cover.jpg" alt="RetroIt Cover">
+        <div class="card-content">
+            <div class="card-title">RetroIt</div>
+            <div class="card-desc">
+                Apply charming retro effects to your images in a single offline HTML tool.
+            </div>
+            <a href="retroit/">Open RetroIt</a>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
