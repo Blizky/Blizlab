@@ -3,193 +3,328 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blizlab Tools</title>
+<title>Blizlab – Offline web-apps for content creators</title>
 <style>
     :root {
-        --blizlab-blue: #0099CC;
-        --blizlab-yellow: #FFCC33;
-        --bg-deep: #0A0019;
-        --card-bg: #141328;
-        --card-header-bg: #1c1a36;
-        --button-blue: #005b80;
+        --blue: #0099CC;
+        --yellow: #FFCC33;
+        --white: #FDFDF9;
+        --text-dark: #1A1A1A;
+    }
+
+    * {
+        box-sizing: border-box;
     }
 
     body {
         margin: 0;
-        font-family: Arial, sans-serif;
-        background: var(--blizlab-blue);
-        color: #FDFDF9;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--white);
+        color: var(--text-dark);
     }
 
-    /* Top Bar */
-    .topbar {
+    /* HEADER ------------------------------------------------------- */
+    header {
+        background: var(--blue);
+        color: var(--white);
+        padding: 14px 24px;
         display: flex;
         align-items: center;
-        padding: 12px 20px;
-        background: #004766; /* darker blue/gray */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+        justify-content: space-between;
     }
 
-    .topbar img {
-        height: 48px;
-        margin-right: 12px;
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
     }
 
-    .title {
-        font-size: 1.7rem;
-        font-weight: bold;
-        letter-spacing: 1px;
-        color: var(--blizlab-yellow);
+    .header-logo {
+        width: 44px;
+        height: 44px;
     }
 
-    /* Page wrapper so cards sit on a darker panel */
-    .page-wrap {
-        background: radial-gradient(circle at top, #18213f 0, var(--bg-deep) 40%, #050312 100%);
-        padding: 40px 0 60px;
+    .header-text-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
     }
 
-    /* Grid Layout */
-    .grid {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 0 20px;
+    .header-text-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .lang-toggle {
+        display: flex;
+        gap: 6px;
+    }
+
+    .lang-btn {
+        border: 1px solid rgba(255,255,255,0.7);
+        background: transparent;
+        color: var(--white);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .lang-btn.active {
+        background: var(--yellow);
+        color: var(--text-dark);
+        border-color: var(--yellow);
+        font-weight: 600;
+    }
+
+    /* MAIN --------------------------------------------------------- */
+    main {
+        max-width: 1120px;
+        margin: 32px auto 40px;
+        padding: 0 16px;
+    }
+
+    .cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
     }
 
-    /* Cards */
     .card {
-        background: var(--card-bg);
-        border-radius: 18px;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        border: 1px solid rgba(0,0,0,0.04);
     }
 
-    .card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 34px rgba(0,0,0,0.55);
+    .card-img-wrap {
+        background: #e2f4fb;
     }
 
-    .card-header {
-        background: var(--card-header-bg);
-        padding: 8px 16px;
-        font-size: 0.9rem;
-        color: #c9c6e8;
-    }
-
-    .card img {
+    .card-img {
         width: 100%;
         aspect-ratio: 4 / 3;
         object-fit: cover;
-        background: #3a3a3a;
         display: block;
     }
 
-    .card-content {
-        padding: 18px 18px 22px;
+    .card-body {
+        padding: 16px 18px 20px;
         display: flex;
         flex-direction: column;
+        gap: 10px;
         flex: 1;
     }
 
     .card-title {
-        font-size: 1.3rem;
-        margin-bottom: 10px;
-        font-weight: bold;
-        color: var(--blizlab-yellow);
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        background: var(--yellow);
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
     }
 
     .card-desc {
         font-size: 0.95rem;
-        margin-bottom: 18px;
-        color: #d8d4e3;
-        flex: 1;
+        line-height: 1.4;
     }
 
-    .card a {
+    .card-btn-wrap {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .card-btn {
+        background: var(--blue);
+        color: #ffffff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
         text-decoration: none;
         text-align: center;
-        background: var(--button-blue);
-        color: #ffffff;
-        padding: 10px 16px;
-        border-radius: 999px;
-        font-weight: bold;
-        display: block;
-        margin: 0 auto;
-        min-width: 140px;
+        min-width: 150px;
     }
 
-    .card a:hover {
-        background: #0073a5;
+    .card-btn:hover {
+        filter: brightness(1.05);
+    }
+
+    /* FOOTER ------------------------------------------------------ */
+    footer {
+        text-align: center;
+        padding: 18px 12px 26px;
+        font-size: 0.9rem;
+        background: #f3f7fa;
+        color: #333;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    footer a {
+        color: var(--blue);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    footer a:hover {
+        text-decoration: underline;
     }
 
     @media (max-width: 600px) {
-        .title {
-            font-size: 1.4rem;
+        header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
         }
-        .topbar img {
-            height: 40px;
+        .header-left {
+            align-items: center;
         }
     }
 </style>
 </head>
 <body>
 
-<!-- Top Bar -->
-<div class="topbar">
-    <img src="Blizlab_logo.png" alt="Blizlab Logo">
-    <div class="title">Blizlab Tools</div>
-</div>
+<header>
+    <div class="header-left">
+        <img src="Blizlab_logo.png" alt="Blizlab logo" class="header-logo">
+        <div>
+            <div id="title-main" class="header-text-title">Blizlab</div>
+            <div id="title-sub" class="header-text-subtitle">
+                Offline web-apps for content creators.
+            </div>
+        </div>
+    </div>
+    <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
+        <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
+    </div>
+</header>
 
-<div class="page-wrap">
-    <!-- Cards Grid -->
-    <div class="grid">
+<main>
+    <section class="cards">
 
         <!-- OctoFind -->
-        <div class="card">
-            <div class="card-header">OctoFind Cover</div>
-            <img src="octofind_cover.jpg" alt="OctoFind Cover" loading="lazy">
-            <div class="card-content">
-                <div class="card-title">OctoFind</div>
-                <div class="card-desc">
+        <article class="card">
+            <div class="card-img-wrap">
+                <img src="Octofind_cover.jpg" alt="OctoFind cover" loading="lazy" class="card-img">
+            </div>
+            <div class="card-body">
+                <div id="octo-title" class="card-title">OctoFind</div>
+                <div id="octo-desc" class="card-desc">
                     Multi-site search tool. Open multiple video, photo, and public-domain sites at once.
                 </div>
-                <a href="octofind/">Open OctoFind</a>
+                <div class="card-btn-wrap">
+                    <a id="octo-btn" href="octofind/" class="card-btn">Open OctoFind</a>
+                </div>
             </div>
-        </div>
+        </article>
 
         <!-- BGone -->
-        <div class="card">
-            <div class="card-header">BGone Cover</div>
-            <img src="bgone_cover.jpg" alt="BGone Cover" loading="lazy">
-            <div class="card-content">
-                <div class="card-title">BGone</div>
-                <div class="card-desc">
-                    Remove image backgrounds locally in your browser. Includes brush, restore, and lasso tools.
-                </div>
-                <a href="bgone/">Open BGone</a>
+        <article class="card">
+            <div class="card-img-wrap">
+                <img src="bgone_cover.jpg" alt="BGone cover" loading="lazy" class="card-img">
             </div>
-        </div>
+            <div class="card-body">
+                <div id="bgone-title" class="card-title">BGone</div>
+                <div id="bgone-desc" class="card-desc">
+                    Offline background remover with brush and lasso refinement, all in your browser.
+                </div>
+                <div class="card-btn-wrap">
+                    <a id="bgone-btn" href="bgone/" class="card-btn">Open BGone</a>
+                </div>
+            </div>
+        </article>
 
         <!-- RetroIt -->
-        <div class="card">
-            <div class="card-header">RetroIt Cover</div>
-            <img src="retroit_cover.jpg" alt="RetroIt Cover" loading="lazy">
-            <div class="card-content">
-                <div class="card-title">RetroIt</div>
-                <div class="card-desc">
-                    Apply charming retro effects to your images in a single offline HTML tool.
-                </div>
-                <a href="retroit/">Open RetroIt</a>
+        <article class="card">
+            <div class="card-img-wrap">
+                <img src="retroit_cover.jpg" alt="RetroIt cover" loading="lazy" class="card-img">
             </div>
-        </div>
+            <div class="card-body">
+                <div id="retro-title" class="card-title">RetroIt</div>
+                <div id="retro-desc" class="card-desc">
+                    Quick vintage photo effects right in your browser. Export ready-to-share images in seconds.
+                </div>
+                <div class="card-btn-wrap">
+                    <a id="retro-btn" href="retroit/" class="card-btn">Open RetroIt</a>
+                </div>
+            </div>
+        </article>
 
-    </div>
-</div>
+    </section>
+</main>
+
+<footer>
+    <span id="footer-text">
+        ☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
+        Made by Alex with ❤️
+    </span>
+</footer>
+
+<script>
+    const copy = {
+        en: {
+            subtitle: "Offline web-apps for content creators.",
+            octoTitle: "OctoFind",
+            octoDesc: "Multi-site search tool. Open multiple video, photo, and public-domain sites at once.",
+            octoBtn: "Open OctoFind",
+            bgoneTitle: "BGone",
+            bgoneDesc: "Offline background remover with brush and lasso refinement, all in your browser.",
+            bgoneBtn: "Open BGone",
+            retroTitle: "RetroIt",
+            retroDesc: "Quick vintage photo effects right in your browser. Export ready-to-share images in seconds.",
+            retroBtn: "Open RetroIt",
+            footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️'
+        },
+        es: {
+            subtitle: "Aplicaciones web sin conexión para creadores de contenido.",
+            octoTitle: "OctoFind",
+            octoDesc: "Buscador multi-sitio. Abre a la vez múltiples páginas de video, fotos y dominio público.",
+            octoBtn: "Abrir OctoFind",
+            bgoneTitle: "BGone",
+            bgoneDesc: "Quitafondos sin conexión con pincel y lazo para refinar, todo en tu navegador.",
+            bgoneBtn: "Abrir BGone",
+            retroTitle: "RetroIt",
+            retroDesc: "Efectos fotográficos vintage rápidos directamente en tu navegador. Exporta imágenes listas para compartir.",
+            retroBtn: "Abrir RetroIt",
+            footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Invítame un Ko-fi</a> · Hecho por Alex con ❤️'
+        }
+    };
+
+    function setLanguage(lang) {
+        const c = copy[lang];
+
+        document.getElementById("title-sub").textContent = c.subtitle;
+
+        document.getElementById("octo-title").textContent = c.octoTitle;
+        document.getElementById("octo-desc").textContent = c.octoDesc;
+        document.getElementById("octo-btn").textContent = c.octoBtn;
+
+        document.getElementById("bgone-title").textContent = c.bgoneTitle;
+        document.getElementById("bgone-desc").textContent = c.bgoneDesc;
+        document.getElementById("bgone-btn").textContent = c.bgoneBtn;
+
+        document.getElementById("retro-title").textContent = c.retroTitle;
+        document.getElementById("retro-desc").textContent = c.retroDesc;
+        document.getElementById("retro-btn").textContent = c.retroBtn;
+
+        document.getElementById("footer-text").innerHTML = c.footer;
+
+        document.getElementById("btn-en").classList.toggle("active", lang === "en");
+        document.getElementById("btn-es").classList.toggle("active", lang === "es");
+    }
+
+    document.getElementById("btn-en").addEventListener("click", () => setLanguage("en"));
+    document.getElementById("btn-es").addEventListener("click", () => setLanguage("es"));
+</script>
 
 </body>
 </html>
