@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blizlab – Offline web-apps for content creators</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="Blizlab_logo.png">
+
 <style>
     :root {
         --blue: #0099CC;
@@ -82,6 +86,29 @@
         max-width: 1120px;
         margin: 32px auto 40px;
         padding: 0 16px;
+    }
+
+    .info {
+        margin-bottom: 26px;
+        background: #e7f7fc;
+        border-radius: 10px;
+        padding: 16px 18px 18px;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .info-title {
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .info-text a {
+        color: var(--blue);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .info-text a:hover {
+        text-decoration: underline;
     }
 
     .cards {
@@ -209,6 +236,20 @@
 </header>
 
 <main>
+    <!-- Info / repo section -->
+    <section class="info">
+        <div id="info-title" class="info-title">About these tools</div>
+        <div id="info-text" class="info-text">
+            These are small single-file web apps that run entirely in your browser. 
+            You can use them directly from this page, or download the HTML files from the 
+            <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+                Blizlab tools repository on GitHub
+            </a>
+            and open them offline.
+        </div>
+    </section>
+
+    <!-- Cards -->
     <section class="cards">
 
         <!-- OctoFind -->
@@ -273,6 +314,11 @@
     const copy = {
         en: {
             subtitle: "Offline web-apps for content creators.",
+            infoTitle: "About these tools",
+            infoText: `These are small single-file web apps that run entirely in your browser. 
+                You can use them directly from this page, or download the HTML files from the 
+                <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+                Blizlab tools repository on GitHub</a> and open them offline.`,
             octoTitle: "OctoFind",
             octoDesc: "Multi-site search tool. Open multiple video, photo, and public-domain sites at once.",
             octoBtn: "Open OctoFind",
@@ -286,6 +332,11 @@
         },
         es: {
             subtitle: "Aplicaciones web sin conexión para creadores de contenido.",
+            infoTitle: "Sobre estas herramientas",
+            infoText: `Son pequeñas aplicaciones web de un solo archivo que se ejecutan por completo en tu navegador. 
+                Puedes usarlas directamente desde esta página o descargar los archivos HTML desde el 
+                <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+                repositorio de herramientas Blizlab en GitHub</a> y abrirlas sin conexión.`,
             octoTitle: "OctoFind",
             octoDesc: "Buscador multi-sitio. Abre a la vez múltiples páginas de video, fotos y dominio público.",
             octoBtn: "Abrir OctoFind",
@@ -303,6 +354,8 @@
         const c = copy[lang];
 
         document.getElementById("title-sub").textContent = c.subtitle;
+        document.getElementById("info-title").textContent = c.infoTitle;
+        document.getElementById("info-text").innerHTML = c.infoText;
 
         document.getElementById("octo-title").textContent = c.octoTitle;
         document.getElementById("octo-desc").textContent = c.octoDesc;
