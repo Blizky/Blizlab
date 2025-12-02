@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RetroIt – Offline vintage photo editor</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230099cc'/%3E%3Crect x='14' y='20' width='36' height='26' rx='4' fill='%23ffcc33'/%3E%3Ccircle cx='32' cy='33' r='9' fill='%230099cc'/%3E%3Crect x='22' y='16' width='12' height='6' rx='2' fill='%23ffcc33'/%3E%3C/svg%3E">
+
+<style>
+/* ======================================================================
+   BLIZLAB SHARED UI CORE
+   ====================================================================== */
+
+* { box-sizing: border-box; }
+
+:root {
+  --paper: #fdfdf9;
+
+  --bg: #dde4f5;
+  --panel-bg: #ffffff;
+  --accent: #f5b93a;
+  --accent-soft: #f8ead1;
+  --border-subtle: #d4d9eb;
+  --chip-bg: #f1f3fb;
+  --chip-border: #d0d4e5;
+  --text-main: #161824;
+  --text-muted: #6f7390;
+}
+
+body[data-theme="dark"] {
+  --bg: #05060a;
+  --panel-bg: #111217;
+  --accent: #f5c14f;
+  --accent-soft: #2c2416;
+  --border-subtle: #262938;
+  --chip-bg: #171922;
+  --chip-border: #2a2c33;
+  --text-main: #f5f5f5;
+  --text-muted: #9ca0b8;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #c7d2f5 0, var(--bg) 55%);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  padding: 18px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Main app shell */
+.app {
+  width: 100%;
+  max-width: 1180px;
+  background: var(--panel-bg);
+  border-radius: 24px;
+  padding: 16px 18px 18px;
+  box-shadow:
+    0 26px 60px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* Title color by theme */
+body[data-theme="light"] .brand-title {
+  color: #0099cc; /* Blizlab blue in day mode */
+}
+body[data-theme="dark"] .brand-title {
+  color: var(--accent); /* warm yellow in dark mode */
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Theme toggle pill */
+.theme-toggle {
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease,
+    border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: #e2e6f5;
+  transform: translateY(-1px);
+}
+
+body[data-theme="dark"] .theme-toggle:hover {
+  background: #1e2130;
+}
+
+/* Language pills */
+.lang-switch {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 2px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-width: 30px;
+}
+
+.lang-btn.active {
+  background: var(--accent);
+  color: #1b1304;
+}
+
+/* Two-column layout: controls + main canvas/content */
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 18px;
+}
+
+/* Left sidebar panel */
+.sidebar {
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  padding: 14px 14px 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+}
+
+body[data-theme="dark"] .sidebar {
+  background: radial-gradient(circle at top left, #1c2132, #101119);
+}
+
+/* Section titles in sidebar */
+.sidebar-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.controls-group {
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 0.9rem;
+}
+
+input[type="file"],
+input[type="range"],
+button {
+  font: inherit;
+}
+
+/* File chooser + generic “pill” buttons */
+.file-label-text {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-width: 120px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.file-button input[type="file"] {
+  display: none;
+}
+
+.file-button:hover {
+  background: #e2e5f3;
+}
+
+body[data-theme="dark"] .file-button:hover {
+  background: #1f2332;
+}
+
+.file-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Chip-style buttons (orientation, style, etc.) */
+.styles,
+.orientations {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.chip-btn {
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.chip-btn:hover {
+  background: #e2e5f3;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.03);
+}
+
+body[data-theme="dark"] .chip-btn:hover {
+  background: #1f2332;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.chip-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1b1304;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(0,0,0,0.35);
+  transform: translateY(-1px);
+}
+
+/* Little color dots inside style chips */
+.style-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
+}
+.style-dot.bw { background: #9a9a9a; }
+.style-dot.sepia { background: #ffcc33; }
+.style-dot.postal { background: #f5054f; }
+
+/* Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.slider-group label {
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-row span {
+  min-width: 3ch;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+/* Main call-to-action button */
+button.main {
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1b1304;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow:
+    0 10px 20px rgba(0,0,0,0.15),
+    0 0 0 1px rgba(0,0,0,0.2);
+  transition:
+    background 0.15s ease,
+    transform 0.08s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+button.main:hover:not(:disabled) {
+  background: #ffd26d;
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 26px rgba(0,0,0,0.2),
+    0 0 0 1px rgba(0,0,0,0.25);
+}
+
+button.main:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+}
+
+/* Secondary button (e.g. Fill canvas) */
+.secondary-btn {
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.secondary-btn:hover {
+  background: #e2e5f3;
+}
+
+body[data-theme="dark"] .secondary-btn:hover {
+  background: #1f2332;
+}
+
+/* Shared small text */
+.hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Footer */
+.app-footer {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.footer-left a,
+.footer-right a {
+  color: #0077cc;
+  text-decoration: none;
+}
+.footer-left a:hover,
+.footer-right a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive layout */
+@media (max-width: 900px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ======================================================================
+   END OF BLIZLAB SHARED UI CORE
+   (Everything above can be reused across apps)
+   ====================================================================== */
+
+
+/* ======================================================================
+   RETROIT-SPECIFIC STYLES
+   Canvas, drop zone, captions, etc.
+   ====================================================================== */
+
+.actions-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 6px;
+}
+
+.canvas-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-drop-zone {
+  position: relative;
+  width: 100%;
+  max-width: 780px;
+  aspect-ratio: 4 / 3;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(0,0,0,0.12);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+.drop-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 0.9rem;
+  color: rgba(0,0,0,0.55);
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.16), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.canvas-drop-zone.dragover .drop-hint {
+  opacity: 1;
+}
+
+.canvas-caption {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ======================================================================
+   END RETROIT-SPECIFIC STYLES
+   ====================================================================== */
+</style>
+</head>
+
+<body data-theme="light">
+<div class="app">
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-title">RETROIT</div>
+      <div class="subtitle" id="subtitleText">
+        Quick offline vintage photo editor — right in your browser.
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switch">
+        <button class="lang-btn active" data-lang="en" id="langEn">EN</button>
+        <button class="lang-btn" data-lang="es" id="langEs">ES</button>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="sidebar">
+      <div class="controls-group">
+        <div class="sidebar-section-title" id="sectionImageTitle">IMAGE</div>
+        <div class="file-label-text" id="loadLabelText">Load photo:</div>
+        <div class="actions-inline">
+          <label class="file-button">
+            <input type="file" id="fileInput" accept="image/*">
+            <span id="fileButtonText">Choose image…</span>
+          </label>
+          <button class="main" id="downloadBtn" disabled>
+            ⬇ <span id="downloadBtnText">Download PNG</span>
+          </button>
+        </div>
+        <div class="file-name" id="fileNameText">No file selected.</div>
+        <div class="hint" id="hintDragText">
+          You can also drag an image into the preview area.
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <div class="sidebar-section-title" id="sectionOrientationTitle">ORIENTATION</div>
+        <div class="orientations">
+          <button class="chip-btn active" data-orientation="landscape43">
+            <span>Landscape 4:3</span>
+          </button>
+          <button class="chip-btn" data-orientation="landscape169">
+            <span>Landscape 16:9</span>
+          </button>
+          <button class="chip-btn" data-orientation="portrait34">
+            <span>Portrait 3:4</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <div class="sidebar-section-title" id="sectionStyleTitle">STYLE</div>
+        <div class="styles">
+          <button class="chip-btn active" data-style="bw">
+            <span class="style-dot bw"></span><span id="styleBWText">B&amp;W</span>
+          </button>
+          <button class="chip-btn" data-style="sepia">
+            <span class="style-dot sepia"></span><span id="styleSepiaText">Sepia</span>
+          </button>
+          <button class="chip-btn" data-style="postal">
+            <span class="style-dot postal"></span><span id="stylePostalText">Postcard</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <div class="sidebar-section-title" id="sectionAdjustTitle">ADJUSTMENTS</div>
+
+        <button class="secondary-btn" id="fillBtn">Fill canvas</button>
+
+        <div class="slider-group" style="margin-top:8px;">
+          <label for="intensity" id="intensityLabel">Style intensity</label>
+          <div class="slider-row">
+            <input type="range" id="intensity" min="0" max="100" value="50">
+            <span id="intensityValue">50</span>
+          </div>
+        </div>
+
+        <div class="slider-group">
+          <label for="roundness" id="roundnessLabel">Rounded corners</label>
+          <div class="slider-row">
+            <input type="range" id="roundness" min="0" max="80" value="0">
+            <span id="roundnessValue">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint" id="hintPanZoomText">
+        Drag to move the image · Mouse wheel to zoom.
+      </div>
+      <div class="hint" id="localHintText">
+        Everything runs locally in your browser. No images are uploaded.
+      </div>
+    </section>
+
+    <section class="canvas-area">
+      <div class="canvas-drop-zone" id="dropZone">
+        <canvas id="canvas"></canvas>
+        <div class="drop-hint" id="dropHintText">Drop an image here</div>
+      </div>
+      <p class="canvas-caption" id="captionText">
+        Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click and drag to reframe.
+      </p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-left">
+      <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">☕️ Buy me a Ko-fi</a>
+    </div>
+    <div class="footer-center" id="footerText"></div>
+    <div class="footer-right" id="footerRightText">
+      Made by Alex with ❤️ – See also
+      <a href="https://blizky.github.io/OctoFind/" target="_blank" rel="noopener noreferrer">OctoFind</a>
+      |
+      <a href="https://blizky.github.io/BGone/" target="_blank" rel="noopener noreferrer">BGone</a>
+      |
+      <a href="https://blizky.github.io/Retroit/" target="_blank" rel="noopener noreferrer">RetroIt</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const fileInput = document.getElementById("fileInput");
+const fileNameText = document.getElementById("fileNameText");
+const downloadBtn = document.getElementById("downloadBtn");
+const styleButtons = document.querySelectorAll(".styles .chip-btn");
+const orientationButtons = document.querySelectorAll(".orientations .chip-btn");
+const intensitySlider = document.getElementById("intensity");
+const intensityValue = document.getElementById("intensityValue");
+const roundnessSlider = document.getElementById("roundness");
+const roundnessValue = document.getElementById("roundnessValue");
+const dropZone = document.getElementById("dropZone");
+const themeToggle = document.getElementById("themeToggle");
+const fillBtn = document.getElementById("fillBtn");
+const langButtons = document.querySelectorAll(".lang-btn");
+const dropHintText = document.getElementById("dropHintText");
+
+const PAPER = "#fdfdf9";
+const MAT_MARGIN = 40;
+
+let img = null;
+let currentStyle = "bw";
+let orientation = "landscape43";
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+let lastX = 0;
+let lastY = 0;
+let currentLang = "en";
+
+const THEME_KEY = "retroit-theme";
+const LANG_KEY = "retroit-lang";
+
+const i18n = {
+  en: {
+    subtitle: "Quick offline vintage photo editor — right in your browser.",
+    sectionImage: "IMAGE",
+    sectionOrientation: "ORIENTATION",
+    sectionStyle: "STYLE",
+    sectionAdjust: "ADJUSTMENTS",
+    loadLabel: "Load photo:",
+    fileButton: "Choose image…",
+    fileNone: "No file selected.",
+    hintDrag: "You can also drag an image into the preview area.",
+    styleBW: "B&W",
+    styleSepia: "Sepia",
+    stylePostal: "Postcard",
+    intensityLabel: "Style intensity",
+    roundnessLabel: "Rounded corners",
+    downloadBtn: "Download PNG",
+    hintPanZoom: "Drag to move the image · Mouse wheel to zoom.",
+    localHint: "Everything runs locally in your browser. No images are uploaded.",
+    dropHint: "Drop an image here",
+    caption: "Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click and drag to reframe.",
+    footerRightHtml: "Made by Alex with ❤️ – See also",
+    fillBtn: "Fill canvas",
+    themeTitle: "Toggle theme"
+  },
+  es: {
+    subtitle: "Editor vintage sin conexión, directo en tu navegador.",
+    sectionImage: "IMAGEN",
+    sectionOrientation: "ORIENTACIÓN",
+    sectionStyle: "ESTILO",
+    sectionAdjust: "AJUSTES",
+    loadLabel: "Cargar foto:",
+    fileButton: "Elegir imagen…",
+    fileNone: "Ningún archivo seleccionado.",
+    hintDrag: "También puedes arrastrar una imagen al área de vista previa.",
+    styleBW: "B/N",
+    styleSepia: "Sepia",
+    stylePostal: "Postal",
+    intensityLabel: "Intensidad del estilo",
+    roundnessLabel: "Esquinas redondeadas",
+    downloadBtn: "Descargar PNG",
+    hintPanZoom: "Arrastra para mover la imagen · Rueda del ratón para hacer zoom.",
+    localHint: "Todo se procesa localmente en tu navegador. Ninguna imagen se envía a un servidor.",
+    dropHint: "Suelta una imagen aquí",
+    caption: "Resolución exportada: 4:3, 16:9 o 3:4 según orientación seleccionada. Mantén pulsado y arrastra para reencuadrar.",
+    footerRightHtml: "Hecho por Alex con ❤️ – Mira también",
+    fillBtn: "Llenar lienzo",
+    themeTitle: "Cambiar tema"
+  }
+};
+
+function applyLang(lang) {
+  currentLang = lang;
+  const t = i18n[lang];
+  document.documentElement.lang = lang;
+
+  document.getElementById("subtitleText").textContent = t.subtitle;
+  document.getElementById("sectionImageTitle").textContent = t.sectionImage;
+  document.getElementById("sectionOrientationTitle").textContent = t.sectionOrientation;
+  document.getElementById("sectionStyleTitle").textContent = t.sectionStyle;
+  document.getElementById("sectionAdjustTitle").textContent = t.sectionAdjust;
+  document.getElementById("loadLabelText").textContent = t.loadLabel;
+  document.getElementById("fileButtonText").textContent = t.fileButton;
+  if (!img) fileNameText.textContent = t.fileNone;
+  document.getElementById("hintDragText").textContent = t.hintDrag;
+  document.getElementById("styleBWText").textContent = t.styleBW;
+  document.getElementById("styleSepiaText").textContent = t.styleSepia;
+  document.getElementById("stylePostalText").textContent = t.stylePostal;
+  document.getElementById("intensityLabel").textContent = t.intensityLabel;
+  document.getElementById("roundnessLabel").textContent = t.roundnessLabel;
+  document.getElementById("downloadBtnText").textContent = t.downloadBtn;
+  document.getElementById("hintPanZoomText").textContent = t.hintPanZoom;
+  document.getElementById("localHintText").textContent = t.localHint;
+  dropHintText.textContent = t.dropHint;
+  document.getElementById("captionText").textContent = t.caption;
+  document.getElementById("footerRightText").childNodes[0].textContent = t.footerRightHtml + " ";
+  fillBtn.textContent = t.fillBtn;
+  themeToggle.title = t.themeTitle;
+
+  langButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.lang === lang);
+  });
+
+  localStorage.setItem(LANG_KEY, lang);
+}
+
+function applyTheme(theme) {
+  document.body.setAttribute("data-theme", theme);
+  themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === "light" || stored === "dark") {
+    applyTheme(stored);
+    return;
+  }
+  // No stored preference: use local time
+  const hour = new Date().getHours();
+  const autoTheme = (hour >= 20 || hour < 6) ? "dark" : "light";
+  applyTheme(autoTheme);
+}
+
+initTheme();
+
+// initial language: stored -> browser -> EN
+const storedLang = localStorage.getItem(LANG_KEY);
+let initialLang = "en";
+if (storedLang === "en" || storedLang === "es") {
+  initialLang = storedLang;
+} else {
+  const nav = navigator.language || navigator.userLanguage || "";
+  if (nav.toLowerCase().startsWith("es")) initialLang = "es";
+}
+applyLang(initialLang);
+
+langButtons.forEach(btn => {
+  btn.addEventListener("click", () => applyLang(btn.dataset.lang));
+});
+
+themeToggle.addEventListener("click", () => {
+  const current = document.body.getAttribute("data-theme") || "light";
+  applyTheme(current === "light" ? "dark" : "light");
+});
+
+function setOrientation(newOrientation) {
+  orientation = newOrientation;
+
+  if (orientation === "landscape43") {
+    canvas.width = 1440;
+    canvas.height = 1080;
+    dropZone.style.aspectRatio = "4 / 3";
+    dropZone.style.maxWidth = "780px";
+  } else if (orientation === "landscape169") {
+    canvas.width = 1440;
+    canvas.height = 810;
+    dropZone.style.aspectRatio = "16 / 9";
+    dropZone.style.maxWidth = "780px";
+  } else if (orientation === "portrait34") {
+    canvas.width = 1080;
+    canvas.height = 1440;
+    dropZone.style.aspectRatio = "3 / 4";
+    dropZone.style.maxWidth = "560px";
+  }
+
+  if (img) {
+    const innerW = canvas.width - MAT_MARGIN * 2;
+    const innerH = canvas.height - MAT_MARGIN * 2;
+    const fitScale = Math.min(innerW / img.width, innerH / img.height);
+    scale = fitScale;
+    offsetX = 0;
+    offsetY = 0;
+  }
+
+  render();
+}
+
+orientationButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    orientationButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    setOrientation(btn.dataset.orientation);
+  });
+});
+
+setOrientation("landscape43");
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    fileNameText.textContent = file.name;
+    loadImageFromFile(file);
+  } else {
+    fileNameText.textContent = i18n[currentLang].fileNone;
+  }
+});
+
+["dragenter","dragover"].forEach(ev => {
+  dropZone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add("dragover");
+  });
+});
+
+["dragleave","dragend","drop"].forEach(ev => {
+  dropZone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove("dragover");
+  });
+});
+
+dropZone.addEventListener("drop", (e) => {
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    fileNameText.textContent = file.name;
+    loadImageFromFile(file);
+  }
+});
+
+function loadImageFromFile(file) {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.onload = () => {
+    URL.revokeObjectURL(url);
+    img = image;
+
+    const innerW = canvas.width - MAT_MARGIN * 2;
+    const innerH = canvas.height - MAT_MARGIN * 2;
+    const fitScale = Math.min(innerW / img.width, innerH / img.height);
+    scale = fitScale;
+    offsetX = 0;
+    offsetY = 0;
+
+    render();
+    downloadBtn.disabled = false;
+  };
+  image.onerror = () => {
+    alert("Could not load image.");
+  };
+  image.src = url;
+}
+
+fillBtn.addEventListener("click", () => {
+  if (!img) return;
+  const innerW = canvas.width - MAT_MARGIN * 2;
+  const innerH = canvas.height - MAT_MARGIN * 2;
+  const fillScale = Math.max(innerW / img.width, innerH / img.height);
+  scale = fillScale;
+  offsetX = 0;
+  offsetY = 0;
+  render();
+});
+
+styleButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    styleButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentStyle = btn.dataset.style;
+    if (img) render();
+  });
+});
+
+intensitySlider.addEventListener("input", () => {
+  intensityValue.textContent = intensitySlider.value;
+  if (img) render();
+});
+
+roundnessSlider.addEventListener("input", () => {
+  roundnessValue.textContent = roundnessSlider.value;
+  if (img) render();
+});
+
+canvas.addEventListener("wheel", (e) => {
+  if (!img) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left);
+  const my = (e.clientY - rect.top);
+
+  const zoomAmount = 1.1;
+  const oldScale = scale;
+  scale = e.deltaY < 0 ? scale * zoomAmount : scale / zoomAmount;
+  scale = Math.max(0.2, Math.min(scale, 5));
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const sx = (mx - cx) - offsetX;
+  const sy = (my - cy) - offsetY;
+
+  offsetX -= sx * (scale / oldScale - 1);
+  offsetY -= sy * (scale / oldScale - 1);
+
+  render();
+}, { passive: false });
+
+canvas.addEventListener("mousedown", (e) => {
+  if (!img) return;
+  dragging = true;
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!dragging) return;
+  offsetX += e.clientX - lastX;
+  offsetY += e.clientY - lastY;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  render();
+});
+
+window.addEventListener("mouseup", () => { dragging = false; });
+
+downloadBtn.addEventListener("click", () => {
+  if (!img) return;
+  const link = document.createElement("a");
+  link.download = "retroit-image.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+
+function render() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, w, h);
+
+  const innerRadius = Number(roundnessSlider.value) || 0;
+  const ix = MAT_MARGIN;
+  const iy = MAT_MARGIN;
+  const iw = w - MAT_MARGIN * 2;
+  const ih = h - MAT_MARGIN * 2;
+
+  ctx.save();
+  if (innerRadius > 0) {
+    roundedRectPath(ctx, ix, iy, iw, ih, innerRadius);
+    ctx.clip();
+  } else {
+    ctx.beginPath();
+    ctx.rect(ix, iy, iw, ih);
+    ctx.clip();
+  }
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(ix, iy, iw, ih);
+
+  if (img) {
+    drawPhoto(ix, iy, iw, ih);
+    applyStyle(ix, iy, iw, ih);
+  } else {
+    ctx.fillStyle = "#777";
+    ctx.font = "20px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(i18n[currentLang].dropHint, w / 2, h / 2);
+  }
+
+  ctx.restore();
+}
+
+function drawPhoto(ix, iy, iw, ih) {
+  const w = img.width * scale;
+  const h = img.height * scale;
+  const x = ix + (iw - w) / 2 + offsetX;
+  const y = iy + (ih - h) / 2 + offsetY;
+  ctx.drawImage(img, x, y, w, h);
+}
+
+function applyStyle(ix, iy, iw, ih) {
+  const tSlider = intensitySlider.value / 100;
+
+  const imageData = ctx.getImageData(ix, iy, iw, ih);
+  const d = imageData.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i];
+    let g = d[i + 1];
+    let b = d[i + 2];
+
+    if (currentStyle === "bw") {
+      let gray = 0.3 * r + 0.59 * g + 0.11 * b;
+
+      const minF = 0.44;
+      const maxF = 1.84;
+      const factor = minF + tSlider * (maxF - minF);
+
+      gray = ((gray - 128) * factor) + 128;
+      r = g = b = clamp(gray);
+
+    } else if (currentStyle === "sepia") {
+      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
+      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
+      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
+
+      r = clamp(mix(r, sr, 0.4 + 0.6 * tSlider));
+      g = clamp(mix(g, sg, 0.4 + 0.6 * tSlider));
+      b = clamp(mix(b, sb, 0.4 + 0.6 * tSlider));
+
+      const fade = 8 + 15 * tSlider;
+      r = clamp(r + fade * 0.9);
+      g = clamp(g + fade * 0.7);
+      b = clamp(b + fade * 0.4);
+
+    } else if (currentStyle === "postal") {
+      const gray = (r + g + b) / 3;
+
+      const satBlend = 0.45;
+      let rr = gray * (1 - satBlend) + r * satBlend;
+      let gg = gray * (1 - satBlend) + g * satBlend;
+      let bb = gray * (1 - satBlend) + b * satBlend;
+
+      const lift = 18 + 20 * tSlider;
+      rr = clamp(rr + lift);
+      gg = clamp(gg + lift);
+      bb = clamp(bb + lift);
+
+      const tone = 12 + 18 * tSlider;
+      rr = clamp(rr + tone * 0.2);
+      gg = clamp(gg + tone * 0.5);
+      bb = clamp(bb - tone * 0.1);
+
+      r = rr; g = gg; b = bb;
+    }
+
+    d[i]     = r;
+    d[i + 1] = g;
+    d[i + 2] = b;
+  }
+
+  ctx.putImageData(imageData, ix, iy);
+}
+
+function roundedRectPath(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function clamp(v) {
+  return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+function mix(a, b, t) {
+  return a + (b - a) * t;
+}
+
+render();
+</script>
+</body>
+</html>
