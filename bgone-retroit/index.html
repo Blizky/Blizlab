@@ -1,13 +1,59 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BGone Retroit</title>
+  <meta charset="UTF-8" />
+  <title>BGone + Retroid</title>
+
+  <!-- Favicon – point this at whatever small icon you prefer -->
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
+
+  <style>
+    /* Basic styling */
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #003a70; /* blue background */
+      color: #ffffff;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .camera-icon {
+      display: block;
+      margin: 1rem auto;
+      width: 80px;
+      height: 80px;
+    }
+    #file-input {
+      margin-top: 1rem;
+    }
+    #output {
+      margin-top: 1rem;
+      max-width: 100%;
+      border: 1px solid #ffffff33;
+    }
+  </style>
 </head>
 <body>
-  <h1>BGone Retroit</h1>
-  <!-- This page loads the background removal and retroit JS -->
-  <script type="module" src="./js/app.js"></script>
+  <h1>BGone + Retroid</h1>
+
+  <!-- Yellow camera icon -->
+  <svg class="camera-icon" viewBox="0 0 24 24" fill="#FFD700" xmlns="http://www.w3.org/2000/svg">
+    <!-- Camera body -->
+    <path d="M4 7h3.172l1.414-2.121A1 1 0 0 1 9.414 4h5.172a1 1 0 0 1 .828.414L16.828 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+    <!-- Lens -->
+    <circle cx="12" cy="13" r="4" />
+  </svg>
+
+  <input id="file-input" type="file" accept="image/*" />
+
+  <canvas id="output"></canvas>
+
+  <script type="module">
+    import { initUI } from './js/ui.js';
+    initUI();
+  </script>
 </body>
 </html>
