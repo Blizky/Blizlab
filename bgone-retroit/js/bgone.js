@@ -1,40 +1,65 @@
 // bgone.js
 import { getSession } from './app.js';
+import * as ort from 'onnxruntime-web';
 
-// Convert an ImageData or <canvas> into an ONNX input tensor.
+/**
+ * Convert the image data in the given canvas into a tensor suitable for U²‑Net.
+ * Normalises pixel values to [0,1] and reshapes to [1,3,H,W].
+ */
 function preprocess(canvas) {
+  const { width, height } = canvas;
   const ctx = canvas.getContext('2d');
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  // Normalise pixel values and reshape to match U²‑Net’s expected input
-  const float32Data = new Float32Array(imgData.data.length / 4 * 3);
-  for (let i = 0, j = 0; i < imgData.data.length; i += 4) {
-    float32Data[j++] = imgData.data[i] / 255;     // R
-    float32Data[j++] = imgData.data[i + 1] / 255; // G
-    float32Data[j++] = imgData.data[i + 2] / 255; // B
+  const imgData = ctx.getImageData(0, 0, width, height).data;
+
+  // U²‑Net expects three channels (RGB), so we ignore the alpha channel.
+  const floatData = new Float32Array(width * height * 3);
+  for (let i = 0, j = 0; i < imgData.length; i += 4) {
+    floatData[j++] = imgData[i]     / 255; // R
+    floatData[j++] = imgData[i + 1] / 255; // G
+    floatData[j++] = imgData[i + 2] / 255; // B
   }
-  return new ort.Tensor('float32', float32Data, [1, 3, canvas.height, canvas.width]);
+
+  // Create a tensor with shape [1, 3, H, W]
+  return new ort.Tensor('float32', floatData, [1, 3, height, width]);
 }
 
-// Apply the alpha mask returned by the model to the original image.
+/**
+ * Apply the model's mask output to the canvas by writing alpha values.
+ * U²‑Net outputs a single channel mask with shape [1, 1, H, W] and values in [0,1].
+ */
 function applyMask(canvas, maskTensor) {
+  const { width, height } = canvas;
   const ctx = canvas.getContext('2d');
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0, 0, width, height);
   const mask = maskTensor.data;
-  // U²‑Net outputs values in [0,1]; use them as alpha
-  for (let i = 0, j = 0; i < imgData.data.length; i += 4) {
-    const alpha = mask[j++];
-    imgData.data[i + 3] = alpha * 255;
+
+  // Set alpha channel based on mask
+  for (let i = 0, j = 0; i < imgData.data.length; i += 4, j++) {
+    const alpha = mask[j];
+    imgData.data[i + 3] = Math.min(255, Math.max(0, alpha * 255));
   }
+
   ctx.putImageData(imgData, 0, 0);
 }
 
+/**
+ * Remove the background from the provided canvas by running U²‑Net.
+ * This will download or reuse the cached model via getSession().
+ */
 export async function removeBackground(canvas) {
   const session = await getSession();
-  const input = preprocess(canvas);
-  const output = await session.run({ input });
-  // U²‑Net uses the first output name; adjust if different
-  const mask = Object.values(output)[0];
-  applyMask(canvas, mask);
-  return canvas;
-}
+  const inputTensor = preprocess(canvas);
 
+  // Feed the tensor into the first input of the model
+  const feeds = {};
+  const inputName = session.inputNames ? session.inputNames[0] : Object.keys(session.inputNames)[0];
+  feeds[inputName] = inputTensor;
+
+  // Run inference
+  const results = await session.run(feeds);
+  const outputName = session.outputNames ? session.outputNames[0] : Object.keys(results)[0];
+  const maskTensor = results[outputName];
+
+  // Apply the resulting mask to the canvas
+  applyMask(canvas, maskTensor);
+}
