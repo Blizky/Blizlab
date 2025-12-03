@@ -2,20 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BGone + Retroid</title>
-
-  <!-- Favicon – point this at whatever small icon you prefer -->
+  <title>BGone + Retroid</title>
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
-
   <style>
-    /* Basic styling */
     body {
       margin: 0;
       padding: 2rem;
       font-family: sans-serif;
       text-align: center;
-      background-color: #003a70; /* blue background */
+      background-color: #003a70;
       color: #ffffff;
+    }
+    .model-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background-color: #111a2b;
+      color: #ffd700;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    #progress-container {
+      flex: 1;
+      background: #2b3a55;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background: #ffd700;
+      transition: width 0.2s;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #555;
+    }
+    .status-dot.done {
+      background: #00c851;
     }
     h1 {
       margin-top: 0;
@@ -37,20 +65,22 @@
   </style>
 </head>
 <body>
-  <h1>BGone + Retroid</h1>
-
-  <!-- Yellow camera icon -->
+  <div id="model-bar" class="model-bar">
+    <span id="model-status">Model not cached.</span>
+    <button id="download-btn">Download model</button>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+    <span id="status-dot" class="status-dot"></span>
+  </div>
+  <h1>BGone + Retroid</h1>
   <svg class="camera-icon" viewBox="0 0 24 24" fill="#FFD700" xmlns="http://www.w3.org/2000/svg">
-    <!-- Camera body -->
     <path d="M4 7h3.172l1.414-2.121A1 1 0 0 1 9.414 4h5.172a1 1 0 0 1 .828.414L16.828 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
-    <!-- Lens -->
     <circle cx="12" cy="13" r="4" />
   </svg>
-
   <input id="file-input" type="file" accept="image/*" />
-
   <canvas id="output"></canvas>
-
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
   <script type="module">
     import { initUI } from './js/ui.js';
     initUI();
