@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Handle Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f1115; --card: #171a21; --text: #e6e6e6;
+      --muted: #9aa0a6; --green: #2ecc71; --yellow: #f1c40f; --grey: #3a3f47;
+      --chip-bg: #232731; --chip-outline: #323743;
+    }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      display: grid; place-items: center; min-height: 100vh; padding: 24px;
+    }
+    .card {
+      background: var(--card); width: 100%; max-width: 780px;
+      border: 1px solid var(--chip-outline); border-radius: 14px; padding: 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    }
+    h1 { margin: 0 0 12px; font-size: 1.4rem; }
+    p { color: var(--muted); margin: 0 0 18px; }
+    .input-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 18px;
+    }
+    input[type="text"] {
+      background: #101319; color: var(--text); border: 1px solid var(--chip-outline);
+      border-radius: 10px; padding: 12px 14px; outline: none; font-size: 1rem;
+    }
+    button {
+      background: #3d6df2; color: white; border: none; border-radius: 10px;
+      padding: 12px 16px; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { background: #2b3c7a; cursor: wait; }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--chip-bg); border: 1px solid var(--chip-outline);
+      color: var(--text); padding: 10px 12px; border-radius: 999px; font-size: 0.95rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--grey); }
+    .chip.available { border-color: rgba(46, 204, 113, 0.5); }
+    .chip.available .dot { background: var(--green); }
+    .chip.taken { opacity: 0.75; }
+    .chip.error { border-color: rgba(241, 196, 15, 0.5); }
+    .chip a { color: inherit; text-decoration: none; }
+    .hint { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Check handle availability across social sites</h1>
+    <p>Type a name and see which platforms show it as available (green) or taken (grey).</p>
+
+    <div class="input-row">
+      <input id="handleInput" type="text" placeholder="e.g., Cuttiebun" />
+      <button id="checkBtn">Check</button>
+    </div>
+
+    <div class="chips" id="chips"></div>
+    <p class="hint">Note: Results rely on a small backend that tests profile URLs for you.</p>
+  </div>
+
+  <script>
+    const SITES = [
+      { key: 'x',        name: 'X (Twitter)', pattern: 'https://x.com/{u}' },
+      { key: 'instagram',name: 'Instagram',   pattern: 'https://www.instagram.com/{u}/' },
+      { key: 'tiktok',   name: 'TikTok',      pattern: 'https://www.tiktok.com/@{u}' },
+      { key: 'youtube',  name: 'YouTube',     pattern: 'https://www.youtube.com/@{u}' },
+      { key: 'github',   name: 'GitHub',      pattern: 'https://github.com/{u}' },
+      { key: 'reddit',   name: 'Reddit',      pattern: 'https://www.reddit.com/user/{u}/' },
+      { key: 'twitch',   name: 'Twitch',      pattern: 'https://www.twitch.tv/{u}' },
+      { key: 'pinterest',name: 'Pinterest',   pattern: 'https://www.pinterest.com/{u}/' },
+      { key: 'medium',   name: 'Medium',      pattern: 'https://medium.com/@{u}' }
+    ];
+
+    const chipsEl = document.getElementById('chips');
+    const inputEl = document.getElementById('handleInput');
+    const btnEl = document.getElementById('checkBtn');
+
+    function sanitizeHandle(h) {
+      return h.trim();
+    }
+
+    function renderChips(username) {
+      chipsEl.innerHTML = '';
+      SITES.forEach(site => {
+        const url = site.pattern.replace('{u}', encodeURIComponent(username));
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.dataset.site = site.key;
+        chip.innerHTML = `
+          <span class="dot"></span>
+          <span>${site.name}</span>
+        `;
+        chip.title = url;
+        chipsEl.appendChild(chip);
+      });
+    }
+
+    async function checkAvailability(username) {
+      btnEl.disabled = true;
+
+      const tasks = SITES.map(async site => {
+        const url = site.pattern.replace('{u}', encodeURIComponent(username));
+        try {
+          // Change this to your backend endpoint:
+          const resp = await fetch(`/api/check?url=${encodeURIComponent(url)}`);
+          if (!resp.ok) throw new Error('Backend error');
+          const data = await resp.json(); // { url, status, available, taken }
+          updateChip(site.key, data);
+        } catch (e) {
+          updateChip(site.key, { url, available: false, taken: false, error: true });
+        }
+      });
+
+      await Promise.allSettled(tasks);
+      btnEl.disabled = false;
+    }
+
+    function updateChip(siteKey, result) {
+      const chip = [...chipsEl.children].find(c => c.dataset.site === siteKey);
+      if (!chip) return;
+      chip.classList.remove('available', 'taken', 'error');
+      if (result.error) {
+        chip.classList.add('error');
+        chip.innerHTML = `<span class="dot"></span><span>⚠️ ${chip.textContent.trim()} (check manually)</span>`;
+        return;
+      }
+      if (result.taken) {
+        chip.classList.add('taken');
+        chip.querySelector('.dot').style.background = 'var(--grey)';
+        chip.innerHTML = `
+          <span class="dot"></span>
+          <a href="${result.url}" target="_blank" rel="noopener">Taken on ${chip.textContent.trim()}</a>
+        `;
+      } else if (result.available) {
+        chip.classList.add('available');
+        chip.querySelector('.dot').style.background = 'var(--green)';
+        chip.innerHTML = `
+          <span class="dot"></span>
+          <span>Available on ${chip.textContent.trim()}</span>
+        `;
+      } else {
+        chip.classList.add('error');
+        chip.innerHTML = `<span class="dot"></span><span>⚠️ ${chip.textContent.trim()} (unknown)</span>`;
+      }
+    }
+
+    btnEl.addEventListener('click', () => {
+      const h = sanitizeHandle(inputEl.value);
+      if (!h) return;
+      renderChips(h);
+      checkAvailability(h);
+    });
+
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') btnEl.click();
+    });
+
+    // Demo state
+    renderChips('Cuttiebun');
+  </script>
+</body>
+</html>
