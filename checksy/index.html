@@ -28,10 +28,14 @@
     }
     .chip {
       background: #1c212e; border: 1px solid #253048;
-      border-radius: 999px; padding: 10px 14px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 0.95rem;
+      border-radius: 999px; padding: 6px 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px;
+      cursor: pointer; font-size: 0.85rem;
       transition: background 0.2s, border-color 0.2s;
+    }
+    .chip img {
+      width: 18px; height: 18px; object-fit: contain;
     }
     .chip.active {
       background: #2a3550; border-color: #5c8df6;
@@ -76,13 +80,25 @@
       SITES.forEach((site, index) => {
         const chip = document.createElement('div');
         chip.className = 'chip' + (site.enabled ? ' active' : ' disabled');
-        chip.textContent = site.name;
         chip.dataset.index = index;
+
+        const img = document.createElement('img');
+        const iconName = site.name.toLowerCase().replace(/ /g, '_') + '_icon.jpg';
+        img.src = `image/${iconName}`;
+        img.alt = site.name + ' icon';
+
+        const label = document.createElement('span');
+        label.textContent = site.name;
+
+        chip.appendChild(img);
+        chip.appendChild(label);
+
         if (site.enabled) {
           chip.addEventListener('click', () => {
             chip.classList.toggle('active');
           });
         }
+
         chipGrid.appendChild(chip);
       });
     }
