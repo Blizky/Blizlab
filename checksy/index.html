@@ -66,10 +66,6 @@
       background: #2a3550;
       border-color: #5c8df6;
     }
-    .chip.disabled {
-      opacity: 0.5;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
@@ -83,16 +79,16 @@
 
   <script>
     const SITES = [
-      { name: 'YouTube',   url: 'https://www.youtube.com/@{u}', enabled: true },
-      { name: 'Instagram', url: 'https://www.instagram.com/{u}/', enabled: true },
-      { name: 'TikTok',    url: 'https://www.tiktok.com/@{u}', enabled: true },
-      { name: 'Twitter',   url: 'https://twitter.com/{u}', enabled: true },
-      { name: 'Bluesky',   url: 'https://bsky.app/profile/{u}.bsky.social', enabled: false },
-      { name: 'Twitch',    url: 'https://www.twitch.tv/{u}', enabled: false },
-      { name: 'Medium',    url: 'https://medium.com/@{u}', enabled: false },
-      { name: 'Patreon',   url: 'https://www.patreon.com/{u}', enabled: false },
-      { name: 'Ko-fi',     url: 'https://ko-fi.com/{u}', enabled: false },
-      { name: 'Buy Me a Coffee', url: 'https://www.buymeacoffee.com/{u}', enabled: false }
+      { name: 'YouTube',   key: 'youtube',   url: 'https://www.youtube.com/@{u}' },
+      { name: 'Instagram', key: 'instagram', url: 'https://www.instagram.com/{u}/' },
+      { name: 'TikTok',    key: 'tiktok',    url: 'https://www.tiktok.com/@{u}' },
+      { name: 'Twitter',   key: 'twitter',   url: 'https://twitter.com/{u}' },
+      { name: 'Bluesky',   key: 'bsky',      url: 'https://bsky.app/profile/{u}.bsky.social' },
+      { name: 'Twitch',    key: 'twitch',    url: 'https://www.twitch.tv/{u}' },
+      { name: 'Medium',    key: 'medium',    url: 'https://medium.com/@{u}' },
+      { name: 'Patreon',   key: 'patreon',   url: 'https://www.patreon.com/{u}' },
+      { name: 'Ko-fi',     key: 'ko-fi',     url: 'https://ko-fi.com/{u}' },
+      { name: 'Buy Me a Coffee', key: 'buymeacoffee', url: 'https://www.buymeacoffee.com/{u}' }
     ];
 
     const chipGrid = document.getElementById('chipGrid');
@@ -106,12 +102,11 @@
       chipGrid.innerHTML = '';
       SITES.forEach((site, index) => {
         const chip = document.createElement('div');
-        chip.className = 'chip' + (site.enabled ? ' active' : ' disabled');
+        chip.className = 'chip active';
         chip.dataset.index = index;
 
         const img = document.createElement('img');
-        const domain = new URL(site.url.replace('{u}', 'placeholder')).hostname;
-        img.src = `image/${domain}.png`;
+        img.src = `image/${site.key}.png`; // <-- matches your 32x32 PNGs
         img.alt = site.name + ' icon';
 
         const label = document.createElement('span');
@@ -120,11 +115,9 @@
         chip.appendChild(img);
         chip.appendChild(label);
 
-        if (site.enabled) {
-          chip.addEventListener('click', () => {
-            chip.classList.toggle('active');
-          });
-        }
+        chip.addEventListener('click', () => {
+          chip.classList.toggle('active');
+        });
 
         chipGrid.appendChild(chip);
       });
