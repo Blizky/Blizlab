@@ -1,202 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Checksy — Handle preview in iframes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Checksy Grid</title>
   <style>
-    :root {
-      --bg: #0f1117; --panel: #131823; --text: #e7e9ee; --muted: #97a1aa;
-      --accent: #5c8df6; --outline: #253048; --green: #2ecc71; --yellow: #f1c40f;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    header { margin-bottom: 16px; }
-    h1 { margin: 0 0 8px; font-size: 1.5rem; }
-    p { margin: 0 0 14px; color: var(--muted); }
-    .input-row {
-      display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 16px;
-    }
-    input[type="text"] {
-      background: #0b0f1a; color: var(--text); border: 1px solid var(--outline);
-      border-radius: 10px; padding: 12px 14px; outline: none; font-size: 1rem;
-    }
-    button {
-      background: var(--accent); color: white; border: none; border-radius: 10px;
-      padding: 12px 16px; font-weight: 600; cursor: pointer;
-    }
-    button.secondary { background: #273352; }
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 14px;
-    }
-    .card {
-      background: var(--panel); border: 1px solid var(--outline); border-radius: 14px; overflow: hidden;
-      display: flex; flex-direction: column;
-    }
-    .card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px; border-bottom: 1px solid var(--outline);
-    }
-    .card-header .name { font-weight: 600; }
-    .card-header .actions { display: flex; gap: 8px; }
-    .card-header a { color: var(--text); text-decoration: none; }
-    .status {
-      font-size: 0.9rem; color: var(--muted);
-    }
-    iframe {
-      width: 100%; height: 280px; border: 0; background: #0b0f1a;
-    }
-    .footer-note {
-      margin-top: 14px; color: var(--muted); font-size: 0.9rem;
-    }
-    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .chip {
-      background: #0b0f1a; border: 1px solid var(--outline); color: var(--text);
-      padding: 6px 10px; border-radius: 999px; font-size: 0.85rem;
-    }
+    body { font-family: sans-serif; background:#0f1117; color:#eee; margin:0; padding:20px; }
+    h1 { margin-bottom:10px; }
+    .input-row { margin-bottom:20px; }
+    input { padding:8px; border-radius:6px; border:1px solid #444; }
+    button { padding:8px 12px; margin-left:8px; border:none; border-radius:6px; background:#5c8df6; color:#fff; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .card { background:#131823; border:1px solid #253048; border-radius:10px; overflow:hidden; }
+    .card-header { padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #253048; }
+    .card-header h3 { margin:0; font-size:1rem; }
+    .card-header a { color:#5c8df6; text-decoration:none; font-size:0.9rem; }
+    iframe { width:100%; height:200px; border:0; background:#0b0f1a; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Checksy</h1>
-      <p>Type a handle to preview its profile URLs inside cards. Some sites may refuse iframe embedding — use the “Open” button to view in a new tab.</p>
-      <div class="input-row">
-        <input id="handleInput" type="text" placeholder="e.g., cutecats" />
-        <button id="checkBtn">Load previews</button>
-        <button id="openAllBtn" class="secondary">Open all in tabs</button>
-      </div>
-      <div class="chip-row" id="rules"></div>
-    </header>
-
-    <section class="grid" id="cards"></section>
-
-    <p class="footer-note">
-      Tip: If a card shows “refused to connect,” that site blocks embedding. Click “Open” to check the profile directly.
-    </p>
+  <h1>Checksy</h1>
+  <div class="input-row">
+    <input id="handle" type="text" placeholder="Enter username e.g. cutecats">
+    <button onclick="render()">Check</button>
   </div>
 
+  <div class="grid" id="grid"></div>
+
   <script>
-    // Define sites and URL patterns. For some, use known embed-friendly endpoints if applicable.
     const SITES = [
-      { key: 'x',        name: 'X (Twitter)',   pattern: 'https://x.com/{u}' },
-      { key: 'instagram',name: 'Instagram',     pattern: 'https://www.instagram.com/{u}/' },
-      { key: 'tiktok',   name: 'TikTok',        pattern: 'https://www.tiktok.com/@{u}' },
-      { key: 'youtube',  name: 'YouTube',       pattern: 'https://www.youtube.com/@{u}' },
-      { key: 'github',   name: 'GitHub',        pattern: 'https://github.com/{u}' },
-      { key: 'reddit',   name: 'Reddit',        pattern: 'https://www.reddit.com/user/{u}/' },
-      { key: 'twitch',   name: 'Twitch',        pattern: 'https://www.twitch.tv/{u}' },
-      { key: 'pinterest',name: 'Pinterest',     pattern: 'https://www.pinterest.com/{u}/' },
-      { key: 'medium',   name: 'Medium',        pattern: 'https://medium.com/@{u}' }
+      {name:'YouTube',   pattern:'https://www.youtube.com/@{u}'},
+      {name:'Instagram', pattern:'https://www.instagram.com/{u}/'},
+      {name:'TikTok',    pattern:'https://www.tiktok.com/@{u}'},
+      {name:'Twitter',   pattern:'https://twitter.com/{u}'},
+      {name:'Bluesky',   pattern:'https://bsky.app/profile/{u}.bsky.social'},
+      {name:'(empty)',   pattern:''}, // placeholder for your missing site
+      {name:'Patreon',   pattern:'https://www.patreon.com/{u}'},
+      {name:'Ko-fi',     pattern:'https://ko-fi.com/{u}'},
+      {name:'Buy Me a Coffee', pattern:'https://www.buymeacoffee.com/{u}'}
     ];
 
-    const inputEl = document.getElementById('handleInput');
-    const checkBtn = document.getElementById('checkBtn');
-    const openAllBtn = document.getElementById('openAllBtn');
-    const cardsEl = document.getElementById('cards');
-    const rulesEl = document.getElementById('rules');
-
-    // Show simple per-site username hints (optional)
-    const RULES = [
-      { site: 'Instagram', rule: '1–30 chars, letters/numbers/._' },
-      { site: 'TikTok',    rule: '2–24 chars, letters/numbers/._' },
-      { site: 'GitHub',    rule: '1–39 chars, letters/numbers/- (no double hyphen)' }
-    ];
-    RULES.forEach(r => {
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.textContent = `${r.site}: ${r.rule}`;
-      rulesEl.appendChild(chip);
-    });
-
-    function sanitizeHandle(h) {
-      return h.trim();
-    }
-
-    function buildUrl(pattern, username) {
-      return pattern.replace('{u}', encodeURIComponent(username));
-    }
-
-    function renderCards(username) {
-      cardsEl.innerHTML = '';
+    function render() {
+      const username = document.getElementById('handle').value.trim();
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
       SITES.forEach(site => {
-        const url = buildUrl(site.pattern, username);
-
+        const url = site.pattern ? site.pattern.replace('{u}', encodeURIComponent(username)) : '';
         const card = document.createElement('div');
         card.className = 'card';
-
         const header = document.createElement('div');
         header.className = 'card-header';
-
-        const name = document.createElement('div');
-        name.className = 'name';
-        name.textContent = site.name;
-
-        const actions = document.createElement('div');
-        actions.className = 'actions';
-        const openBtn = document.createElement('a');
-        openBtn.href = url;
-        openBtn.target = '_blank';
-        openBtn.rel = 'noopener';
-        openBtn.textContent = 'Open';
-        openBtn.className = 'btn';
-        actions.appendChild(openBtn);
-
-        const status = document.createElement('div');
-        status.className = 'status';
-        status.textContent = 'Loading preview...';
-
-        header.appendChild(name);
-        header.appendChild(actions);
-
-        const frame = document.createElement('iframe');
-        frame.src = url;
-        // Sandbox to be safe; remove features we don't need.
-        frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
-        frame.referrerPolicy = 'no-referrer';
-
-        // We can't inspect cross-origin content, but we can at least update status messages.
-        frame.addEventListener('load', () => {
-          status.textContent = 'Loaded (if site allows embedding).';
-        });
-        frame.addEventListener('error', () => {
-          status.textContent = 'Preview failed. Site may block iframes.';
-        });
-
+        header.innerHTML = `<h3>${site.name}</h3>` + (url ? `<a href="${url}" target="_blank">Open</a>` : '');
         card.appendChild(header);
-        card.appendChild(frame);
-        card.appendChild(status);
-        cardsEl.appendChild(card);
+        if (url) {
+          const frame = document.createElement('iframe');
+          frame.src = url;
+          card.appendChild(frame);
+        }
+        grid.appendChild(card);
       });
     }
 
-    function openAllTabs(username) {
-      SITES.forEach(site => {
-        const url = buildUrl(site.pattern, username);
-        window.open(url, '_blank');
-      });
-    }
-
-    checkBtn.addEventListener('click', () => {
-      const h = sanitizeHandle(inputEl.value);
-      if (!h) return;
-      renderCards(h);
-    });
-
-    openAllBtn.addEventListener('click', () => {
-      const h = sanitizeHandle(inputEl.value);
-      if (!h) return;
-      openAllTabs(h);
-    });
-
-    // Demo default
-    inputEl.value = 'cutecats';
-    renderCards('cutecats');
+    // demo default
+    document.getElementById('handle').value = 'cutecats';
+    render();
   </script>
 </body>
 </html>
