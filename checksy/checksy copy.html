@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checksy – Handle checker for creators</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Shared Blizlab UI -->
+  <link rel="stylesheet" href="blizlab-ui.css">
+
+  <style>
+    /* ============ Checksy-specific styles ============ */
+
+    .page-main {
+      max-width: 760px;
+      margin: 26px auto 40px;
+      padding: 0 16px;
+    }
+
+    .tool-card {
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      padding: 18px 20px 20px;
+    }
+
+    .tool-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .tool-subtitle {
+      font-size: 0.96rem;
+      color: var(--text-muted);
+      max-width: 560px;
+    }
+
+    .search-card {
+      background: #f9fafb;
+      border-radius: 18px;
+      padding: 12px 14px 14px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      padding: 4px 10px;
+    }
+
+    .input-wrap input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 0.92rem;
+      padding: 6px 4px;
+      width: 100%;
+    }
+
+    .input-wrap svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    .btn-main {
+      border-radius: 999px;
+      border: none;
+      background: var(--blue);
+      color: #ffffff;
+      padding: 7px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(0, 153, 204, 0.35);
+    }
+
+    .btn-main:disabled {
+      opacity: .55;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .search-hint {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .groups {
+      margin-top: 4px;
+    }
+
+    .group-title {
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 10px 0 4px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px 4px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(15,23,42,0.12);
+      background: #ffffff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .chip:hover {
+      border-color: var(--blue);
+      background: #f0f9ff;
+    }
+
+    .chip.off {
+      opacity: 0.45;
+      background: #f9fafb;
+    }
+
+    .chip-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(15,23,42,0.16);
+      background: #e5e7eb;
+    }
+
+    .chip.on .chip-dot {
+      background: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.5);
+    }
+
+    .tip-line {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .tool-footer {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tool-footer-count {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    /* Popup hint strip */
+    .popup-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #fef3c7;
+      border: 1px solid #facc15;
+      font-size: 0.8rem;
+      color: #92400e;
+      margin-bottom: 12px;
+    }
+
+    .popup-strip-main {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .popup-strip .icon {
+      font-size: 1rem;
+    }
+
+    .popup-strip button {
+      border-radius: 999px;
+      border: none;
+      background: #fef9c3;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Footer tweak */
+    .page-footer {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      padding: 10px 10px 24px;
+    }
+
+    @media (max-width: 640px) {
+      .tool-title-pill {
+        font-size: 2.1rem;
+      }
+      .page-main {
+        padding: 0 10px;
+      }
+      .tool-card {
+        padding: 14px 14px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Shared Blizlab header -->
+  <header class="page-header">
+    <div class="header-left">
+      <a href="../" class="brand-link">
+        <div class="logo-circle">Blizlab</div>
+        <div>
+          <div class="brand-title">Blizlab</div>
+          <div class="brand-subtitle" id="title-sub">
+            Simple offline web-apps for creators over their deadline… again.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
+      <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <!-- Pop-up hint -->
+    <div class="popup-strip" id="popupStrip">
+      <div class="popup-strip-main">
+        <span class="icon">⚠️</span>
+        <span id="popupText">
+          To open multiple sites at once, please allow pop-ups for this page.
+        </span>
+      </div>
+      <button id="popupDismiss">Got it</button>
+    </div>
+
+    <section class="tool-card">
+      <div class="tool-header">
+        <div class="tool-title-pill">
+ <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     style="width: 34px; height: 34px; flex-shrink: 0; color: #FFCC33;">
+  <path fill="currentColor" fill-rule="evenodd"
+        d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16M4.433 6.191q0-.627.426-1.271.427-.645 1.247-1.067.819-.423 1.91-.423 1.015 0 1.793.354.777.353 1.2.96.423.608.423 1.322 0 .561-.241.984a3 3 0 0 1-.574.73q-.333.307-1.194 1.033a5 5 0 0 0-.381.36 1.5 1.5 0 0 0-.214.284c-.385.89-2.058.79-1.735-.455q.181-.406.482-.714.302-.307.812-.73.45-.369.648-.558a2 2 0 0 0 .336-.42.97.97 0 0 0 .136-.501q0-.529-.416-.892-.417-.363-1.075-.363-.769 0-1.134.367-.364.366-.616 1.08-.238.746-.903.746a.92.92 0 0 1-.661-.261q-.27-.26-.27-.565M8 13a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+</svg>
+          <span>Checksy</span>
+        </div>
+        <p class="tool-subtitle" id="toolSubtitle">
+          Check if your creator name is available across multiple platforms with one click.
+        </p>
+      </div>
+
+      <!-- Search card -->
+      <section class="search-card">
+        <div class="search-row">
+          <label class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input id="handle" type="text" autocomplete="off"
+                   placeholder="Creator name (e.g., Blizlab)">
+          </label>
+          <button class="btn-main" id="btnCheck">
+            <span id="btnCheckLabel">Check name</span>
+          </button>
+        </div>
+        <div class="search-hint" id="searchHint">
+          Press Enter or click “Check name”. Spaces will be removed so the handle works on most sites.
+        </div>
+      </section>
+
+      <!-- Sites chips -->
+      <section class="groups">
+        <div>
+          <div class="group-title" id="sitesTitle">SITES</div>
+          <div class="chips" id="chips"></div>
+        </div>
+      </section>
+
+      <p class="tip-line" id="tipLine">
+        Tip: click a site chip to enable or disable it. Only enabled sites will open.
+      </p>
+
+      <div class="tool-footer">
+        <span class="tool-footer-count" id="enabledCount">0 / 0 sites enabled.</span>
+        <span id="footerHint">
+          Handles are not reserved here — this just opens each site so you can check by yourself.
+        </span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    ☕️ <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
+    Made by Alex with ❤️ – See also
+    <a href="https://www.blizlab.com/bgone/" target="_blank" rel="noopener noreferrer">BGone</a> |
+    <a href="https://www.blizlab.com/retroit/" target="_blank" rel="noopener noreferrer">RetroIt</a> |
+    <a href="https://www.blizlab.com/octofind/" target="_blank" rel="noopener noreferrer">OctoFind</a>
+  </footer>
+
+  <script>
+    // ===== Storage keys =====
+    const KEY_SITES  = "checksy-sites-v1";
+    const KEY_LANG   = "checksy-lang";
+    const KEY_POPUP  = "checksy-popup-seen";
+
+    // ===== Default sites =====
+    const DEFAULT_SITES = [
+      {
+        id: "youtube",
+        name: "YouTube",
+        icon: "youtube",
+        url: "https://www.youtube.com/@%S",
+        enabled: true
+      },
+      {
+        id: "instagram",
+        name: "Instagram",
+        icon: "instagram",
+        url: "https://www.instagram.com/%S",
+        enabled: true
+      },
+      {
+        id: "tiktok",
+        name: "TikTok",
+        icon: "ticktock",
+        url: "https://www.tiktok.com/@%S",
+        enabled: true
+      },
+      {
+        id: "twitter",
+        name: "X (Twitter)",
+        icon: "twitter",
+        url: "https://x.com/%S",
+        enabled: true
+      },
+      {
+        id: "patreon",
+        name: "Patreon",
+        icon: "patreon",
+        url: "https://www.patreon.com/%S",
+        enabled: true
+      },
+      {
+        id: "kofi",
+        name: "Ko-fi",
+        icon: "ko-fi",
+        url: "https://ko-fi.com/%S",
+        enabled: true
+      },
+      {
+        id: "buymeacoffee",
+        name: "Buy Me a Coffee",
+        icon: "buymeacoffee",
+        url: "https://www.buymeacoffee.com/%S",
+        enabled: false
+      },
+      {
+        id: "twitch",
+        name: "Twitch",
+        icon: "twitch",
+        url: "https://www.twitch.tv/%S",
+        enabled: false
+      },
+      {
+        id: "bsky",
+        name: "Bluesky",
+        icon: "bsky",
+        url: "https://bsky.app/search?q=%S",
+        enabled: false
+      }
+    ];
+
+    let sites = loadSites();
+
+    // ===== I18N =====
+    const I18N = {
+      en: {
+        subtitleHeader:
+          "Simple offline web-apps for creators over their deadline… again.",
+        toolSubtitle:
+          "Check if your creator name is available across multiple platforms with one click.",
+        placeholder: "Creator name (e.g., Blizlab)",
+        searchHint:
+          "Press Enter or click “Check name”. Spaces will be removed so the handle works on most sites.",
+        btnCheck: "Check name",
+        sitesTitle: "SITES",
+        tipLine:
+          "Tip: click a site chip to enable or disable it. Only enabled sites will open.",
+        footerHint:
+          "Handles are not reserved here — this just opens each site so you can check by yourself.",
+        enabledCount: (on, total) => `${on} / ${total} sites enabled.`,
+        popupText:
+          "To open multiple sites at once, please allow pop-ups for this page.",
+        popupBtn: "Got it"
+      },
+      es: {
+        subtitleHeader:
+          "Aplicaciones web sencillas offline para creadores que ya van tarde otra vez.",
+        toolSubtitle:
+          "Comprueba si tu nombre de creador está libre en varias plataformas con un solo clic.",
+        placeholder: "Nombre de creador (ej.: Blizlab)",
+        searchHint:
+          "Pulsa Enter o haz clic en “Revisar nombre”. Se quitarán los espacios para que funcione como usuario.",
+        btnCheck: "Revisar nombre",
+        sitesTitle: "SITIOS",
+        tipLine:
+          "Tip: haz clic en cada chip para activar o desactivar ese sitio. Solo se abrirán los sitios activos.",
+        footerHint:
+          "Aquí no reservas el usuario: solo abrimos cada sitio para que tú mismo lo revises.",
+        enabledCount: (on, total) => `${on} / ${total} sitios activos.`,
+        popupText:
+          "Para abrir varios sitios a la vez, permite las ventanas emergentes (pop-ups) de esta página.",
+        popupBtn: "Entendido"
+      }
+    };
+
+    // ===== DOM =====
+    const titleSub      = document.getElementById("title-sub");
+    const toolSubtitle  = document.getElementById("toolSubtitle");
+    const handleInput   = document.getElementById("handle");
+    const btnCheck      = document.getElementById("btnCheck");
+    const btnCheckLabel = document.getElementById("btnCheckLabel");
+    const searchHint    = document.getElementById("searchHint");
+    const sitesTitle    = document.getElementById("sitesTitle");
+    const chipsEl       = document.getElementById("chips");
+    const tipLine       = document.getElementById("tipLine");
+    const enabledCount  = document.getElementById("enabledCount");
+    const footerHint    = document.getElementById("footerHint");
+    const popupStrip    = document.getElementById("popupStrip");
+    const popupText     = document.getElementById("popupText");
+    const popupDismiss  = document.getElementById("popupDismiss");
+    const btnEN         = document.getElementById("btn-en");
+    const btnES         = document.getElementById("btn-es");
+
+    // ===== Storage helpers =====
+    function loadSites() {
+      try {
+        const raw = localStorage.getItem(KEY_SITES);
+        if (!raw) return structuredClone(DEFAULT_SITES);
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || !parsed.length) {
+          return structuredClone(DEFAULT_SITES);
+        }
+        // Ensure icons exist on older data
+        return parsed.map(def => {
+          const fallback =
+            DEFAULT_SITES.find(d => d.id === def.id) || {};
+          return {
+            ...def,
+            icon: def.icon || fallback.icon || def.id
+          };
+        });
+      } catch (err) {
+        console.warn("Checksy: failed to load sites, using defaults", err);
+        return structuredClone(DEFAULT_SITES);
+      }
+    }
+
+    function saveSites() {
+      try {
+        localStorage.setItem(KEY_SITES, JSON.stringify(sites));
+      } catch (err) {
+        console.warn("Checksy: failed to save sites", err);
+      }
+    }
+
+    // ===== Language =====
+    function applyLang(lang) {
+      const t = I18N[lang] || I18N.en;
+      titleSub.textContent     = t.subtitleHeader;
+      toolSubtitle.textContent = t.toolSubtitle;
+      handleInput.placeholder  = t.placeholder;
+      searchHint.textContent   = t.searchHint;
+      btnCheckLabel.textContent = t.btnCheck;
+      sitesTitle.textContent   = t.sitesTitle;
+      tipLine.textContent      = t.tipLine;
+      footerHint.textContent   = t.footerHint;
+      updateEnabledLabel(t);
+
+      popupText.textContent    = t.popupText;
+      popupDismiss.textContent = t.popupBtn;
+
+      const isEN = lang === "en";
+      btnEN.classList.toggle("active", isEN);
+      btnES.classList.toggle("active", !isEN);
+
+      localStorage.setItem(KEY_LANG, lang);
+    }
+
+    function updateEnabledLabel(translation) {
+      const t = translation || I18N[getCurrentLang()] || I18N.en;
+      const total = sites.length;
+      const on = sites.filter(s => s.enabled).length;
+      enabledCount.textContent = t.enabledCount(on, total);
+      btnCheck.disabled = on === 0;
+    }
+
+    function getCurrentLang() {
+      return localStorage.getItem(KEY_LANG) ||
+        ((navigator.language || "en").toLowerCase().startsWith("es")
+          ? "es"
+          : "en");
+    }
+
+    // ===== Chips =====
+    function renderChips() {
+      chipsEl.innerHTML = "";
+      sites.forEach(site => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip " + (site.enabled ? "on" : "off");
+        chip.dataset.siteId = site.id;
+
+        const icon = document.createElement("img");
+        icon.className = "chip-icon";
+        icon.alt = site.name;
+        icon.src = "images/" + (site.icon || site.id) + ".png";
+
+        const dot = document.createElement("span");
+        dot.className = "chip-dot";
+
+        const label = document.createElement("span");
+        label.textContent = site.name;
+
+        chip.appendChild(icon);
+        chip.appendChild(dot);
+        chip.appendChild(label);
+
+        chip.addEventListener("click", () => toggleSite(site.id));
+        chipsEl.appendChild(chip);
+      });
+
+      updateEnabledLabel();
+    }
+
+    function toggleSite(id) {
+      const site = sites.find(s => s.id === id);
+      if (!site) return;
+      site.enabled = !site.enabled;
+      saveSites();
+      renderChips();
+    }
+
+    // ===== Search / open popups =====
+    function normalizeHandle(raw) {
+      // Remove spaces and most punctuation; keep basic letters, numbers, underscores and dots
+      const slug = raw
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9._-]/g, "");
+      return slug;
+    }
+
+    function checkName() {
+      const raw = handleInput.value;
+      if (!raw.trim()) return;
+
+      const slug = normalizeHandle(raw);
+      if (!slug) {
+        alert("Please use at least one letter or number in the name.");
+        return;
+      }
+
+      const enabledSites = sites.filter(s => s.enabled);
+      if (!enabledSites.length) {
+        alert("No sites enabled.");
+        return;
+      }
+
+      const encoded = encodeURIComponent(slug);
+      enabledSites.forEach(site => {
+        let url = site.url || "";
+        if (url.includes("%S")) {
+          url = url.replace(/%S/g, encoded);
+        }
+        window.open(url, "_blank");
+      });
+    }
+
+    // ===== Events =====
+    btnCheck.addEventListener("click", checkName);
+    handleInput.addEventListener("keydown", ev => {
+      if (ev.key === "Enter") {
+        checkName();
+      }
+    });
+
+    btnEN.addEventListener("click", () => applyLang("en"));
+    btnES.addEventListener("click", () => applyLang("es"));
+
+    popupDismiss.addEventListener("click", () => {
+      popupStrip.style.display = "none";
+      localStorage.setItem(KEY_POPUP, "1");
+    });
+
+    // ===== Init =====
+    renderChips();
+
+    const lang = getCurrentLang();
+    applyLang(lang);
+
+    if (localStorage.getItem(KEY_POPUP) === "1") {
+      popupStrip.style.display = "none";
+    }
+  </script>
+
+  <!-- Counter.dev analytics (optional, same as other tools) -->
+  <script src="https://cdn.counter.dev/script.js"
+          data-id="dd7fb35a-238d-4948-a5a8-694b141e7608"
+          data-utcoffset="-6"></script>
+</body>
+</html>
