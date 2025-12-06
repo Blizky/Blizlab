@@ -5,21 +5,229 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blizlab – Offline web-apps for content creators</title>
 
-<!-- Favicon -->
 <link rel="icon" type="image/png" href="Blizlab_logo.png">
 
 <style>
+:root {
+  --blue:   #0099CC;
+  --yellow: #FFCC33;
+  --white:  #FDFDF9;
+  --text-dark: #1A1A1A;
+  --red:    #c03221;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text-dark);
+  background: radial-gradient(circle at top, #00a8dd 0%, #0099CC 48%, #0081aa 100%);
+}
+
+/* HEADER ------------------------------------------------------- */
+header {
+  background: #ffffff;
+  color: var(--text-dark);
+  padding: 14px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr auto; /* brand | subtitle | lang */
+  column-gap: 18px;
+  align-items: center;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-brand {
+  white-space: nowrap;
+}
+
+.header-text-title {
+  font-size: 2.6rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--blue);
+  text-transform: uppercase;
+}
+
+.header-text-title .z-highlight {
+  color: var(--yellow);
+}
+
+.header-sub {
+  text-align: center;
+}
+
+.header-text-subtitle {
+  font-size: 0.96rem;
+  opacity: 0.9;
+  color: var(--text-dark);
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.lang-toggle {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.lang-btn {
+  border: 1px solid rgba(0,0,0,0.12);
+  background: transparent;
+  color: var(--text-dark);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  background: var(--blue);
+  color: var(--white);
+  border-color: var(--blue);
+  font-weight: 600;
+}
+
+/* Mobile header layout */
+@media (max-width: 800px) {
+  header {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+    text-align: center;
+  }
+  .header-brand {
+    justify-self: center;
+  }
+  .header-sub {
+    justify-self: center;
+  }
+  .lang-toggle {
+    justify-content: center;
+  }
+}
+
+/* MAIN --------------------------------------------------------- */
+main {
+  max-width: 1180px;
+  margin: 32px auto 40px;
+  padding: 0 16px 16px;
+}
+
+/* GRID OF CARDS ----------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 800px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card container – landscape, blue border */
+.card {
+  background: var(--white);
+  border-radius: 18px;
+  border: 3px solid var(--blue);
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+  min-height: 210px;
+}
+
+@media (max-width: 640px) {
+  .card {
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+/* Left visual block */
+.card-visual {
+  position: relative;
+  padding: 10px;
+  flex: 0 0 40%;
+  display: flex;
+}
+
+.card-placeholder {
+  position: relative;
+  border-radius: 14px;
+  background: #dceffa;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.9);
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+/* Actual cover image, if used */
+.card-placeholder img {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Glass gradient overlay */
+.card-placeholder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.12) 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* App name – top-left, prominent */
+.card-title {
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--yellow);
+  text-shadow: 0 4px 8px rgba(0,0,0,0.45);
+}
+
+/* Right text block */
+.card-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.card-desc {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-dark);
+}
+
 .color-dots {
   list-style: none;
   padding-left: 0;
-  margin: 8px 0 0;
+  margin: 8px 0 12px;
 }
 
 .color-dots li {
   position: relative;
   padding-left: 1.2em;
-  margin-bottom: 0.35em;
-  font-size: 0.92rem;
+  margin-bottom: 0.25em;
+  font-size: 0.9rem;
 }
 
 .color-dots li::before {
@@ -27,471 +235,351 @@
   position: absolute;
   left: 0;
   top: 0.55em;
-  width: 0.5em;
-  height: 0.5em;
-  background: #FFCC33; /* yellow dots */
+  width: 0.45em;
+  height: 0.45em;
+  background: var(--yellow);
   border-radius: 50%;
 }
 
-:root {
-    --blue: #0099CC;
-    --yellow: #FFCC33;
-    --white: #FDFDF9;
-    --text-dark: #1A1A1A;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--white);
-    color: var(--text-dark);
-}
-
-/* HEADER ------------------------------------------------------- */
-header {
-    background: var(--blue);
-    color: var(--white);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.header-logo {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;           /* makes the image appear circular */
-    border: 2px solid #FFCC33;    /* yellow border */
-    padding: 0px;                 /* optional spacing */
-    background: #FFCC33;          /* fills behind transparent areas */
-}
-
-.header-text-title {
-    font-size: 2.4rem;        /* larger */
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    color: var(--yellow);   /* yellow title */
-}
-
-.header-text-subtitle {
-    font-size: 0.95rem;
-    opacity: 0.9;
-}
-
-.lang-toggle {
-    display: flex;
-    gap: 6px;
-}
-
-.lang-btn {
-    border: 1px solid rgba(255,255,255,0.7);
-    background: transparent;
-    color: var(--white);
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    cursor: pointer;
-}
-
-.lang-btn.active {
-    background: var(--yellow);
-    color: var(--text-dark);
-    border-color: var(--yellow);
-    font-weight: 600;
-}
-
-/* MAIN --------------------------------------------------------- */
-main {
-    max-width: 1120px;
-    margin: 32px auto 40px;
-    padding: 0 16px;
-}
-
-.info {
-    margin-bottom: 26px;
-    background: #e7f7fc;
-    border-radius: 10px;
-    padding: 16px 18px 18px;
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.info-title {
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.info-text a {
-    color: var(--blue);
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.info-text a:hover {
-    text-decoration: underline;
-}
-
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
-}
-
-.card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid rgba(0,0,0,0.06);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-    position: relative;
-}
-
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.16);
-    border-color: rgba(0,0,0,0.12);
-}
-
-.card-img-wrap {
-    background:
-        radial-gradient(circle at top left, rgba(255,204,51,0.35), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(0,153,204,0.35), transparent 55%);
-    padding: 10px 10px 6px;
-}
-
-.card-img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
-    border-radius: 12px;
-    border: 2px solid rgba(0,0,0,0.08);
-    background: #e2f4fb;
-}
-
-.card-body {
-    padding: 20px 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
-}
-
-.card-title {
-    font-size: 1.25rem;     /* larger */
-    font-weight: 800;
-    color: var(--yellow);
-    background: var(--blue);
-    display: inline-block;
-    border-radius: 999px;
-    align-self: center;
-    margin-top: -22px;
-    margin-bottom: 10px;
-    padding: 8px 22px;      /* bigger pill */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.18);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    text-align: center;
-    width: auto;            /* adaptive */
-    min-width: 200px;       /* ensure slightly wider than bottom button */
-}
-
-/* description */
-.card-desc {
-    font-size: 0.95rem;
-    line-height: 1.45;
-    text-align: left;
-}
-
-/* button holder pinned to bottom */
+/* Button – aligned right */
 .card-btn-wrap {
-    margin-top: auto;
-    display: flex;
-    justify-content: center;
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
-/* buttons */
 .card-btn {
-    background: var(--yellow);
-    color: #000000;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    text-decoration: none;
-    text-align: center;
-    min-width: 160px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  background: var(--blue);
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  min-width: 170px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
 }
 
 .card-btn::after {
-    content: "↗";
-    font-size: 0.95em;
-    margin-left: 6px;
+  content: "➜";
+  font-size: 0.9em;
+  margin-left: 8px;
 }
 
 .card-btn:hover {
-    filter: brightness(1.05);
+  filter: brightness(1.05);
+}
+
+/* Info / repo strip – at bottom --------------------------- */
+.info {
+  margin-top: 28px;
+  background: rgba(253,253,249,0.96);
+  border-radius: 14px;
+  padding: 16px 18px 18px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.info-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--blue);
+}
+
+.info-text a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.info-text a:hover {
+  text-decoration: underline;
 }
 
 /* FOOTER ------------------------------------------------------ */
 footer {
-    text-align: center;
-    padding: 18px 12px 26px;
-    font-size: 0.9rem;
-    background: #f3f7fa;
-    color: #333;
-    border-top: 1px solid rgba(0,0,0,0.05);
+  text-align: center;
+  padding: 18px 12px 26px;
+  font-size: 0.9rem;
+  background: rgba(0,0,0,0.12);
+  color: #f9fafb;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  backdrop-filter: blur(8px);
 }
 
 footer a {
-    color: var(--blue);
-    font-weight: 600;
-    text-decoration: none;
+  color: var(--yellow);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 footer a:hover {
-    text-decoration: underline;
-}
-
-@media (max-width: 600px) {
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .header-left {
-        align-items: center;
-    }
+  text-decoration: underline;
 }
 </style>
 </head>
 <body>
 
 <header>
-    <div class="header-left">
-        <img src="Blizlab_logo.png" alt="Blizlab logo" class="header-logo">
-        <div>
-            <div id="title-main" class="header-text-title">Blizlab</div>
-            <div id="title-sub" class="header-text-subtitle">
-                Simple offline web-apps for creators over their deadline… again.
-            </div>
-        </div>
+  <div class="header-brand">
+    <div id="title-main" class="header-text-title">
+      BLI<span class="z-highlight">Z</span>LAB
     </div>
-    <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
-        <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
+  </div>
+  <div class="header-sub">
+    <div id="title-sub" class="header-text-subtitle">
+      Simple offline web-apps for creators over their deadline… again.
     </div>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
+    <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
+  </div>
 </header>
 
 <main>
-    <!-- Info / repo section -->
-    <section class="info">
-        <div id="info-title" class="info-title">About these tools</div>
-        <div id="info-text" class="info-text">
-            These are small single-file web apps that run entirely in your browser and are completely free to use.
-            You can use them directly from this page, or download the HTML files from the 
-            <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
-                Blizlab tools repository on GitHub
-            </a>
-            and open them offline.
+
+  <!-- Cards: 2x2 landscape layout -->
+  <section class="cards">
+
+    <!-- OctoFind -->
+    <article class="card">
+      <div class="card-visual">
+        <div class="card-placeholder">
+          <!-- <img src="Octofind_cover.jpg" alt="OctoFind cover" loading="lazy"> -->
         </div>
-    </section>
+        <h3 id="octo-title" class="card-title">OctoFind</h3>
+      </div>
+      <div class="card-body">
+        <p id="octo-desc" class="card-desc">
+          Multi-site search launcher to help you find media faster.
+        </p>
+        <ul id="octo-list" class="color-dots"></ul>
+        <div class="card-btn-wrap">
+          <a id="octo-btn" href="/octofind/" class="card-btn">Open OctoFind</a>
+        </div>
+      </div>
+    </article>
 
-    <!-- Cards -->
-    <section class="cards">
+    <!-- BGone -->
+    <article class="card">
+      <div class="card-visual">
+        <div class="card-placeholder">
+          <!-- <img src="bgone_cover.jpg" alt="BGone cover" loading="lazy"> -->
+        </div>
+        <h3 id="bgone-title" class="card-title">BGone</h3>
+      </div>
+      <div class="card-body">
+        <p id="bgone-desc" class="card-desc">
+          Offline AI background remover for fast, private cutouts.
+        </p>
+        <ul id="bgone-list" class="color-dots"></ul>
+        <div class="card-btn-wrap">
+          <a id="bgone-btn" href="/bgone/" class="card-btn">Open BGone</a>
+        </div>
+      </div>
+    </article>
 
-        <!-- OctoFind -->
-        <article class="card">
-            <div class="card-img-wrap">
-                <img src="Octofind_cover.jpg" alt="OctoFind cover" loading="lazy" class="card-img">
-            </div>
-            <div class="card-body">
-                <div id="octo-title" class="card-title">OctoFind</div>
-                <div id="octo-desc" class="card-desc">
-                    Multi-site search launcher to help you find media faster.
-                </div>
-                <ul id="octo-list" class="color-dots">
-                    <!-- Filled by JS based on language -->
-                </ul>
-                <div class="card-btn-wrap">
-                    <a id="octo-btn" href="/octofind/" class="card-btn">Open OctoFind</a>
-                </div>
-            </div>
-        </article>
+    <!-- RetroIt -->
+    <article class="card">
+      <div class="card-visual">
+        <div class="card-placeholder">
+          <!-- <img src="retroit_cover.jpg" alt="RetroIt cover" loading="lazy"> -->
+        </div>
+        <h3 id="retro-title" class="card-title">RetroIt</h3>
+      </div>
+      <div class="card-body">
+        <p id="retro-desc" class="card-desc">
+          Simple retro-style photo tweaks right in your browser.
+        </p>
+        <ul id="retro-list" class="color-dots"></ul>
+        <div class="card-btn-wrap">
+          <a id="retro-btn" href="/retroit/" class="card-btn">Open RetroIt</a>
+        </div>
+      </div>
+    </article>
 
-        <!-- BGone -->
-        <article class="card">
-            <div class="card-img-wrap">
-                <img src="bgone_cover.jpg" alt="BGone cover" loading="lazy" class="card-img">
-            </div>
-            <div class="card-body">
-                <div id="bgone-title" class="card-title">BGone</div>
-                <div id="bgone-desc" class="card-desc">
-                    Offline AI background remover for fast, private cutouts.
-                </div>
-                <ul id="bgone-list" class="color-dots">
-                    <!-- Filled by JS based on language -->
-                </ul>
-                <div class="card-btn-wrap">
-                    <a id="bgone-btn" href="/bgone/" class="card-btn">Open BGone</a>
-                </div>
-            </div>
-        </article>
+    <!-- Checksy -->
+    <article class="card">
+      <div class="card-visual">
+        <div class="card-placeholder">
+          <!-- <img src="checksy_cover.jpg" alt="Checksy cover" loading="lazy"> -->
+        </div>
+        <h3 id="checksy-title" class="card-title">Checksy</h3>
+      </div>
+      <div class="card-body">
+        <p id="checksy-desc" class="card-desc">
+          Handle checker to see if your creator name is free across multiple platforms.
+        </p>
+        <ul id="checksy-list" class="color-dots"></ul>
+        <div class="card-btn-wrap">
+          <a id="checksy-btn" href="/checksy/" class="card-btn">Open Checksy</a>
+        </div>
+      </div>
+    </article>
 
-        <!-- RetroIt -->
-        <article class="card">
-            <div class="card-img-wrap">
-                <img src="retroit_cover.jpg" alt="RetroIt cover" loading="lazy" class="card-img">
-            </div>
-            <div class="card-body">
-                <div id="retro-title" class="card-title">RetroIt</div>
-                <div id="retro-desc" class="card-desc">
-                    Simple retro-style photo tweaks right in your browser.
-                </div>
-                <ul id="retro-list" class="color-dots">
-                    <!-- Filled by JS based on language -->
-                </ul>
-                <div class="card-btn-wrap">
-                    <a id="retro-btn" href="/retroit/" class="card-btn">Open RetroIt</a>
-                </div>
-            </div>
-        </article>
+  </section>
 
-    </section>
+  <!-- About / repo info at bottom -->
+  <section class="info">
+    <div id="info-title" class="info-title">About these tools</div>
+    <div id="info-text" class="info-text">
+      These are small single-file web apps that run entirely in your browser and are completely free to use.
+      You can use them directly from this page, or download the HTML files from the 
+      <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+        Blizlab tools repository on GitHub
+      </a>
+      and open them offline.
+    </div>
+  </section>
+
 </main>
 
 <footer>
-    <span id="footer-text">
-        ☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
-        Made by Alex with ❤️
-    </span>
+  <span id="footer-text">
+    ☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
+    Made by Alex with ❤️
+  </span>
 </footer>
 
 <script>
-    const copy = {
-        en: {
-            subtitle: "Simple offline web-apps for creators over their deadline… again.",
-            infoTitle: "About these tools",
-            infoText: `These are small single-file web apps that run entirely in your browser and are completely free to use.
-                You can use them directly from this page, or download the HTML files from the 
-                <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
-                Blizlab tools repository on GitHub</a> and open them offline.`,
-            octoTitle: "OctoFind",
-            octoDesc: "Multi-site search launcher to help you find media faster.",
-            octoBtn: "Open OctoFind",
-            octoBullets: [
-                "Quickly find royalty-free images and videos",
-                "Opens multiple sites at once with the same search",
-                "Add your favorite sites to search through"
-            ],
-            bgoneTitle: "BGone",
-            bgoneDesc: "Offline AI background remover for fast, private cutouts.",
-            bgoneBtn: "Open BGone",
-            bgoneBullets: [
-                "Removes image background in ~5 seconds",
-                "Includes brush and lasso tools for manual cleanup",
-                "Powered by U²-Net AI (one-time ~80 MB download)"
-            ],
-            retroTitle: "RetroIt",
-            retroDesc: "Simple retro-style photo tweaks right in your browser.",
-            retroBtn: "Open RetroIt",
-            retroBullets: [
-                "Applies instant retro B&W, Sepia and Vintage Postcard effects",
-                "Add round corners",
-                "Flip orientation and aspect ratio"
-            ],
-            footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️'
-        },
-        es: {
-            subtitle: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
-            infoTitle: "Sobre estas herramientas",
-            infoText: `Son pequeñas aplicaciones web de un solo archivo que se ejecutan por completo en tu navegador y son completamente gratuitas.
-                Puedes usarlas directamente desde esta página o descargar los archivos HTML desde el 
-                <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
-                repositorio de herramientas Blizlab en GitHub</a> y abrirlas sin conexión.`,
-            octoTitle: "OctoFind",
-            octoDesc: "Lanzador de búsquedas multi-sitio para encontrar medios más rápido.",
-            octoBtn: "Abrir OctoFind",
-            octoBullets: [
-                "Encuentra rápido imágenes y videos libres de derechos",
-                "Abre varios sitios a la vez con la misma búsqueda",
-                "Añade tus sitios favoritos para buscarlos juntos"
-            ],
-            bgoneTitle: "BGone",
-            bgoneDesc: "Quitafondos con IA sin conexión para recortes rápidos y privados.",
-            bgoneBtn: "Abrir BGone",
-            bgoneBullets: [
-                "Quita el fondo de imágenes en ~5 segundos",
-                "Incluye pincel y lazo para retoque manual",
-                "Funciona con IA U²-Net (descarga única de ~80 MB)"
-            ],
-            retroTitle: "RetroIt",
-            retroDesc: "Ajustes fotográficos retro sencillos directamente en tu navegador.",
-            retroBtn: "Abrir RetroIt",
-            retroBullets: [
-                "Aplica efectos retro instantáneos: B/N, sepia y postal vintage",
-                "Añade esquinas redondeadas",
-                "Gira orientación y relación de aspecto"
-            ],
-            footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Invítame un Ko-fi</a> · Hecho por Alex con ❤️'
-        }
-    };
+const copy = {
+  en: {
+    subtitle: "Simple offline web-apps for creators over their deadline… again.",
+    infoTitle: "About these tools",
+    infoText: `These are small single-file web apps that run entirely in your browser and are completely free to use.
+      You can use them directly from this page, or download the HTML files from the 
+      <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+      Blizlab tools repository on GitHub</a> and open them offline.`,
+    octoTitle: "OctoFind",
+    octoDesc: "Multi-site search launcher to help you find media faster.",
+    octoBtn: "Open OctoFind",
+    octoBullets: [
+      "Quickly find royalty-free images and videos",
+      "Opens multiple sites at once with the same search",
+      "Add your favorite sites to search through"
+    ],
+    bgoneTitle: "BGone",
+    bgoneDesc: "Offline AI background remover for fast, private cutouts.",
+    bgoneBtn: "Open BGone",
+    bgoneBullets: [
+      "Removes image background in ~5 seconds",
+      "Includes brush and lasso tools for manual cleanup",
+      "Powered by U²-Net AI (one-time ~80 MB download)"
+    ],
+    retroTitle: "RetroIt",
+    retroDesc: "Simple retro-style photo tweaks right in your browser.",
+    retroBtn: "Open RetroIt",
+    retroBullets: [
+      "Applies instant retro B&W, Sepia and Vintage Postcard effects",
+      "Add rounded corners to your photos",
+      "Flip orientation and aspect ratio"
+    ],
+    checksyTitle: "Checksy",
+    checksyDesc: "Handle checker to see if your creator name is free across multiple platforms.",
+    checksyBtn: "Open Checksy",
+    checksyBullets: [
+      "Open multiple creator sites with the same handle",
+      "Toggle which platforms you want to check",
+      "Quick way to test new brand names before committing"
+    ],
+    footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️'
+  },
+  es: {
+    subtitle: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
+    infoTitle: "Sobre estas herramientas",
+    infoText: `Son pequeñas aplicaciones web de un solo archivo que se ejecutan por completo en tu navegador y son completamente gratuitas.
+      Puedes usarlas directamente desde esta página o descargar los archivos HTML desde el 
+      <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
+      repositorio de herramientas Blizlab en GitHub</a> y abrirlas sin conexión.`,
+    octoTitle: "OctoFind",
+    octoDesc: "Lanzador de búsquedas multi-sitio para encontrar medios más rápido.",
+    octoBtn: "Abrir OctoFind",
+    octoBullets: [
+      "Encuentra rápido imágenes y vídeos libres de derechos",
+      "Abre varios sitios a la vez con la misma búsqueda",
+      "Añade tus sitios favoritos para buscarlos juntos"
+    ],
+    bgoneTitle: "BGone",
+    bgoneDesc: "Quitafondos con IA sin conexión para recortes rápidos y privados.",
+    bgoneBtn: "Abrir BGone",
+    bgoneBullets: [
+      "Quita el fondo de imágenes en ~5 segundos",
+      "Incluye pincel y lazo para retoque manual",
+      "Funciona con IA U²-Net (descarga única de ~80 MB)"
+    ],
+    retroTitle: "RetroIt",
+    retroDesc: "Ajustes fotográficos retro sencillos directamente en tu navegador.",
+    retroBtn: "Abrir RetroIt",
+    retroBullets: [
+      "Aplica efectos retro instantáneos: B/N, sepia y postal vintage",
+      "Añade esquinas redondeadas",
+      "Gira orientación y relación de aspecto"
+    ],
+    checksyTitle: "Checksy",
+    checksyDesc: "Comprobador de nombre para ver si tu usuario está libre en varias plataformas.",
+    checksyBtn: "Abrir Checksy",
+    checksyBullets: [
+      "Abre varias plataformas de creador con el mismo usuario",
+      "Activa o desactiva las plataformas que quieres revisar",
+      "Forma rápida de probar nombres de marca antes de decidirte"
+    ],
+    footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Invítame un Ko-fi</a> · Hecho por Alex con ❤️'
+  }
+};
 
-    function setLanguage(lang) {
-        const c = copy[lang];
+function setLanguage(lang) {
+  const c = copy[lang];
 
-        document.getElementById("title-sub").textContent = c.subtitle;
-        document.getElementById("info-title").textContent = c.infoTitle;
-        document.getElementById("info-text").innerHTML = c.infoText;
+  document.getElementById("title-sub").textContent = c.subtitle;
+  document.getElementById("info-title").textContent = c.infoTitle;
+  document.getElementById("info-text").innerHTML = c.infoText;
 
-        document.getElementById("octo-title").textContent = c.octoTitle;
-        document.getElementById("octo-desc").textContent = c.octoDesc;
-        document.getElementById("octo-btn").textContent = c.octoBtn;
-        document.getElementById("octo-list").innerHTML =
-            c.octoBullets.map(item => `<li>${item}</li>`).join("");
+  document.getElementById("octo-title").textContent = c.octoTitle;
+  document.getElementById("octo-desc").textContent = c.octoDesc;
+  document.getElementById("octo-btn").textContent = c.octoBtn;
+  document.getElementById("octo-list").innerHTML =
+    c.octoBullets.map(item => `<li>${item}</li>`).join("");
 
-        document.getElementById("bgone-title").textContent = c.bgoneTitle;
-        document.getElementById("bgone-desc").textContent = c.bgoneDesc;
-        document.getElementById("bgone-btn").textContent = c.bgoneBtn;
-        document.getElementById("bgone-list").innerHTML =
-            c.bgoneBullets.map(item => `<li>${item}</li>`).join("");
+  document.getElementById("bgone-title").textContent = c.bgoneTitle;
+  document.getElementById("bgone-desc").textContent = c.bgoneDesc;
+  document.getElementById("bgone-btn").textContent = c.bgoneBtn;
+  document.getElementById("bgone-list").innerHTML =
+    c.bgoneBullets.map(item => `<li>${item}</li>`).join("");
 
-        document.getElementById("retro-title").textContent = c.retroTitle;
-        document.getElementById("retro-desc").textContent = c.retroDesc;
-        document.getElementById("retro-btn").textContent = c.retroBtn;
-        document.getElementById("retro-list").innerHTML =
-            c.retroBullets.map(item => `<li>${item}</li>`).join("");
+  document.getElementById("retro-title").textContent = c.retroTitle;
+  document.getElementById("retro-desc").textContent = c.retroDesc;
+  document.getElementById("retro-btn").textContent = c.retroBtn;
+  document.getElementById("retro-list").innerHTML =
+    c.retroBullets.map(item => `<li>${item}</li>`).join("");
 
-        document.getElementById("footer-text").innerHTML = c.footer;
+  document.getElementById("checksy-title").textContent = c.checksyTitle;
+  document.getElementById("checksy-desc").textContent = c.checksyDesc;
+  document.getElementById("checksy-btn").textContent = c.checksyBtn;
+  document.getElementById("checksy-list").innerHTML =
+    c.checksyBullets.map(item => `<li>${item}</li>`).join("");
 
-        document.getElementById("btn-en").classList.toggle("active", lang === "en");
-        document.getElementById("btn-es").classList.toggle("active", lang === "es");
-    }
+  document.getElementById("footer-text").innerHTML = c.footer;
 
-    // Init EN on load
-    setLanguage("en");
+  document.getElementById("btn-en").classList.toggle("active", lang === "en");
+  document.getElementById("btn-es").classList.toggle("active", lang === "es");
+}
 
-    document.getElementById("btn-en").addEventListener("click", () => setLanguage("en"));
-    document.getElementById("btn-es").addEventListener("click", () => setLanguage("es"));
+// Init EN on load
+setLanguage("en");
+
+document.getElementById("btn-en").addEventListener("click", () => setLanguage("en"));
+document.getElementById("btn-es").addEventListener("click", () => setLanguage("es"));
 </script>
 
-<script src="https://cdn.counter.dev/script.js" data-id="dd7fb35a-238d-4948-a5a8-694b141e7608" data-utcoffset="-6"></script>
+<script src="https://cdn.counter.dev/script.js"
+        data-id="dd7fb35a-238d-4948-a5a8-694b141e7608"
+        data-utcoffset="-6"></script>
 </body>
 </html>
