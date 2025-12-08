@@ -6,22 +6,24 @@
 <title>Blizlab – Offline web-apps for content creators</title>
 
 <link rel="icon" type="image/svg+xml" href="assets/svg/fabicon.svg">
-
-<link rel="stylesheet" href="assets/css/blizlab-ui.css">
+<link rel="stylesheet" href="assets/css/home.css">
+<link rel="stylesheet" href="assets/css/global.css">
 </head>
 <body>
 
 <header>
   <!-- Logo -->
-  <div class="header-brand">
+<div class="header-brand">
+  <a href="/" class="logo-link">
     <div id="title-main" class="header-text-title">
       BLI
       <span class="z-icon">
-        <img src="assets/svg/blizlab-bolt.svg" alt="">
+        <img src="/assets/svg/blizlab-bolt.svg" alt="">
       </span>
       LAB
     </div>
-  </div>
+  </a>
+</div>
 
   <!-- Subtitle -->
   <div class="header-sub">
@@ -53,49 +55,62 @@
             <li><a href="/checksy/">Checksy</a></li>
           </ul>
         </li>
-        <li><a class="nav-link" href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">Readme</a></li>
-        <li><a class="nav-link nav-disabled" href="#">Vlog (coming soon)</a></li>
+        
+        <li>
+          <a class="nav-link nav-link--button" 
+            href="https://github.com/Blizky/" 
+            target="_blank" 
+            rel="noopener noreferrer">
+            Readme
+          </a>
+        </li>
+
+        <li><a class="nav-link nav-disabled" href="#">Blog (coming soon)</a></li>
         <li><a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a></li>
       </ul>
     </nav>
   </div>
 </div>
 
-<main>
+<main class="landing-main">
+  <p></p>
   <!-- Cards -------------------------------------------------- -->
   <section class="cards" id="cards-container">
 
     <!-- OctoFind -->
-    <article class="card" data-index="0">
-      <header class="card-header">
-        <span class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M15.5 14h-.79l-.28-.28A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.22-1.57l.28.28v.79L19 20.5 20.5 19 15.5 14zm-6 0A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14z"/>
-          </svg>
-        </span>
-        <h3 id="octo-title" class="card-title">OctoFind</h3>
-      </header>
-      <div class="card-body">
-        <p id="octo-desc" class="card-desc">
-          Multi-site search launcher to help you find media faster.
-        </p>
-        <ul id="octo-list" class="color-dots"></ul>
-        <div class="card-btn-wrap">
-          <a id="octo-btn" href="/octofind/" class="card-btn" onclick="event.stopPropagation();">Open OctoFind</a>
-        </div>
-      </div>
-    </article>
+<article class="card" data-index="0">
+    
+    <!-- TITLE OVERLAY -->
+    <header class="card-header">
+      <h3 id="octo-title" class="card-title">OctoFind</h3>
+    </header>
+     
+    <div class="img-wrap">
+      <img src="assets/images/octofind_cover.jpg" alt="">
+      <div class="shine-overlay"></div>
+    </div>
+ 
+  <div class="card-body">
+    <p id="octo-desc" class="card-desc">
+      Multi-site search launcher to help you find media faster.
+    </p>
+    <ul id="octo-list" class="color-dots"></ul>
+    <div class="card-btn-wrap">
+      <a id="octo-btn" href="/octofind/" class="card-btn" onclick="event.stopPropagation();">Open OctoFind</a>
+    </div>
+  </div>
+
+</article>
 
     <!-- BGone -->
     <article class="card" data-index="1">
       <header class="card-header">
-        <span class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M16.24 3.76a2.5 2.5 0 0 0-3.54 0L4.21 12.25a2.5 2.5 0 0 0 0 3.54l3.5 3.5c.47.47 1.1.71 1.77.71h10.02v-2H9.48l-3.5-3.5 8.49-8.49 3.5 3.5 1.41-1.41-3.5-3.5z"/>
-          </svg>
-        </span>
         <h3 id="bgone-title" class="card-title">BGone</h3>
       </header>
+    <div class="img-wrap">
+      <img src="assets/images/bgone_cover.jpg" alt="">
+      <div class="shine-overlay"></div>
+    </div>
       <div class="card-body">
         <p id="bgone-desc" class="card-desc">
           Offline AI background remover for fast, private cutouts.
@@ -110,13 +125,12 @@
     <!-- RetroIt -->
     <article class="card" data-index="2">
       <header class="card-header">
-        <span class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M9 3L7.17 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 .001 6.001A3 3 0 0 0 12 10z"/>
-          </svg>
-        </span>
         <h3 id="retro-title" class="card-title">RetroIt</h3>
       </header>
+          <div class="img-wrap">
+      <img src="assets/images/retroit_cover.jpg" alt="">
+      <div class="shine-overlay"></div>
+    </div>
       <div class="card-body">
         <p id="retro-desc" class="card-desc">
           Simple retro-style photo tweaks right in your browser.
@@ -131,13 +145,12 @@
     <!-- Checksy -->
     <article class="card" data-index="3">
       <header class="card-header">
-        <span class="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M9 16.17 4.83 12 3.41 13.41 9 19l12-12-1.41-1.41z"/>
-          </svg>
-        </span>
         <h3 id="checksy-title" class="card-title">Checksy</h3>
       </header>
+          <div class="img-wrap">
+      <img src="assets/images/checksy_cover.jpg" alt="">
+      <div class="shine-overlay"></div>
+    </div>
       <div class="card-body">
         <p id="checksy-desc" class="card-desc">
           Handle checker to see if your creator name is free across multiple platforms.
@@ -168,8 +181,7 @@
 
 <footer>
   <span id="footer-text">
-    ☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
-    Made by Alex with ❤️
+<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
   </span>
 </footer>
 
@@ -186,35 +198,36 @@ const copy = {
     octoDesc: "Multi-site search launcher to help you find media faster.",
     octoBtn: "Open OctoFind",
     octoBullets: [
-      "Quickly find royalty-free images and videos",
-      "Opens multiple sites at once with the same search",
-      "Add your favorite sites to search through"
+      "Find free images and videos",
+      "Opens multiple sites at once",
+      "Add your favorite sites"
     ],
     bgoneTitle: "BGone",
     bgoneDesc: "Offline AI background remover for fast, private cutouts.",
     bgoneBtn: "Open BGone",
     bgoneBullets: [
-      "Removes image background in ~5 seconds",
-      "Includes brush and lasso tools for manual cleanup",
-      "Powered by U²-Net AI (one-time ~80 MB download)"
+      "Removes background in seconds",
+      "Includes brush for manual cleanup",
+      "No uploads, works offline"
     ],
     retroTitle: "RetroIt",
     retroDesc: "Simple retro-style photo tweaks right in your browser.",
     retroBtn: "Open RetroIt",
     retroBullets: [
-      "Applies instant retro B&W, Sepia and Vintage Postcard effects",
-      "Add rounded corners to your photos",
+      "Applies instant Vintage effects",
+      "Add rounded corners",
       "Flip orientation and aspect ratio"
     ],
     checksyTitle: "Checksy",
-    checksyDesc: "Handle checker to see if your creator name is free across multiple platforms.",
+    checksyDesc: "See if your creator name is free across multiple platforms.",
     checksyBtn: "Open Checksy",
     checksyBullets: [
-      "Open multiple creator sites with the same handle",
-      "Toggle which platforms you want to check",
-      "Quick way to test new brand names before committing"
+      "Find if username is available",
+      "Open multiple sites at once",
+      "Select platforms to check",
     ],
-    footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️'
+
+
   },
   es: {
     subtitle: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
@@ -223,39 +236,44 @@ const copy = {
       Puedes usarlas directamente desde esta página o descargar los archivos HTML desde el 
       <a href="https://github.com/Blizky/" target="_blank" rel="noopener noreferrer">
       repositorio de herramientas Blizlab en GitHub</a> y abrirlas sin conexión.`,
-    octoTitle: "OctoFind",
-    octoDesc: "Lanzador de búsquedas multi-sitio para encontrar medios más rápido.",
-    octoBtn: "Abrir OctoFind",
-    octoBullets: [
-      "Encuentra rápido imágenes y vídeos libres de derechos",
-      "Abre varios sitios a la vez con la misma búsqueda",
-      "Añade tus sitios favoritos para buscarlos juntos"
-    ],
-    bgoneTitle: "BGone",
-    bgoneDesc: "Quitafondos con IA sin conexión para recortes rápidos y privados.",
-    bgoneBtn: "Abrir BGone",
-    bgoneBullets: [
-      "Quita el fondo de imágenes en ~5 segundos",
-      "Incluye pincel y lazo para retoque manual",
-      "Funciona con IA U²-Net (descarga única de ~80 MB)"
-    ],
-    retroTitle: "RetroIt",
-    retroDesc: "Ajustes fotográficos retro sencillos directamente en tu navegador.",
-    retroBtn: "Abrir RetroIt",
-    retroBullets: [
-      "Aplica efectos retro instantáneos: B/N, sepia y postal vintage",
-      "Añade esquinas redondeadas",
-      "Gira orientación y relación de aspecto"
-    ],
-    checksyTitle: "Checksy",
-    checksyDesc: "Comprobador de nombre para ver si tu usuario está libre en varias plataformas.",
-    checksyBtn: "Abrir Checksy",
-    checksyBullets: [
-      "Abre varias plataformas de creador con el mismo usuario",
-      "Activa o desactiva las plataformas que quieres revisar",
-      "Forma rápida de probar nombres de marca antes de decidirte"
-    ],
-    footer: '☕️ <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Invítame un Ko-fi</a> · Hecho por Alex con ❤️'
+    
+octoTitle: "OctoFind",
+octoDesc: "Lanzador de búsquedas multi-sitio para encontrar medios más rápido.",
+octoBtn: "Abrir OctoFind",
+octoBullets: [
+  "Imágenes y videos gratis",
+  "Abre varios sitios a la vez",
+  "Añade tus sitios favoritos"
+],
+
+bgoneTitle: "BGone",
+bgoneDesc: "Quitafondos con IA sin conexión para recortes rápidos y privados.",
+bgoneBtn: "Abrir BGone",
+bgoneBullets: [
+  "Quita el fondo en segundos",
+  "Incluye pincel para retoque manual",
+  "Sin subir archivos, funciona offline"
+],
+
+retroTitle: "RetroIt",
+retroDesc: "Ajustes fotográficos retro directamente en tu navegador.",
+retroBtn: "Abrir RetroIt",
+retroBullets: [
+  "Aplica efectos Vintage al instante",
+  "Añade esquinas redondeadas",
+  "Gira orientación y formato"
+],
+
+checksyTitle: "Checksy",
+checksyDesc: "Ve si tu nombre de creador está libre en varias plataformas.",
+checksyBtn: "Abrir Checksy",
+checksyBullets: [
+  "Revisa si el usuario está disponible",
+  "Abre varios sitios a la vez",
+  "Elige qué plataformas revisar"
+],
+
+
   }
 };
 
@@ -290,7 +308,7 @@ function setLanguage(lang) {
   document.getElementById("checksy-list").innerHTML =
     c.checksyBullets.map(item => `<li>${item}</li>`).join("");
 
-  document.getElementById("footer-text").innerHTML = c.footer;
+  
 
   document.getElementById("btn-en").classList.toggle("active", lang === "en");
   document.getElementById("btn-es").classList.toggle("active", lang === "es");
@@ -303,7 +321,8 @@ function layoutCards() {
   const cards = document.querySelectorAll(".card");
   const total = cards.length;
 
-  const baseSpread = 170;
+/* Separate cards with fixed offset */
+  const baseSpread = 250;
   const start = -((total - 1) * baseSpread) / 2;
 
   cards.forEach((card, i) => {
@@ -350,6 +369,8 @@ setLanguage("en");
 document.getElementById("btn-en").addEventListener("click", () => setLanguage("en"));
 document.getElementById("btn-es").addEventListener("click", () => setLanguage("es"));
 initCardCarousel();
+
+
 </script>
 
 <script src="https://cdn.counter.dev/script.js"
