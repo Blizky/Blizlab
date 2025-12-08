@@ -174,6 +174,11 @@ header {
   background: transparent;
   color: var(--text-dark);
   cursor: pointer;
+  
+  line-height: 1;         /* normalize */
+  display: inline-flex;   /* match button box model */
+  align-items: center;    /* fix baseline differences */
+  font-size: inherit;     /* ensure same scale */
 }
 
 .nav-link:hover,
@@ -329,7 +334,7 @@ main {
 /* App name inside chip */
 .card-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   color: var(--blue);
@@ -337,6 +342,7 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  
 }
 
 /* Body text */
@@ -497,3 +503,4 @@ footer a {
 footer a:hover {
   text-decoration: underline;
 }
+

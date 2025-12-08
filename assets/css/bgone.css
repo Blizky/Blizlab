@@ -1,23 +1,19 @@
-/* BGone layout + tweaks on top of blizlab-ui.css */
+/* ----------------------------------------------------------
+   BGone layout under shared header/menu
+---------------------------------------------------------- */
 
-/* Main container under shared header/menu */
 .page-main {
   max-width: 1180px;
   margin: 32px auto 40px;
   padding: 0 16px 24px;
 }
 
-/* Big white shell card */
-.app-shell {
-  background: #fdfdf9;
-  border-radius: 26px;
-  padding: 18px 20px 22px;
-  box-shadow:
-    0 24px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.7);
-}
 
-/* Model bar -------------------------------------------------- */
+
+/* ----------------------------------------------------------
+   Model bar
+---------------------------------------------------------- */
+
 .model-bar {
   display: flex;
   align-items: center;
@@ -64,7 +60,10 @@
   background: #bbb;
 }
 
-/* App header row -------------------------------------------- */
+/* ----------------------------------------------------------
+   App header row
+---------------------------------------------------------- */
+
 .app-header-row {
   display: flex;
   justify-content: space-between;
@@ -82,12 +81,6 @@
   border-radius: 999px;
   background: #ffcc33;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-}
-
-.tool-title-pill svg {
-  background: #ffffff;
-  border-radius: 999px;
-  padding: 4px;
 }
 
 .tool-title-pill span {
@@ -108,7 +101,10 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
 }
 
-/* Layout: sidebar + canvas ---------------------------------- */
+/* ----------------------------------------------------------
+   Layout: sidebar + canvas
+---------------------------------------------------------- */
+
 .app-layout {
   display: flex;
   gap: 18px;
@@ -129,7 +125,10 @@
   flex-direction: column;
 }
 
-/* Cards ------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Cards (Image, Tools, Notes)
+---------------------------------------------------------- */
+
 .card {
   background: #ffffff;
   border-radius: 18px;
@@ -166,7 +165,10 @@
   line-height: 1.4;
 }
 
-/* Fake input + buttons -------------------------------------- */
+/* ----------------------------------------------------------
+   Fake input + buttons
+---------------------------------------------------------- */
+
 .fake-input {
   flex: 1;
   border-radius: 999px;
@@ -220,7 +222,10 @@
   background: #f5f5f5;
 }
 
-/* Tools & brush controls ------------------------------------ */
+/* ----------------------------------------------------------
+   Tools & brush controls
+---------------------------------------------------------- */
+
 .tools-card .card-row {
   margin-bottom: 8px;
 }
@@ -246,7 +251,7 @@
   width: 100%;
 }
 
-/* Erase / Restore pill toggle ------------------------------- */
+/* Erase / Restore pill toggle */
 .pill-toggle {
   display: inline-flex;
   border-radius: 999px;
@@ -277,7 +282,10 @@
   margin-top: 10px;
 }
 
-/* Canvas area ----------------------------------------------- */
+/* ----------------------------------------------------------
+   Canvas area
+---------------------------------------------------------- */
+
 .canvas-wrap {
   position: relative;
   border-radius: 24px;
@@ -291,7 +299,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
 
 #canvas {
@@ -319,7 +326,7 @@
   color: #666;
 }
 
-/* Brush preview ring ---------------------------------------- */
+/* Brush preview ring */
 .brush-preview {
   position: absolute;
   border-radius: 50%;
@@ -341,7 +348,10 @@
     0 0 12px rgba(255, 204, 51, 0.9);
 }
 
-/* Footer alignment */
+/* ----------------------------------------------------------
+   Page footer alignment
+---------------------------------------------------------- */
+
 .page-footer {
   text-align: center;
   padding: 18px 12px 26px;
@@ -349,7 +359,10 @@
   color: #f9fafb;
 }
 
-/* Responsive tweaks ----------------------------------------- */
+/* ----------------------------------------------------------
+   Responsive tweaks
+---------------------------------------------------------- */
+
 @media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
@@ -360,6 +373,13 @@
   }
 
   .canvas-wrap {
-    min-height: 280px;
+    min-height: 400px;
   }
+}
+
+.model-dot.ok {
+  background: #2ecc71;                  /* green */
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 10px rgba(46, 204, 113, 0.9);   /* glow */
 }

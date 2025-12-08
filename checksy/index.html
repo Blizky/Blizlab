@@ -4,298 +4,77 @@
   <meta charset="UTF-8" />
   <title>Checksy – Handle checker for creators</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230099CC'/%3E%3Ctext x='48%25' y='52%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial, Helvetica, sans-serif' font-size='48' font-weight='700' fill='%23FFCC33'%3E%40%3C/text%3E%3C/svg%3E">
-  <!-- Shared Blizlab UI -->
-  <link rel="stylesheet" href="blizlab-ui.css">
 
-  <style>
-    /* ============ Checksy-specific styles ============ */
+    <!-- SHARED -->
+  <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
+  <link rel="stylesheet" href="/assets/css/global.css">
 
-    .page-main {
-      max-width: 760px;
-      margin: 26px auto 40px;
-      padding: 0 16px;
-    }
+  <link rel="stylesheet" href="/assets/css/checksy.css"> <!-- App-specific CSS -->
 
-    .tool-card {
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      padding: 18px 20px 20px;
-    }
-
-    .tool-header {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-
-    .tool-subtitle {
-      font-size: 0.96rem;
-      color: var(--text-muted);
-      max-width: 560px;
-    }
-
-    .search-card {
-      background: #f9fafb;
-      border-radius: 18px;
-      padding: 12px 14px 14px;
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      margin-bottom: 16px;
-    }
-
-    .search-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .input-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #ffffff;
-      border-radius: 999px;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      padding: 4px 10px;
-    }
-
-    .input-wrap input {
-      border: none;
-      outline: none;
-      background: transparent;
-      font-size: 0.92rem;
-      padding: 6px 4px;
-      width: 100%;
-    }
-
-    .input-wrap svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: var(--text-muted);
-    }
-
-    .btn-main {
-      border-radius: 999px;
-      border: none;
-      background: var(--blue);
-      color: #ffffff;
-      padding: 7px 16px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 10px 24px rgba(0, 153, 204, 0.35);
-    }
-
-    .btn-main:disabled {
-      opacity: .55;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    .search-hint {
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .groups {
-      margin-top: 4px;
-    }
-
-    .groups-header {
-      margin: 10px 0 2px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .group-title-main {
-      font-size: 0.78rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-
-    .group-block {
-      margin-top: 8px;
-    }
-
-    .group-title {
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin: 6px 0 4px;
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 9px 4px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(15,23,42,0.12);
-      background: #ffffff;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
-    }
-
-    .chip:hover {
-      border-color: var(--blue);
-      background: #f0f9ff;
-    }
-
-    .chip.off {
-      opacity: 0.45;
-      background: #f9fafb;
-    }
-
-    .chip-icon {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .chip-icon svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    /* dot styles removed */
-
-    .btn-ghost-small {
-      border-radius: 999px;
-      border: 1px solid rgba(15,23,42,0.16);
-      background: transparent;
-      padding: 3px 10px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .btn-ghost-small:hover {
-      border-color: var(--blue);
-      color: var(--blue);
-      background: #eff6ff;
-    }
-
-    .tip-line {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .tool-footer {
-      margin-top: 14px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .tool-footer-count {
-      font-weight: 500;
-      color: #111827;
-    }
-
-    .popup-strip {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #fef3c7;
-      border: 1px solid #facc15;
-      font-size: 0.8rem;
-      color: #92400e;
-      margin-bottom: 12px;
-    }
-
-    .popup-strip-main {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .popup-strip .icon {
-      font-size: 1rem;
-    }
-
-    .popup-strip button {
-      border-radius: 999px;
-      border: none;
-      background: #fef9c3;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .page-footer {
-      text-align: center;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      padding: 10px 10px 24px;
-    }
-
-    @media (max-width: 640px) {
-      .tool-title-pill {
-        font-size: 2.1rem;
-      }
-      .page-main {
-        padding: 0 10px;
-      }
-      .tool-card {
-        padding: 14px 14px 16px;
-      }
-    }
-  </style>
 </head>
-<body>
 
-  <!-- Shared Blizlab header -->
-  <header class="page-header">
-    <div class="header-left">
-      <a href="../" class="brand-link">
-        <div class="logo-circle">Blizlab</div>
-        <div>
-          <div class="brand-title">Blizlab</div>
-          <div class="brand-subtitle" id="title-sub">
-            Simple offline web-apps for creators over their deadline… again.
-          </div>
-        </div>
-      </a>
+<body>
+<header>
+  <!-- Logo -->
+<div class="header-brand">
+  <a href="/" class="logo-link">
+    <div id="title-main" class="header-text-title">
+      BLI
+      <span class="z-icon">
+        <img src="/assets/svg/blizlab-bolt.svg" alt="">
+      </span>
+      LAB
     </div>
+  </a>
+</div>
+
+  <!-- Subtitle -->
+  <div class="header-sub">
+    <div id="title-sub" class="header-text-subtitle">
+      Simple offline web-apps for creators over their deadline… again.
+    </div>
+  </div>
+
+  <!-- Right: language only -->
+  <div class="header-right">
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
       <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
     </div>
-  </header>
+  </div>
+</header>
+
+<!-- Yellow menu bar -->
+<div class="app-menu-bar">
+  <div class="app-menu-inner">
+    <nav class="main-nav" aria-label="App navigation">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link nav-link--button" type="button">Apps</button>
+          <ul class="nav-submenu">
+            <li><a href="/octofind/">OctoFind</a></li>
+            <li><a href="/bgone/">BGone</a></li>
+            <li><a href="/retroit/">RetroIt</a></li>
+            <li><a href="/checksy/">Checksy</a></li>
+          </ul>
+        </li>
+        
+        <li>
+          <a class="nav-link nav-link--button" 
+             href="https://github.com/Blizky/" 
+             target="_blank" 
+             rel="noopener noreferrer">
+            Readme
+          </a>
+        </li>
+
+        <li><a class="nav-link nav-disabled" href="#">Blog (coming soon)</a></li>
+        <li><a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+<!-- END SHARED-->
 
   <main class="page-main">
     <div class="popup-strip" id="popupStrip">
@@ -310,19 +89,17 @@
 
     <section class="tool-card">
       <div class="tool-header">
-        <div class="tool-title-pill">
+
+      <div class="app-badge app-badge--large">
+        <span class="app-badge__icon">🫵</span>
+        <span class="app-badge__title">Checksy</span>
+      </div>
 
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 426.667 426.667" xml:space="preserve"><path style="fill:#fac917" d="M213.333 426.667C95.71 426.667.017 330.974.017 213.35.017 95.71 95.71 0 213.333 0S426.65 95.71 426.65 213.35c0 15.317-12.416 27.733-27.733 27.733s-27.733-12.416-27.733-27.733c0-87.057-70.814-157.884-157.85-157.884S55.484 126.293 55.484 213.35c0 87.04 70.814 157.85 157.85 157.85 27.849 0 55.147-7.283 78.938-21.069 13.261-7.676 30.225-3.157 37.901 10.091 7.68 13.252 3.157 30.221-10.091 37.901-32.236 18.675-69.147 28.544-106.749 28.544"/><path style="fill:#fac917" d="M213.333 333.931c-66.449 0-120.508-54.076-120.508-120.542 0-66.47 54.059-120.546 120.508-120.546 66.483 0 120.576 54.076 120.576 120.546 0 66.466-54.092 120.542-120.576 120.542m0-185.622c-35.861 0-65.041 29.193-65.041 65.079 0 35.883 29.18 65.075 65.041 65.075 35.9 0 65.109-29.193 65.109-65.075.001-35.886-29.209-65.079-65.109-65.079"/><path style="fill:#fac917" d="M352.563 333.931c-19.725 0-38.306-7.697-52.322-21.662-13.999-13.717-21.798-32.41-21.798-52.459v-46.421c0-15.317 12.416-27.733 27.733-27.733s27.733 12.416 27.733 27.733v46.421c0 3.554.926 8.695 5.325 13.009 3.712 3.699 8.388 5.645 13.329 5.645a18.68 18.68 0 0 0 13.274-5.478c3.439-3.435 5.346-8.124 5.346-13.175V213.39c0-15.317 12.416-27.733 27.733-27.733s27.733 12.416 27.733 27.733v46.421c0 19.87-7.68 38.49-21.628 52.433-14.041 13.99-32.665 21.687-52.458 21.687"/></svg>
-
-
-          <span>Checksy</span>
-        </div>
         <p class="tool-subtitle" id="toolSubtitle">
           Check if your creator name is available across multiple platforms with one click.
         </p>
       </div>
-
       <section class="search-card">
         <div class="search-row">
           <label class="input-wrap">
@@ -363,13 +140,11 @@
     </section>
   </main>
 
-  <footer class="page-footer">
-    ☕️ <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> ·
-    Made by Alex with ❤️ – See also
-    <a href="https://www.blizlab.com/bgone/" target="_blank" rel="noopener noreferrer">BGone</a> |
-    <a href="https://www.blizlab.com/retroit/" target="_blank" rel="noopener noreferrer">RetroIt</a> |
-    <a href="https://www.blizlab.com/octofind/" target="_blank" rel="noopener noreferrer">OctoFind</a>
-  </footer>
+<footer>
+  <span id="footer-text">
+<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
+  </span>
+</footer>
 
   <script>
     /* ============================

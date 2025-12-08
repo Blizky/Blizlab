@@ -5,55 +5,96 @@
   <title>RetroIt – Offline vintage photo editor by Blizlab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="Blizlab_logo.png" />
+  <!-- SHARED -->
+  <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
+  <link rel="stylesheet" href="/assets/css/global.css">
 
-  <!-- Shared Blizlab UI -->
-  <link rel="stylesheet" href="blizlab-ui.css" />
-  <!-- RetroIt-specific styles -->
-  <link rel="stylesheet" href="retroit.css" />
+  <link rel="stylesheet" href="/assets/css/retroit.css"> <!-- App-specific CSS -->
+  
 </head>
 
 <body>
-  <!-- Shared header (same structure as BGone) -->
-  <header class="page-header">
-    <div class="header-left">
-      <a href="../" class="brand-link">
-        <div class="logo-circle">Blizlab</div>
-        <div>
-          <div class="brand-title">Blizlab</div>
-          <div class="brand-subtitle" id="title-sub">
-            Simple offline web-apps for creators over their deadline… again.
-          </div>
-        </div>
-      </a>
+
+<header>
+  <!-- Logo -->
+<div class="header-brand">
+  <a href="/" class="logo-link">
+    <div id="title-main" class="header-text-title">
+      BLI
+      <span class="z-icon">
+        <img src="/assets/svg/blizlab-bolt.svg" alt="">
+      </span>
+      LAB
     </div>
+  </a>
+</div>
+
+  <!-- Subtitle -->
+  <div class="header-sub">
+    <div id="title-sub" class="header-text-subtitle">
+      Simple offline web-apps for creators over their deadline… again.
+    </div>
+  </div>
+
+  <!-- Right: language only -->
+  <div class="header-right">
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
       <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
     </div>
-  </header>
+  </div>
+</header>
+
+<!-- Yellow menu bar -->
+<div class="app-menu-bar">
+  <div class="app-menu-inner">
+    <nav class="main-nav" aria-label="App navigation">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link nav-link--button" type="button">Apps</button>
+          <ul class="nav-submenu">
+            <li><a href="/octofind/">OctoFind</a></li>
+            <li><a href="/bgone/">BGone</a></li>
+            <li><a href="/retroit/">RetroIt</a></li>
+            <li><a href="/checksy/">Checksy</a></li>
+          </ul>
+        </li>
+        
+        <li>
+          <a class="nav-link nav-link--button" 
+             href="https://github.com/Blizky/" 
+             target="_blank" 
+             rel="noopener noreferrer">
+            Readme
+          </a>
+        </li>
+
+        <li><a class="nav-link nav-disabled" href="#">Blog (coming soon)</a></li>
+        <li><a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+<!-- END SHARED-->
+
+
 
   <main class="page-main">
     <section class="app-shell">
       <!-- App header row (icon + title + subtitle pill) -->
-      <div class="app-header-row">
-        <div class="tool-title-pill">
-          <!-- Camera icon, same size/behavior as BGone eraser icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <rect x="2" y="2" width="20" height="20" rx="4" ry="4" />
-            <circle cx="12" cy="12" r="5" fill="#ffffff" />
-            <circle cx="12" cy="12" r="3.4" />
-            <rect x="15.5" y="4.5" width="3.5" height="3.5" rx="1" ry="1" fill="#ffffff" />
-          </svg>
-          <span>RetroIt</span>
-        </div>
+      <!-- Header badge -->
+<div class="app-header-row">
+  <div class="app-badge app-badge--large">
+    <span class="app-badge__icon">📷</span>
+    <span class="app-badge__title">RetroIt</span>
+  </div>
+  <div class="status-pill" id="toolSubtitle">
+    Simple retro-style photo tweaks right in your browser.
+  </div>
+</div>
 
-        <!-- Re-use status pill style for the subtitle text -->
-        <div class="status-pill" id="toolSubtitle">
-          Simple retro-style photo tweaks right in your browser.
-        </div>
-      </div>
+
+      <!-- END Header badge -->
 
       <!-- Main layout: sidebar + canvas -->
       <div class="app-layout retroit-main">
@@ -183,25 +224,11 @@
     </section>
   </main>
 
-  <footer class="page-footer">
-    ☕️ <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer"
-      >Buy me a Ko-fi</a
-    >
-    · Made by Alex with ❤️ – See also
-    <a
-      href="https://www.blizlab.com/octofind/"
-      target="_blank"
-      rel="noopener noreferrer"
-      >OctoFind</a
-    >
-    |
-    <a
-      href="https://www.blizlab.com/bgone/"
-      target="_blank"
-      rel="noopener noreferrer"
-      >BGone</a
-    >
-  </footer>
+<footer>
+  <span id="footer-text">
+<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
+  </span>
+</footer>
 
   <!-- JS: same logic as working file -->
 <script>

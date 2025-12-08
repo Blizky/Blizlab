@@ -1,0 +1,283 @@
+/* ----------------------------------------------------------
+   IMAGE WRAPPER FOR LANDING CARDS
+---------------------------------------------------------- */
+.img-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 2px solid #FFCC33;
+  border-radius: 10px;
+  position: relative;
+  padding-bottom: 48%;   /* shorter so text doesn’t spill */
+  height: 0;
+}
+
+.img-wrap img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ----------------------------------------------------------
+   SHINY OVERLAY
+---------------------------------------------------------- */
+.shine-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: linear-gradient(
+    60deg,
+    rgba(255,255,255,0.70) 0%,
+    rgba(255,255,255,0.35) 20%,
+    rgba(255,255,255,0.10) 45%,
+    rgba(0,0,0,0.25) 100%
+  );
+}
+
+/* ----------------------------------------------------------
+   MAIN AREA FOR LANDING ONLY
+---------------------------------------------------------- */
+.landing-main {
+  max-width: 1180px;
+  margin: 32px auto 40px;
+  padding: 0 16px 16px;
+  margin-top: 24px;   /* space under the yellow bar */
+}
+
+/* ----------------------------------------------------------
+   CARD STACK LAYOUT
+---------------------------------------------------------- */
+.cards {
+  position: relative;
+  height: 420px;
+  margin-bottom: 32px;
+}
+
+.card {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 280px;
+  max-width: 80vw;
+  height: 100%;
+
+  transform-origin: center bottom;
+  background: radial-gradient(circle at top, #ffffff, #f3f3f0);
+  border: 3px solid var(--blue);
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.5) inset;
+
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease,
+    filter 260ms ease,
+    z-index 0s linear 60ms;
+}
+
+.card.card--active {
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease,
+    filter 260ms ease,
+    z-index 0s;
+}
+
+/* Title chip -------------------------------------------------- */
+.card-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--yellow);
+  border-radius: 999px;
+  padding: 6px 12px;
+  margin-bottom: 4px;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.16);
+}
+
+/* Icon inside chip */
+.card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: var(--yellow);
+}
+
+/* App name inside chip */
+.card-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--blue);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Body text --------------------------------------------------- */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.card-desc {
+  font-size: 0.9rem;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  color: var(--text-dark);
+}
+
+/* Bullets ----------------------------------------------------- */
+.color-dots {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 4px;
+}
+
+.color-dots li {
+  position: relative;
+  padding-left: 1.15em;
+  margin-bottom: 0.15em;
+  font-size: 0.85rem;
+}
+
+.color-dots li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.4em;
+  height: 0.4em;
+  background: var(--yellow);
+  border-radius: 50%;
+}
+
+/* Button ------------------------------------------------------ */
+.card-btn-wrap {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.card-btn {
+  background: var(--blue);
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+}
+
+.card-btn::after {
+  content: "➜";
+  margin-left: 6px;
+  font-size: 0.9em;
+}
+
+.card-btn:hover {
+  filter: brightness(1.05);
+}
+
+/* Hover glow (only inactive cards) */
+.card:not(.card--active):hover {
+  box-shadow: 0 24px 36px rgba(0,0,0,0.45);
+  filter: brightness(1.02);
+}
+
+/* Card transform variables (set by JS) */
+.card {
+  transform:
+    translateX(-50%)
+    translateX(var(--offset-x, 0px))
+    translateY(var(--offset-y, 0px))
+    scale(var(--scale, 0.96));
+}
+
+/* Mobile layout ---------------------------------------------- */
+@media (max-width: 800px) {
+  .cards {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    position: static;
+    width: 100%;
+    max-width: none;
+    height: auto;
+
+    transform: none !important;
+
+    box-shadow:
+      0 12px 30px rgba(0,0,0,0.26),
+      0 0 0 1px rgba(255,255,255,0.4) inset;
+  }
+}
+
+/* ----------------------------------------------------------
+   INFO BOX AT BOTTOM OF LANDING PAGE
+---------------------------------------------------------- */
+.info {
+  margin-top: 8px;
+  background: rgba(253,253,249,0.96);
+  border-radius: 14px;
+  padding: 16px 18px 18px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.info-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--blue);
+}
+
+.info-text a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.info-text a:hover {
+  text-decoration: underline;
+}
