@@ -65,11 +65,10 @@
              href="https://github.com/Blizky/" 
              target="_blank" 
              rel="noopener noreferrer">
-            Readme
+             Readme
           </a>
         </li>
 
-        <li><a class="nav-link nav-disabled" href="#">Blog (coming soon)</a></li>
         <li><a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a></li>
       </ul>
     </nav>
@@ -101,6 +100,8 @@
         <!-- Sidebar controls -->
         <aside class="side-panel">
           <div class="card sidebar">
+            
+            
             <div class="controls-group">
               <div class="sidebar-section-title" id="sectionImageTitle">IMAGE</div>
               <div class="file-label-text" id="loadLabelText">Load photo:</div>
@@ -113,6 +114,14 @@
                 <button class="main" id="downloadBtn" disabled>
                   ⬇ <span id="downloadBtnText">Download PNG</span>
                 </button>
+              </div>
+
+              <!-- NUEVO: checkbox para el passepartú -->
+              <div class="export-option">
+                <label for="frameCheckbox">
+                  <input type="checkbox" id="frameCheckbox" />
+                  <span id="frameCheckboxLabel">Guardar con pasepartú</span>
+                </label>
               </div>
 
               <div class="file-name" id="fileNameText">No file selected.</div>
@@ -219,6 +228,8 @@
             Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click
             and drag to reframe.
           </p>
+          <!-- NUEVO: nombre del archivo bajo el canvas -->
+          <p class="canvas-file-name" id="canvasFileNameText"></p>
         </section>
       </div>
     </section>
@@ -238,6 +249,11 @@ const ctx = canvas.getContext("2d");
 const fileInput      = document.getElementById("fileInput");
 const fileNameText   = document.getElementById("fileNameText");
 const downloadBtn    = document.getElementById("downloadBtn");
+
+/* NUEVO: checkbox para el passepartú */
+const frameCheckbox = document.getElementById("frameCheckbox");
+const frameCheckboxLabel = document.getElementById("frameCheckboxLabel");
+
 const styleButtons   = document.querySelectorAll(".styles .chip-btn");
 const orientationBtns= document.querySelectorAll(".orientations .chip-btn");
 const intensitySlider= document.getElementById("intensity");
@@ -271,6 +287,7 @@ const downloadBtnText= document.getElementById("downloadBtnText");
 const hintPanZoomText= document.getElementById("hintPanZoomText");
 const localHintText  = document.getElementById("localHintText");
 const captionText    = document.getElementById("captionText");
+const canvasFileNameText = document.getElementById("canvasFileNameText");
 
 const PAPER = "#fdfdf9";
 const MAT_MARGIN = 40;
@@ -312,7 +329,9 @@ const I18N = {
     localHint: "Everything runs locally in your browser. No images are uploaded.",
     dropHint: "Drop an image here",
     caption: "Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click and drag to reframe.",
-    fillBtn: "Fill canvas"
+    fillBtn: "Fill canvas",
+    frameCheckbox: "Save with passepartout",
+
   },
   es: {
     subtitleHeader: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
@@ -336,7 +355,9 @@ const I18N = {
     localHint: "Todo se procesa localmente en tu navegador. Ninguna imagen se sube a un servidor.",
     dropHint: "Suelta una imagen aquí",
     caption: "Resolución de exportación: 4:3, 16:9 o 3:4 según la orientación. Haz clic y arrastra para reencuadrar.",
-    fillBtn: "Llenar lienzo"
+    fillBtn: "Llenar lienzo",
+    frameCheckbox: "Guardar con pasepartú",
+
   }
 };
 
@@ -366,6 +387,10 @@ function applyLang(lang) {
   localHintText.textContent  = t.localHint;
   dropHintText.textContent   = t.dropHint;
   captionText.textContent    = t.caption;
+
+  // Nuevo: el texto del checkbox
+  frameCheckboxLabel.textContent = t.frameCheckbox;
+
   fillBtn.textContent        = t.fillBtn;
 
   btnEN.classList.toggle("active", lang === "en");
@@ -583,9 +608,11 @@ fileInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
     fileNameText.textContent = file.name;
+    if (canvasFileNameText) canvasFileNameText.textContent = file.name;
     loadImageFromFile(file);
   } else {
     fileNameText.textContent = I18N[currentLang].fileNone;
+    if (canvasFileNameText) canvasFileNameText.textContent = "";
   }
 });
 
@@ -607,6 +634,7 @@ dropZone.addEventListener("drop", (e) => {
   const file = e.dataTransfer.files && e.dataTransfer.files[0];
   if (file && file.type.startsWith("image/")) {
     fileNameText.textContent = file.name;
+    if (canvasFileNameText) canvasFileNameText.textContent = file.name;
     loadImageFromFile(file);
   }
 });
@@ -690,9 +718,29 @@ window.addEventListener("mouseup", () => { dragging = false; });
 
 downloadBtn.addEventListener("click", () => {
   if (!img) return;
+
+  let exportCanvas = canvas;
+
+  // Si el checkbox NO está marcado → recortar el passepartú
+  if (!frameCheckbox.checked) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const ix = MAT_MARGIN;
+    const iy = MAT_MARGIN;
+    const iw = w - MAT_MARGIN * 2;
+    const ih = h - MAT_MARGIN * 2;
+
+    const tmp = document.createElement("canvas");
+    tmp.width = iw;
+    tmp.height = ih;
+    const tctx = tmp.getContext("2d");
+    tctx.drawImage(canvas, ix, iy, iw, ih, 0, 0, iw, ih);
+    exportCanvas = tmp;
+  }
+
   const link = document.createElement("a");
   link.download = "retroit-image.png";
-  link.href = canvas.toDataURL("image/png");
+  link.href = exportCanvas.toDataURL("image/png");
   link.click();
 });
 
