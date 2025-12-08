@@ -377,3 +377,13 @@ footer a:hover {
   height: 20px;
   vertical-align: -4px;
 }
+
+.nav-icon {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 6px;
+  vertical-align: -0.15em;
+  display: inline-block;
+}
+
+
