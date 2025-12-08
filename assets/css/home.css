@@ -281,3 +281,8 @@
 .info-text a:hover {
   text-decoration: underline;
 }
+
+.emoji {
+  font-size: 1.3em; /* increase as needed */
+  vertical-align: -0.1em; /* adjust to center nicely */
+}
