@@ -148,5 +148,5 @@ You are free to remix, adapt, and share non-commercially with attribution and sh
 
 ---
 
-Made by **Alex** (@peorcaso).  
-If you find the tools useful, consider supporting on Ko-fi.
+Made by **Alex** (@aaloyola37 @peorcaso).  
+If you find the tools useful, consider [supporting on Ko-fi](https://ko-fi.com/)  
