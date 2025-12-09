@@ -87,14 +87,49 @@
   color: #5b6a74;
 }
 
+/* NUEVO checkbox para el passepartú--------------------------- */
+/* Ocultar el hint bajo los botones (sigue existiendo pero no se ve) */
+#hintDragText {
+  display: none;
+}
+
+/* Checkbox "Guardar con pasepartú" */
+.export-option {
+  margin-top: 6px;
+}
+
+.export-option label {
+  font-size: 0.8rem;
+  color: #5b6a74;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.export-option input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+
+/* Nombre del archivo bajo el canvas */
+.canvas-file-name {
+  font-size: 0.8rem;
+  color: #5b6a74;
+  text-align: center;
+  margin-top: 2px;
+}
+
+
+
+
 /* ORIENTATION & STYLE CHIPS ---------------------------------- */
 
 .actions-inline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   align-items: center;
-  margin: 4px 0 6px;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .orientations,
@@ -276,7 +311,8 @@ button.main:disabled {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  font-size: 0.9rem;
+  font-size: 2rem;      /* bigger */
+  font-weight: 700;     /* punchier */
   color: rgba(0, 0, 0, 0.6);
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -316,4 +352,24 @@ button.main:disabled {
 }
 #toolSubtitle {
   padding-inline: 18px;
+}
+
+/* Pretty checkbox */
+.export-option {
+  margin-top: 4px;
+}
+
+.export-option label {
+  font-size: 0.8rem;
+  color: #5b6a74;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.canvas-file-name {
+  font-size: 0.8rem;
+  color: #5b6a74;
+  text-align: center;
+  margin-top: 2px;
 }

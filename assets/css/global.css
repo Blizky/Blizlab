@@ -158,7 +158,7 @@ header {
    NAVIGATION
 ---------------------------------------------------------- */
 .main-nav {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
 }
 
 .nav-list {
@@ -178,11 +178,11 @@ header {
   background: transparent;
   padding: 4px 10px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-dark);
   cursor: pointer;
   text-decoration: none;
-  font-size: 0.98rem;
+  font-size: 0.75rem;
 }
 
 .nav-link:hover,
