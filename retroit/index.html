@@ -116,13 +116,6 @@
                 </button>
               </div>
 
-              <!-- NUEVO: checkbox para el passepartú -->
-              <div class="export-option">
-                <label for="frameCheckbox">
-                  <input type="checkbox" id="frameCheckbox" />
-                  <span id="frameCheckboxLabel">Guardar con pasepartú</span>
-                </label>
-              </div>
 
               <div class="file-name" id="fileNameText">No file selected.</div>
               <div class="hint" id="hintDragText">
@@ -143,6 +136,9 @@
                 </button>
                 <button class="chip-btn" data-orientation="portrait34">
                   <span>Portrait 3:4</span>
+                </button>
+                  <button class="chip-btn" data-orientation="square11">
+                  <span>Square 1:1</span>
                 </button>
               </div>
             </div>
@@ -228,8 +224,6 @@
             Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click
             and drag to reframe.
           </p>
-          <!-- NUEVO: nombre del archivo bajo el canvas -->
-          <p class="canvas-file-name" id="canvasFileNameText"></p>
         </section>
       </div>
     </section>
@@ -241,7 +235,6 @@
   </span>
 </footer>
 
-  <!-- JS: same logic as working file -->
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -249,10 +242,6 @@ const ctx = canvas.getContext("2d");
 const fileInput      = document.getElementById("fileInput");
 const fileNameText   = document.getElementById("fileNameText");
 const downloadBtn    = document.getElementById("downloadBtn");
-
-/* NUEVO: checkbox para el passepartú */
-const frameCheckbox = document.getElementById("frameCheckbox");
-const frameCheckboxLabel = document.getElementById("frameCheckboxLabel");
 
 const styleButtons   = document.querySelectorAll(".styles .chip-btn");
 const orientationBtns= document.querySelectorAll(".orientations .chip-btn");
@@ -328,10 +317,8 @@ const I18N = {
     hintPanZoom: "Drag to move the image · Mouse wheel to zoom.",
     localHint: "Everything runs locally in your browser. No images are uploaded.",
     dropHint: "Drop an image here",
-    caption: "Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click and drag to reframe.",
+    caption: "Export resolution: 4:3, 16:9, 3:4 or 1:1 depending on orientation. Click and drag to reframe.",
     fillBtn: "Fill canvas",
-    frameCheckbox: "Save with passepartout",
-
   },
   es: {
     subtitleHeader: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
@@ -354,10 +341,8 @@ const I18N = {
     hintPanZoom: "Arrastra para mover la imagen · Usa la rueda del ratón para hacer zoom.",
     localHint: "Todo se procesa localmente en tu navegador. Ninguna imagen se sube a un servidor.",
     dropHint: "Suelta una imagen aquí",
-    caption: "Resolución de exportación: 4:3, 16:9 o 3:4 según la orientación. Haz clic y arrastra para reencuadrar.",
+    caption: "Resolución de exportación: 4:3, 16:9, 3:4 o 1:1 según la orientación. Haz clic y arrastra para reencuadrar.",
     fillBtn: "Llenar lienzo",
-    frameCheckbox: "Guardar con pasepartú",
-
   }
 };
 
@@ -388,9 +373,6 @@ function applyLang(lang) {
   dropHintText.textContent   = t.dropHint;
   captionText.textContent    = t.caption;
 
-  // Nuevo: el texto del checkbox
-  frameCheckboxLabel.textContent = t.frameCheckbox;
-
   fillBtn.textContent        = t.fillBtn;
 
   btnEN.classList.toggle("active", lang === "en");
@@ -418,6 +400,11 @@ function setOrientation(newOrientation) {
     canvas.height = 1440;
     dropZone.style.aspectRatio = "3 / 4";
     dropZone.style.maxWidth = "560px";
+  } else if (orientation === "square11") {
+    canvas.width = 1200;        // puedes usar 1080x1080 si prefieres
+    canvas.height = 1200;
+    dropZone.style.aspectRatio = "1 / 1";
+    dropZone.style.maxWidth = "620px";  // entre landscape y portrait
   }
 
   if (img) {
@@ -462,6 +449,7 @@ function render() {
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
+  // marco/papel
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, w, h);
 
@@ -481,12 +469,13 @@ function render() {
     ctx.clip();
   }
 
+  // fondo negro dentro del área de imagen
   ctx.fillStyle = "#000";
   ctx.fillRect(ix, iy, iw, ih);
 
   if (img) {
-    drawPhoto(ix, iy, iw, ih);
-    applyStyle(ix, iy, iw, ih);
+    drawPhoto(ctx, ix, iy, iw, ih);
+    applyStyle(ctx, ix, iy, iw, ih);
   } else {
     ctx.fillStyle = "#777";
     ctx.font = "20px system-ui";
@@ -498,19 +487,19 @@ function render() {
   ctx.restore();
 }
 
-function drawPhoto(ix, iy, iw, ih) {
+function drawPhoto(targetCtx, ix, iy, iw, ih) {
   const w = img.width * scale;
   const h = img.height * scale;
   const x = ix + (iw - w) / 2 + offsetX;
   const y = iy + (ih - h) / 2 + offsetY;
-  ctx.drawImage(img, x, y, w, h);
+  targetCtx.drawImage(img, x, y, w, h);
 }
 
-function applyStyle(ix, iy, iw, ih) {
+function applyStyle(targetCtx, ix, iy, iw, ih) {
   const tSlider = intensitySlider.value / 100;
   const noiseAmount = (noiseSlider.value || 0) / 100;
 
-  const imageData = ctx.getImageData(ix, iy, iw, ih);
+  const imageData = targetCtx.getImageData(ix, iy, iw, ih);
   const d = imageData.data;
 
   for (let i = 0; i < d.length; i += 4) {
@@ -572,7 +561,7 @@ function applyStyle(ix, iy, iw, ih) {
     d[i + 2] = b;
   }
 
-  ctx.putImageData(imageData, ix, iy);
+  targetCtx.putImageData(imageData, ix, iy);
 }
 
 /* Helpers ------------------------------------------------------ */
@@ -716,26 +705,35 @@ window.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", () => { dragging = false; });
 
+/* DESCARGA SIN MARCO, CON ESQUINAS TRANSPARENTES -------------- */
 downloadBtn.addEventListener("click", () => {
   if (!img) return;
 
-  let exportCanvas = canvas;
+  const w = canvas.width;
+  const h = canvas.height;
+  const ix = MAT_MARGIN;
+  const iy = MAT_MARGIN;
+  const iw = w - MAT_MARGIN * 2;
+  const ih = h - MAT_MARGIN * 2;
+  const innerRadius = Number(roundnessSlider.value) || 0;
 
-  // Si el checkbox NO está marcado → recortar el passepartú
-  if (!frameCheckbox.checked) {
-    const w = canvas.width;
-    const h = canvas.height;
-    const ix = MAT_MARGIN;
-    const iy = MAT_MARGIN;
-    const iw = w - MAT_MARGIN * 2;
-    const ih = h - MAT_MARGIN * 2;
+  // 1) recortamos solo el área interna (sin marco)
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = iw;
+  exportCanvas.height = ih;
+  const ectx = exportCanvas.getContext("2d");
 
-    const tmp = document.createElement("canvas");
-    tmp.width = iw;
-    tmp.height = ih;
-    const tctx = tmp.getContext("2d");
-    tctx.drawImage(canvas, ix, iy, iw, ih, 0, 0, iw, ih);
-    exportCanvas = tmp;
+  ectx.drawImage(canvas, ix, iy, iw, ih, 0, 0, iw, ih);
+
+  // 2) si hay esquinas redondeadas, aplicamos máscara para que
+  //    las esquinas queden transparentes (sin tocar la foto)
+  if (innerRadius > 0) {
+    ectx.save();
+    ectx.globalCompositeOperation = "destination-in";
+    roundedRectPath(ectx, 0, 0, iw, ih, innerRadius);
+    ectx.fillStyle = "#fff";
+    ectx.fill();
+    ectx.restore();
   }
 
   const link = document.createElement("a");
@@ -756,6 +754,7 @@ applyLang(initialLang);
 
 render();
 </script>
+
 
   <!-- Counter.dev (unchanged) -->
   <script

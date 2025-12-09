@@ -45,6 +45,7 @@
 
 .controls-group {
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 /* FILE PICKER ------------------------------------------------- */
@@ -80,6 +81,16 @@
   font-size: 0.8rem;
   color: #5b6a74;
   margin-top: 4px;
+
+  /* make it respect the sidebar width */
+  display: block;
+  width: 100%;
+  max-width: 100%;
+
+  /* enable truncation instead of spilling */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hint {
