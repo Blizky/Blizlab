@@ -8,8 +8,7 @@
   <!-- SHARED -->
   <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
   <link rel="stylesheet" href="/assets/css/global.css">
-
-  <link rel="stylesheet" href="/assets/css/retroit.css"> <!-- App-specific CSS -->
+  <link rel="stylesheet" href="/assets/css/retroit.css">
   
 </head>
 
@@ -45,36 +44,47 @@
   </div>
 </header>
 
+
 <!-- Yellow menu bar -->
 <div class="app-menu-bar">
   <div class="app-menu-inner">
     <nav class="main-nav" aria-label="App navigation">
       <ul class="nav-list">
-        <li class="nav-item">
-          <button class="nav-link nav-link--button" type="button">Apps</button>
-          <ul class="nav-submenu">
-            <li><a href="/octofind/">OctoFind</a></li>
-            <li><a href="/bgone/">BGone</a></li>
-            <li><a href="/retroit/">RetroIt</a></li>
-            <li><a href="/checksy/">Checksy</a></li>
-          </ul>
+
+        <li>
+          <a class="nav-link nav-link--button" href="/octofind/">OctoFind</a>
         </li>
-        
+
+        <li>
+          <a class="nav-link nav-link--button" href="/bgone/">BGone</a>
+        </li>
+
+        <li>
+          <a class="nav-link nav-link--button" href="/retroit/">RetroIt</a>
+        </li>
+
+        <li>
+          <a class="nav-link nav-link--button" href="/checksy/">Checksy</a>
+        </li>
+
         <li>
           <a class="nav-link nav-link--button" 
-             href="https://github.com/Blizky/" 
+             href="https://github.com/Blizky/Blizlab" 
              target="_blank" 
              rel="noopener noreferrer">
              Readme
           </a>
         </li>
 
-        <li><a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a></li>
+        <li>
+          <a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a>
+        </li>
+
       </ul>
     </nav>
   </div>
 </div>
-<!-- END SHARED-->
+ <!-- END MENU -->
 
 
 
@@ -114,12 +124,6 @@
                 <button class="main" id="downloadBtn" disabled>
                   ⬇ <span id="downloadBtnText">Download PNG</span>
                 </button>
-              </div>
-
-
-              <div class="file-name" id="fileNameText">No file selected.</div>
-              <div class="hint" id="hintDragText">
-                You can also drag an image into the preview area.
               </div>
             </div>
 
@@ -216,14 +220,11 @@
 
         <!-- Canvas area -->
         <section class="canvas-panel canvas-area">
-          <div class="canvas-drop-zone" id="dropZone">
-            <canvas id="canvas"></canvas>
-            <div class="drop-hint" id="dropHintText">Drop an image here</div>
-          </div>
-          <p class="canvas-caption" id="captionText">
-            Export resolution: 4:3, 16:9 or 3:4 depending on orientation. Click
-            and drag to reframe.
-          </p>
+            <div class="canvas-drop-zone" id="dropZone">
+              <canvas id="canvas"></canvas>
+              
+            </div>
+            <div class="file-name" id="fileNameText">No file selected.</div>
         </section>
       </div>
     </section>
@@ -370,8 +371,8 @@ function applyLang(lang) {
   downloadBtnText.textContent= t.downloadBtn;
   hintPanZoomText.textContent= t.hintPanZoom;
   localHintText.textContent  = t.localHint;
-  dropHintText.textContent   = t.dropHint;
-  captionText.textContent    = t.caption;
+  dropHintText.textContent = t.dropHint; /* NOT TRANSLATING - pending */
+  if (captionText)  captionText.textContent  = t.caption;
 
   fillBtn.textContent        = t.fillBtn;
 
@@ -379,6 +380,9 @@ function applyLang(lang) {
   btnES.classList.toggle("active", lang === "es");
 
   localStorage.setItem(LANG_KEY, lang);
+
+  // NEW: redraw with the new language
+  render();
 }
 
 /* Orientation + canvas setup ---------------------------------- */
@@ -478,7 +482,7 @@ function render() {
     applyStyle(ctx, ix, iy, iw, ih);
   } else {
     ctx.fillStyle = "#777";
-    ctx.font = "20px system-ui";
+    ctx.font = "30px system-ui";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(I18N[currentLang].dropHint, w / 2, h / 2);
