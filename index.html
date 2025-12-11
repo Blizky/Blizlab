@@ -365,7 +365,7 @@ function layoutCards() {
   const total = cards.length;
 
 /* Separate cards with fixed offset */
-  const baseSpread = 250;
+  const baseSpread = 165; /* change card separation */
   const start = -((total - 1) * baseSpread) / 2;
 
   cards.forEach((card, i) => {
