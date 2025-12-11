@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Skreen – Kelvin Light</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Shared Blizlab styles -->
+  <link rel="stylesheet" href="assets/css/global.css" />
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      background: #ffffff; /* JS will override with Kelvin color */
+      transition: background-color 0.15s linear;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111;
+    }
+
+    .skreen-ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* MAIN BAR – now solid blue with white text */
+    .skreen-bar {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      background: #0099cc;        /* blue */
+      color: #ffffff;             /* white text */
+      padding: 8px 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      max-width: calc(100% - 24px);
+    }
+
+    .skreen-bar label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .skreen-bar input[type="range"] {
+      width: 220px;
+      max-width: 35vw;
+    }
+
+    .skreen-k-display {
+      min-width: 70px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .skreen-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #ffcc33; /* yellow */
+      color: #111;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .skreen-btn-icon {
+      padding: 2px 7px;
+      min-width: 20px;
+      text-align: center;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      color: #ffffff;
+      font-size: 11px;
+      line-height: 1.1;
+    }
+
+    .skreen-brand {
+      margin-left: auto;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0.95;
+    }
+
+    .skreen-brand a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .skreen-brand a:hover {
+      text-decoration: underline;
+    }
+
+    /* EXIT BUTTON – yellow like Full screen */
+    .skreen-exit-btn {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      background: #ffcc33;  /* yellow */
+      color: #111;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+      display: none; /* shown only in fullscreen */
+    }
+
+    /* Slider styling: yellow bar */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    /* WebKit */
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      background: #ffcc33; /* yellow */
+      border-radius: 999px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -6px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #111;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Firefox */
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      background: #ffcc33;
+      border-radius: 999px;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #111;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Info modal */
+    .skreen-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+    }
+
+
+    /* White card modal */
+    .skreen-modal {
+      background: #ffffff;         /* white card */
+      color: #111;                 /* dark text */
+      padding: 18px 20px;
+      border-radius: 16px;
+      max-width: 340px;
+      width: calc(100% - 40px);
+      box-shadow:
+        0 24px 40px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.7);  /* same style as other apps */
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .skreen-modal h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .skreen-modal button {
+      margin-top: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: none;
+      background: #ffcc33;
+      color: #111827;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="skreen-ui">
+    <!-- Full control bar (windowed mode) -->
+    <div class="skreen-bar" id="skreenBar">
+      <label for="kelvin">Skreen</label>
+      <input
+        type="range"
+        id="kelvin"
+        min="3000"
+        max="7000"
+        step="50"
+        value="5600"
+      />
+      <span class="skreen-k-display" id="kValue">5600 K</span>
+      <button class="skreen-btn" id="btnFull">Full screen</button>
+      <button class="skreen-btn-icon" id="btnInfo" aria-label="How this color is calculated">?</button>
+      <span class="skreen-brand">
+        <a href="https://blizlab.com" target="_blank" rel="noopener noreferrer">
+          App by Blizlab.com
+        </a>
+      </span>
+    </div>
+
+    <!-- Minimal button (fullscreen mode only) -->
+    <button class="skreen-exit-btn" id="btnExitFull">
+      Exit full screen
+    </button>
+  </div>
+
+  <script src="skreen.js"></script>
+</body>
+</html>
