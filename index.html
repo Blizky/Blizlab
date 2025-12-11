@@ -42,6 +42,8 @@
 </header>
 
 <!-- Yellow menu bar -->
+<!-- Yellow menu bar -->
+
 <div class="app-menu-bar">
   <div class="app-menu-inner">
     <nav class="main-nav" aria-label="App navigation">
@@ -57,6 +59,10 @@
 
         <li>
           <a class="nav-link nav-link--button" href="/retroit/">RetroIt</a>
+        </li>
+
+        <li>
+          <a class="nav-link nav-link--button" href="/skreen/">Skreen</a>
         </li>
 
         <li>
@@ -80,6 +86,7 @@
     </nav>
   </div>
 </div>
+
 
 <main class="landing-main">
   <p></p>
@@ -151,8 +158,35 @@
       </div>
     </article>
 
+<!-- Skreen -->
+<article class="card" data-index="3">
+  <header class="card-header">
+    <span class="emoji">💡</span>
+    <h3 id="skreen-title" class="card-title">Skreen</h3>
+  </header>
+
+  <div class="img-wrap">
+    <img src="assets/images/skreen_cover.jpg" alt="Skreen cover">
+    <div class="shine-overlay"></div>
+  </div>
+
+  <div class="card-body">
+    <p id="skreen-desc" class="card-desc">
+      Turn your screen into a fill-light using adjustable Kelvin temperatures.
+    </p>
+
+    <ul id="skreen-list" class="color-dots"></ul>
+
+    <div class="card-btn-wrap">
+      <a id="skreen-btn" href="/skreen/" class="card-btn" onclick="event.stopPropagation();">
+        Open Skreen
+      </a>
+    </div>
+  </div>
+</article>
+
     <!-- Checksy -->
-    <article class="card" data-index="3">
+    <article class="card" data-index="4">
       <header class="card-header">
         <span class="emoji">🫵</span> <h3 id="checksy-title" class="card-title">Checksy</h3>
       </header>
@@ -378,6 +412,8 @@ setLanguage("en");
 document.getElementById("btn-en").addEventListener("click", () => setLanguage("en"));
 document.getElementById("btn-es").addEventListener("click", () => setLanguage("es"));
 initCardCarousel();
+
+
 
 
 </script>
