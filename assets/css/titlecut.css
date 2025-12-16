@@ -1,0 +1,273 @@
+:root{
+  /* Calibrado a tu teléfono */
+  --mobileWidth: 295px;
+
+  /* Título estilo YouTube */
+  --titleSize: 16px;
+  --titleLineHeight: 1.20;
+  --titleWeight: 600;
+}
+
+/* FIX: el badge grande usa transform: scale() en global.css -> puede “salirse”.
+   Aquí lo neutralizamos solo para esta página. */
+.tc-toolHeader .app-badge--large{
+  transform: none;
+}
+
+/* Extra seguridad */
+.tool-card{
+  overflow: hidden;
+}
+
+.tc-toolHeader{
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.tc-toolHeader .app-badge{
+  max-width: 100%;
+  min-width: 0;
+}
+.tc-toolHeader .app-badge__title{
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tc-shell{
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.tc-card{
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.tc-section{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.tc-divider{
+  height:1px;
+  margin:14px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0),
+    rgba(0,0,0,0.08),
+    rgba(0,0,0,0)
+  );
+}
+
+.tc-inputRow, .tc-simRow{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tc-label{
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.tc-count, .tc-width{
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.tc-textarea{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  outline: none;
+  font-size: 1rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.tc-textarea:focus{
+  border-color: rgba(0,153,204,0.55);
+  box-shadow: 0 0 0 3px rgba(0,153,204,0.12);
+}
+
+/* input de 2 líneas */
+.tc-textarea--two{
+  min-height: calc(1em * 2 * 1.4 + 24px);
+  max-height: calc(1em * 2 * 1.4 + 24px);
+  line-height: 1.4;
+  resize: none;
+}
+
+/* GRID: mockup izquierda, caja derecha */
+.tc-simGrid{
+  display:grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.tc-left{ min-width: 0; }
+
+@media (max-width: 860px){
+  .tc-simGrid{ grid-template-columns: 1fr; }
+}
+
+/* YouTube mobile mock */
+.ytm-card{
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+}
+
+.ytm-thumb{
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, rgba(0,153,204,0.18), rgba(255,204,51,0.14)),
+              #e9eef5;
+  position: relative;
+}
+
+.ytm-duration{
+  position:absolute;
+  right:10px;
+  bottom:10px;
+  background: rgba(0,0,0,0.72);
+  color:#fff;
+  font-size:12px;
+  padding:4px 7px;
+  border-radius:8px;
+  line-height:1;
+  font-weight:700;
+}
+
+.ytm-meta{
+  display:flex;
+  gap:10px;
+  padding:12px 12px 14px;
+  align-items:flex-start;
+}
+
+.ytm-avatar{
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  background:#ff3b30;
+  color:#fff;
+  font-weight:800;
+  display:grid;
+  place-items:center;
+  font-size:13px;
+  flex: 0 0 auto;
+  margin-top:2px;
+}
+
+.ytm-text{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.ytm-title{
+  font-size: var(--titleSize);
+  line-height: var(--titleLineHeight);
+  font-weight: var(--titleWeight);
+  color: var(--text-dark);
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.ytm-sub{
+  margin-top:6px;
+  font-size:12px;
+  color: rgba(0,0,0,0.55);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.ytm-more{
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  color: rgba(0,0,0,0.55);
+  flex:0 0 auto;
+  margin-top:2px;
+}
+
+/* Zeigarnik box */
+.tc-infoBox{
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #f7fafc;
+  padding: 12px 12px;
+}
+
+.tc-infoTitle{
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.tc-formula{
+  border-radius: 14px;
+  border: 1px dashed rgba(0,0,0,0.18);
+  background: #fff;
+  padding: 10px 10px;
+}
+
+.tc-formulaRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+.tc-chip{
+  display:inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(0,153,204,0.08);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.tc-plus, .tc-eq{
+  font-weight: 900;
+  opacity: 0.6;
+}
+
+.tc-result{
+  font-weight: 900;
+}
+
+.tc-block{
+  margin-top: 10px;
+}
+
+.tc-blockTitle{
+  font-weight: 900;
+  font-size: 0.9rem;
+  margin: 10px 0 6px;
+}
+
+.tc-infoBox ul{
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(0,0,0,0.70);
+  font-size: 0.9rem;
+}
+.tc-infoBox li{
+  margin: 6px 0;
+}
