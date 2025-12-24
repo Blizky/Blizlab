@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WebPrompter | Blizlab</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --blue: #0099CC; --yellow: #FFCC33; --white: #FDFDF9;
+            --black: #1A1A1A; --red: #c03221;
+        }
+        body {
+            background: var(--black); color: var(--white);
+            font-family: sans-serif; margin: 0; display: flex; flex-direction: column;
+            height: 100vh; justify-content: space-around; align-items: center;
+            touch-action: manipulation;
+        }
+        .status { font-size: 12px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
+        
+        button {
+            background: #2A2A2A; color: var(--white); border: 2px solid var(--blue);
+            padding: 20px; border-radius: 12px; font-size: 18px; font-weight: bold;
+            transition: active 0.1s;
+        }
+        button:active { background: var(--blue); transform: scale(0.95); }
+        
+        .btn-main { grid-column: span 2; background: var(--blue); height: 80px; font-size: 24px; }
+        .label { font-size: 14px; color: #888; margin-bottom: 5px; text-align: center; }
+        .control-group { display: flex; flex-direction: column; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="status" id="status">Connecting to iPad...</div>
+
+    <button class="btn-main" id="playBtn">START SCROLL</button>
+
+    <div class="grid">
+        <div class="control-group">
+            <div class="label">SPEED</div>
+            <button onclick="sendAction('speed-up')">＋ Faster</button>
+            <button onclick="sendAction('speed-down')" style="margin-top:10px">－ Slower</button>
+        </div>
+
+        <div class="control-group">
+            <div class="label">TEXT SIZE</div>
+            <button onclick="sendAction('size-up')">＋ Bigger</button>
+            <button onclick="sendAction('size-down')" style="margin-top:10px">－ Smaller</button>
+        </div>
+
+        <button class="btn-main" onclick="sendAction('mirror')" style="background: #333; border-color: var(--yellow);">MIRROR TEXT</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('remote');
+        const status = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        
+        let isPlaying = false;
+        const peer = new Peer();
+
+        peer.on('open', () => {
+            const conn = peer.connect(targetId);
+            
+            conn.on('open', () => {
+                status.innerText = "● Connected to EzScript";
+                status.style.color = "#2ecc71";
+                
+                // Keep screen awake on phone
+                if ('wakeLock' in navigator) { navigator.wakeLock.request('screen'); }
+            });
+
+            window.sendAction = (action) => {
+                conn.send({ action: action });
+            };
+
+            playBtn.onclick = () => {
+                isPlaying = !isPlaying;
+                playBtn.innerText = isPlaying ? "STOP SCROLL" : "START SCROLL";
+                playBtn.style.background = isPlaying ? "var(--red)" : "var(--blue)";
+                conn.send({ action: 'toggle', state: isPlaying });
+            };
+        });
+    </script>
+</body>
+</html>
