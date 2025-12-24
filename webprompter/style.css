@@ -44,31 +44,28 @@ textarea {
     display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
 }
 
+/* Container for the icon and title */
 h1 {
-  /* Set the text color */
-  color: #0099CC;
-  font-family: sans-serif;
-  
-  /* Remove the original text from view */
-  font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Adjust to 'flex-start' if you want it left-aligned */
+  text-decoration: none;
 }
 
-h1::before {
-  /* Define the mirrored emoji */
-  content: "💬";
+/* The Mirrored Emoji */
+.app_icon {
   display: inline-block;
   transform: scaleX(-1); /* Mirrors the emoji */
+  font-size: 32px;
   margin-right: 10px;
-  
-  /* Reset font size for the emoji */
-  font-size: 32px; 
+  line-height: 1;
 }
 
-h1::after {
-  /* Define the new title text */
-  content: "WebPrompter";
-  
-  /* Reset font size for the text */
+/* The Title Text */
+.app_title {
+  color: #0099CC;
+  font-family: sans-serif;
   font-size: 32px;
+  font-weight: bold;
   vertical-align: middle;
 }
