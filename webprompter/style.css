@@ -48,7 +48,7 @@ textarea {
 h1 {
   display: flex;
   align-items: center;
-  justify-content: center; /* Adjust to 'flex-start' if you want it left-aligned */
+  justify-content: flex-start; /* Adjust to 'flex-start' if you want it left-aligned */
   text-decoration: none;
 }
 
