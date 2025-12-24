@@ -43,3 +43,32 @@ textarea {
     position: fixed; inset: 0; background: rgba(0,0,0,0.95);
     display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
 }
+
+h1 {
+  /* Set the text color */
+  color: #0099CC;
+  font-family: sans-serif;
+  
+  /* Remove the original text from view */
+  font-size: 0;
+}
+
+h1::before {
+  /* Define the mirrored emoji */
+  content: "💬";
+  display: inline-block;
+  transform: scaleX(-1); /* Mirrors the emoji */
+  margin-right: 10px;
+  
+  /* Reset font size for the emoji */
+  font-size: 32px; 
+}
+
+h1::after {
+  /* Define the new title text */
+  content: "WebPrompter";
+  
+  /* Reset font size for the text */
+  font-size: 32px;
+  vertical-align: middle;
+}
