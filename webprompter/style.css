@@ -27,7 +27,7 @@ textarea {
     height: 100%; overflow-y: scroll; padding: 45vh 10vw;
     scroll-behavior: auto; /* Smoother for manual control */
 }
-#text-display { font-size: 60px; line-height: 1.5; white-space: pre-wrap; transition: transform 0.3s; }
+#text-display { font-size: 90px; line-height: 1.5; white-space: pre-wrap; transition: transform 0.3s; }
 .mirrored { transform: scaleX(-1); }
 
 /* UI Elements */
