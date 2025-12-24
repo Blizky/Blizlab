@@ -10,6 +10,19 @@ body, html {
     overflow: hidden;
 }
 
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  /* Blizlab-style Blue Gradient */
+  background: linear-gradient(135deg, #051937, #004d7a, #008793);
+  background-attachment: fixed; /* Keeps the gradient from scrolling with content */
+  
+  /* Text defaults to look good on dark blue */
+  color: white;
+  font-family: sans-serif;
+}
+
 /* Edit Mode */
 #edit-mode { 
     background: var(--white); color: var(--black);
@@ -63,7 +76,7 @@ h1 {
 
 /* The Title Text */
 .app_title {
-  color: #0099CC;
+  color: #FDFDF9;
   font-family: sans-serif;
   font-size: 32px;
   font-weight: bold;
