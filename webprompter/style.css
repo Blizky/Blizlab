@@ -44,10 +44,29 @@ textarea {
 .mirrored { transform: scaleX(-1); }
 
 /* UI Elements */
+
+
+/* button*/
 .btn {
-    background: var(--blue); color: white; border: none; padding: 15px 25px;
-    font-weight: bold; border-radius: 8px; cursor: pointer;
+	background: var(--blue);
+	color: #ffffff;
+	border: none;
+	padding: 15px 25px;
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 0.9rem;
+	cursor: pointer;
+	text-decoration: none;
+	min-width: 140px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 10px 20px rgba(0,0,0,0.35);
 }
+/*end button */
+
+
+
 #status-bar {
     position: fixed; bottom: 15px; right: 15px; padding: 8px 15px;
     border-radius: 20px; font-size: 12px; font-weight: bold; background: var(--red);
