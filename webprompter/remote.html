@@ -1,89 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WebPrompter | Blizlab</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root {
-            --blue: #0099CC; --yellow: #FFCC33; --white: #FDFDF9;
-            --black: #1A1A1A; --red: #c03221;
-        }
-        body {
-            background: var(--black); color: var(--white);
-            font-family: sans-serif; margin: 0; display: flex; flex-direction: column;
-            height: 100vh; justify-content: space-around; align-items: center;
-            touch-action: manipulation;
-        }
-        .status { font-size: 12px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
-        
-        button {
-            background: #2A2A2A; color: var(--white); border: 2px solid var(--blue);
-            padding: 20px; border-radius: 12px; font-size: 18px; font-weight: bold;
-            transition: active 0.1s;
-        }
-        button:active { background: var(--blue); transform: scale(0.95); }
-        
-        .btn-main { grid-column: span 2; background: var(--blue); height: 80px; font-size: 24px; }
-        .label { font-size: 14px; color: #888; margin-bottom: 5px; text-align: center; }
-        .control-group { display: flex; flex-direction: column; width: 100%; }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .btn-large { width: 100%; height: 100px; font-size: 24px; background: var(--blue); color: white; border: none; border-radius: 15px; }
+        .btn-sub { padding: 20px; background: #333; color: white; border: 1px solid var(--blue); border-radius: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
-
-    <div class="status" id="status">Connecting to iPad...</div>
-
-    <button class="btn-main" id="playBtn">START SCROLL</button>
-
-    <div class="grid">
-        <div class="control-group">
-            <div class="label">SPEED</div>
-            <button onclick="sendAction('speed-up')">＋ Faster</button>
-            <button onclick="sendAction('speed-down')" style="margin-top:10px">－ Slower</button>
-        </div>
-
-        <div class="control-group">
-            <div class="label">TEXT SIZE</div>
-            <button onclick="sendAction('size-up')">＋ Bigger</button>
-            <button onclick="sendAction('size-down')" style="margin-top:10px">－ Smaller</button>
-        </div>
-
-        <button class="btn-main" onclick="sendAction('mirror')" style="background: #333; border-color: var(--yellow);">MIRROR TEXT</button>
+    <h2 id="rm-status" style="color:var(--yellow)">Connecting...</h2>
+    <button id="playBtn" class="btn-large">START</button>
+    <div class="control-grid">
+        <button class="btn-sub" onclick="send('speed-up')">Speed +</button>
+        <button class="btn-sub" onclick="send('speed-down')">Speed -</button>
+        <button class="btn-sub" onclick="send('size-up')">Size +</button>
+        <button class="btn-sub" onclick="send('size-down')">Size -</button>
+        <button class="btn-sub" onclick="send('mirror')" style="grid-column: span 2; border-color: var(--yellow)">Mirror Text</button>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetId = urlParams.get('remote');
-        const status = document.getElementById('status');
-        const playBtn = document.getElementById('playBtn');
-        
-        let isPlaying = false;
+        const targetId = new URLSearchParams(window.location.search).get('remote');
         const peer = new Peer();
+        let conn;
+        let active = false;
 
         peer.on('open', () => {
-            const conn = peer.connect(targetId);
-            
+            conn = peer.connect(targetId);
             conn.on('open', () => {
-                status.innerText = "● Connected to EzScript";
-                status.style.color = "#2ecc71";
-                
-                // Keep screen awake on phone
-                if ('wakeLock' in navigator) { navigator.wakeLock.request('screen'); }
+                document.getElementById('rm-status').innerText = 'CONNECTED';
+                document.getElementById('rm-status').style.color = '#2ecc71';
             });
-
-            window.sendAction = (action) => {
-                conn.send({ action: action });
-            };
-
-            playBtn.onclick = () => {
-                isPlaying = !isPlaying;
-                playBtn.innerText = isPlaying ? "STOP SCROLL" : "START SCROLL";
-                playBtn.style.background = isPlaying ? "var(--red)" : "var(--blue)";
-                conn.send({ action: 'toggle', state: isPlaying });
-            };
         });
+
+        function send(action) { if(conn) conn.send({action}); }
+
+        document.getElementById('playBtn').onclick = function() {
+            active = !active;
+            this.innerText = active ? 'STOP' : 'START';
+            this.style.background = active ? 'var(--red)' : 'var(--blue)';
+            conn.send({action: 'toggle', state: active});
+        };
     </script>
 </body>
 </html>
