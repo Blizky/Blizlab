@@ -6,14 +6,14 @@
 body, html { 
     margin: 0; padding: 0; height: 100%; 
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--blue); color: var(--white);
+    background: var(--black); color: var(--white);
     overflow: hidden;
 }
 
 
 /* Edit Mode */
 #edit-mode { 
-    background: var(--white); color: var(--black);
+    background: var(--blue); color: var(--black);
     display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box;
 }
 
