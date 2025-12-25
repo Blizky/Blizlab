@@ -12,6 +12,11 @@
     </style>
 </head>
 <body>
+
+<div class="header-container">
+          <span class="app_icon">💬</span><span class="app_title">WebPrompter</span>
+        </div>
+    
     <h2 id="rm-status" style="color:var(--yellow)">Connecting...</h2>
     <button id="playBtn" class="btn-large">START</button>
     <div class="control-grid">
@@ -45,5 +50,10 @@
             conn.send({action: 'toggle', state: active});
         };
     </script>
+
+    <footer class="bliz-footer">
+    Made by Alex with <span class="heart">❤️</span>
+</footer>
+
 </body>
 </html>
