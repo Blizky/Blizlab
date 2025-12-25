@@ -13,7 +13,7 @@ body, html {
 
 /* Edit Mode */
 #edit-mode { 
-    background: var(--blue); color: var(--black);
+    background: var(--white); color: var(--black);
     display: flex; flex-direction: column; height: 100vh; padding: 20px; box-sizing: border-box;
 }
 
