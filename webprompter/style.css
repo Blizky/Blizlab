@@ -18,7 +18,7 @@ body, html {
 }
 
 textarea { 
-    flex-grow: 0; height: 70%; margin: 15px 0; padding: 20px; border: 2px solid var(--black);
+    flex-grow: 0; height: 480px; margin: 15px 0; padding: 20px; border: 2px solid var(--black);
     font-size: 1.2rem; border-radius: 10px; resize: none;
 }
 
