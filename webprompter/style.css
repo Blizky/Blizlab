@@ -83,7 +83,7 @@ h1 {
 
 /* The Title Text */
 .app_title {
-  color: #FDFDF9;
+  color: var(--blue);
   font-family: sans-serif;
   font-size: 32px;
   font-weight: bold;
