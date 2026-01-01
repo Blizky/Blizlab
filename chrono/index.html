@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One-Button Chronometer</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px 60px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 250px;
+        }
+
+        #display {
+            font-size: 4.5rem;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+            width: 100%;
+            outline: none;
+            user-select: none; 
+            font-weight: bold;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        /* State Colors */
+        .btn-play { background-color: #28a745; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+        .btn-play:hover { background-color: #218838; }
+
+        .btn-stop { background-color: #dc3545; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3); }
+        .btn-stop:hover { background-color: #c82333; }
+
+        .btn-reset { background-color: #007bff; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); }
+        .btn-reset:hover { background-color: #0069d9; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="display">00:00:00</div>
+        <button id="actionBtn" class="btn-play" onclick="handleAction()">Start</button>
+    </div>
+
+    <script>
+        // Define variables globally so they are never lost
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let currentState = 'idle'; 
+
+        // Main function called by the button
+        function handleAction() {
+            // Grab elements fresh every time to avoid errors
+            const btn = document.getElementById("actionBtn");
+            const display = document.getElementById("display");
+
+            if (currentState === 'idle') {
+                // START
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(function() {
+                    const now = Date.now();
+                    elapsedTime = now - startTime;
+                    updateDisplay(elapsedTime, display);
+                }, 10);
+
+                currentState = 'running';
+                btn.textContent = "Stop";
+                btn.className = "btn-stop";
+
+            } else if (currentState === 'running') {
+                // STOP
+                clearInterval(timerInterval);
+                currentState = 'stopped';
+                btn.textContent = "Reset";
+                btn.className = "btn-reset";
+
+            } else if (currentState === 'stopped') {
+                // RESET
+                elapsedTime = 0;
+                updateDisplay(0, display);
+                currentState = 'idle';
+                btn.textContent = "Start";
+                btn.className = "btn-play";
+            }
+        }
+
+        function updateDisplay(time, displayElement) {
+            let diff = time;
+            let ms = Math.floor((diff % 1000) / 10);
+            let s = Math.floor((diff / 1000) % 60);
+            let m = Math.floor((diff / (1000 * 60)) % 60);
+
+            let mString = m < 10 ? "0" + m : m;
+            let sString = s < 10 ? "0" + s : s;
+            let msString = ms < 10 ? "0" + ms : ms;
+
+            displayElement.textContent = `${mString}:${sString}:${msString}`;
+        }
+    </script>
+</body>
+</html>
