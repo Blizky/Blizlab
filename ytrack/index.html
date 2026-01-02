@@ -14,6 +14,7 @@
     <h2 id="mainTitle">Video Interest Experiment</h2>
 
     <div id="setupSection">
+        <p>Enter a YouTube URL to begin a 60-second engagement test.</p>
         <input type="text" id="videoUrl" placeholder="Paste YouTube Link Here">
         <button id="loadBtn">Start Test</button>
     </div>
@@ -37,9 +38,16 @@
 
     <button id="submitBtn">Send & See Results</button>
 
-    <div id="resultsArea" style="display:none; margin-top: 20px;">
+    <div id="resultsArea" style="display:none;">
         <h3>Community Average (Smoothed)</h3>
-        <canvas id="avgChart"></canvas>
+        <div class="chart-container">
+            <canvas id="avgChart"></canvas>
+        </div>
+        <button id="shareBtn" class="secondary-btn">Share Results</button>
+        <p class="expiration-note">
+            Note: This campaign data is temporary and will be available for 15 days. 
+            All entries are automatically cleared after 30 days.
+        </p>
     </div>
 </div>
 

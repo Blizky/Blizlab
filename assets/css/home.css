@@ -5,7 +5,7 @@
   width: 100%;
   overflow: hidden;
   border: 2px solid #FFCC33;
-  border-radius: 10px;
+  border-radius: 8px; /* Slightly sharper radius to match new button */
   position: relative;
   padding-bottom: 48%;   /* shorter so text doesn’t spill */
   height: 0;
@@ -67,17 +67,17 @@
 
   transform-origin: center bottom;
   background: radial-gradient(circle at top, #ffffff, #f3f3f0);
-  border: 3px solid var(--blue);
+  border: 4px solid var(--blue);
   border-radius: 20px;
 
   box-shadow:
     0 20px 40px rgba(0,0,0,0.35),
     0 0 0 1px rgba(255,255,255,0.5) inset;
 
-  padding: 14px 16px 18px;
+  padding: 16px 18px 20px; /* Tweaked overall padding */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0; /* Handled by margins manually for precision */
   cursor: pointer;
 
   transition:
@@ -95,62 +95,43 @@
     z-index 0s;
 }
 
-/* Title chip -------------------------------------------------- */
+/* Title Header (Simplified) ----------------------------------- */
 .card-header {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--yellow);
-  border-radius: 999px;
-  padding: 6px 12px;
-  margin-bottom: 4px;
-  box-shadow: 0 5px 12px rgba(0,0,0,0.16);
-}
-
-/* Icon inside chip */
-.card-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: #ffffff;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  gap: 8px;
+  background: transparent; 
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 12px;
+  width: 100%;
 }
 
-.card-icon svg {
-  width: 19px;
-  height: 19px;
-  fill: var(--yellow);
-}
-
-/* App name inside chip */
 .card-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.6rem; 
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   color: var(--blue);
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1;
 }
 
 /* Body text --------------------------------------------------- */
 .card-body {
+  padding: 0; /* Removed padding so we can control it via margins */
+  margin-top: 10px; /* Precise gap between Image and Text */
+  
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 6px;
-  margin-top: 2px;
 }
 
 .card-desc {
-  font-size: 0.9rem;
-  line-height: 1.3;
-  margin-bottom: 4px;
+  font-size: 0.85rem; /* Smaller text */
+  padding: 0; 
+  line-height: 1.4;
+  margin: 0 0 6px 0;
   color: var(--text-dark);
 }
 
@@ -158,14 +139,15 @@
 .color-dots {
   list-style: none;
   padding-left: 0;
-  margin: 4px 0 4px;
+  margin: 4px 0 12px;
 }
 
 .color-dots li {
   position: relative;
   padding-left: 1.15em;
-  margin-bottom: 0.15em;
-  font-size: 0.85rem;
+  margin-bottom: 0.2em;
+  font-size: 0.8rem;
+  color: #444;
 }
 
 .color-dots li::before {
@@ -179,40 +161,48 @@
   border-radius: 50%;
 }
 
-/* Button ------------------------------------------------------ */
+/* Button (Square) -------------------------------------------- */
 .card-btn-wrap {
-  margin-top: auto;
-  display: flex;
-  justify-content: center;
+  margin-top: auto; /* Pushes button to bottom */
+  width: 100%;
 }
 
 .card-btn {
   background: var(--blue);
   color: #ffffff;
   border: none;
-  padding: 10px 16px;
-  border-radius: 999px;
+  
+  /* Square Look */
+  border-radius: 8px; 
+  width: 100%;
+  padding: 12px 0;
+  
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 1rem;
   cursor: pointer;
   text-decoration: none;
 
-  min-width: 140px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
 
-  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 
 .card-btn::after {
   content: "➜";
-  margin-left: 6px;
+  margin-left: 8px;
   font-size: 0.9em;
 }
 
 .card-btn:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
+}
+
+.card-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
 }
 
 /* Hover glow (only inactive cards) */
@@ -283,6 +273,12 @@
 }
 
 .emoji {
-  font-size: 1.3em; /* increase as needed */
-  vertical-align: -0.1em; /* adjust to center nicely */
+  font-size: 1.6rem; 
+  vertical-align: middle;
+  line-height: 1;
+  
+  /* The Blue Shadow Effect */
+  filter: drop-shadow(0 3px 3px rgba(0, 133, 173, 0.5));
+  
+
 }

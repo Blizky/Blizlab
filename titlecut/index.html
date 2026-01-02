@@ -1,186 +1,71 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TitleCut</title>
-
-  <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
-  <link rel="stylesheet" href="/assets/css/global.css">
-  <link rel="stylesheet" href="/assets/css/titlecut.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleCut | YouTube Mobile Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="titlecut.css">
 </head>
-
 <body>
-  <!-- HEADER (igual estilo Checksy) -->
-  <header>
-    <div class="header-brand">
-      <a href="/" class="logo-link">
-        <div id="title-main" class="header-text-title">
-          BLI
-          <span class="z-icon">
-            <img src="/assets/svg/blizlab-bolt.svg" alt="">
-          </span>
-          LAB
-        </div>
-      </a>
-    </div>
-
-    <div class="header-sub">
-      <div id="title-sub" class="header-text-subtitle">
-        Simple offline web-apps for creators over their deadline… again.
-      </div>
-    </div>
-
-    <div class="header-right">
-      <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
-        <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="app-menu-bar">
-    <div class="app-menu-inner">
-      <nav class="main-nav" aria-label="App navigation">
-        <ul class="nav-list">
-          <li class="nav-item">
-            <button class="nav-link nav-link--button" type="button">Apps</button>
-            <ul class="nav-submenu">
-              <li><a href="/octofind/">OctoFind</a></li>
-              <li><a href="/bgone/">BGone</a></li>
-              <li><a href="/retroit/">RetroIt</a></li>
-              <li><a href="/skreen/">Skreen</a></li>
-              <li><a href="/checksy/">Checksy</a></li>
-              <li><a href="/titlecut/">TitleCut</a></li>
-            </ul>
-          </li>
-
-          <li>
-            <a class="nav-link nav-link--button"
-               href="https://github.com/Blizky/Blizlab"
-               target="_blank"
-               rel="noopener noreferrer">
-              Readme
-            </a>
-          </li>
-
-          <li>
-            <a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-  <!-- END HEADER -->
-
-  <main class="page-main">
-    <section class="tool-card">
-      <div class="tc-card">
-
-            <!-- floating star -->
-            <div class="tool-header tc-toolHeader">
-              <div class="app-badge app-badge--large">
-                <span class="app-badge__icon">✂️</span>
-                <span class="app-badge__title">TitleCut</span>
-              </div>
-
-              <p class="tool-subtitle" id="tcSubtitle">
-                Simula cómo se corta tu título en YouTube mobile (2 líneas + …).
-              </p>
+    <div class="tc-app">
+        <header class="tc-header">
+            <span class="tc-logo">✂️ TitleCut</span>
+            <div class="tc-lang">
+                <button id="btn-en" class="active">EN</button>
+                <button id="btn-es">ES</button>
             </div>
-            <!-- floating end -->
+        </header>
 
-          <!-- SECTION 1: INPUT -->
-          <div class="tc-section">
-            <div class="tc-inputRow">
-              <div class="tc-label" id="tcLabelTitle">Título</div>
-              <div class="tc-count"><span id="charCount">0</span> <span id="tcCharsWord">caracteres</span></div>
-            </div>
+        <div class="tc-main-grid">
+            <section class="tc-input-section">
+                <div class="tc-card">
+                    <div class="tc-label-row">
+                        <label id="lbl-title">Video Title</label>
+                        <span class="tc-chars"><span id="charCount">0</span> <span id="lbl-chars">characters</span></span>
+                    </div>
+                    <textarea id="titleInput" placeholder="Paste your title here..."></textarea>
+                </div>
 
-            <textarea
-              id="titleInput"
-              class="tc-textarea tc-textarea--two"
-              spellcheck="false"
-              placeholder="Pega tu título aquí..."
-            ></textarea>
-          </div>
+                <aside class="tc-card tc-sidebar">
+                    <h3 id="lbl-formula-title">Zeigarnik Formula</h3>
+                    <div class="tc-formula-box">
+                        Concrete Fact + Incomplete Hook = Clicks
+                    </div>
+                    <ul id="tc-tips-list" class="tc-tips">
+                        </ul>
+                </aside>
+            </section>
 
-          <div class="tc-divider"></div>
-
-          <!-- SECTION 2: PREVIEW + INFO -->
-          <div class="tc-section">
-            <div class="tc-simRow">
-              <div class="tc-label" id="tcLabelSim">Simulador móvil (2 líneas + …)</div>
-              <div class="tc-width"><span id="tcWidthWord">ancho</span>: <span id="wLabel">295px</span></div>
-            </div>
-
-            <div class="tc-simGrid">
-              <!-- Left: YouTube mock -->
-              <div class="tc-left">
-                <div class="ytm-card" style="width: var(--mobileWidth);">
-                  <div class="ytm-thumb" aria-hidden="true">
-                    <div class="ytm-duration">10:24</div>
-                  </div>
-
-                  <div class="ytm-meta">
-                    <div class="ytm-avatar" aria-hidden="true">YT</div>
-
-                    <div class="ytm-text">
-                      <div id="simTitle" class="ytm-title"></div>
-                      <div class="ytm-sub" id="tcMetaLine">Channel Name · 1.2M views · 2 days ago</div>
+            <section class="tc-sim-section">
+                <div class="tc-card">
+                    <div class="tc-label-row">
+                        <label id="lbl-sim">Mobile Simulation (iPhone)</label>
+                        <div class="tc-width-ctrl">
+                            <input type="range" id="widthSlider" min="280" max="420" value="360">
+                            <span id="widthDisplay">360px</span>
+                        </div>
                     </div>
 
-                    <div class="ytm-more" aria-hidden="true">⋮</div>
-                  </div>
+                    <div class="iphone-container">
+                        <div class="yt-mobile-mock" id="ytMock">
+                            <div class="yt-thumb">
+                                <span class="yt-time">12:56</span>
+                            </div>
+                            <div class="yt-meta">
+                                <div class="yt-avatar"></div>
+                                <div class="yt-text">
+                                    <h3 id="simTitle" class="yt-title-text"></h3>
+                                    <p class="yt-sub">Anton Petrov • 105K views • 2 days ago</p>
+                                </div>
+                                <div class="yt-more">⋮</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-
-              <!-- Right: Zeigarnik box -->
-              <aside class="tc-infoBox">
-                <h3 class="tc-infoTitle" id="tcInfoTitle">Fórmula “Zeigarnik Cut”</h3>
-
-                <div class="tc-formula">
-                  <div class="tc-formulaRow">
-                    <span class="tc-chip" id="tcChipFact">Hecho concreto</span>
-                    <span class="tc-plus">+</span>
-                    <span class="tc-chip" id="tcChipConseq">Consecuencia incompleta</span>
-                  </div>
-                  <div class="tc-formulaRow">
-                    <span class="tc-eq">=</span>
-                    <span class="tc-result" id="tcResult">Curiosidad + clic</span>
-                  </div>
-                </div>
-
-                <div class="tc-block">
-                  <div class="tc-blockTitle" id="tcChecklistTitle">Checklist rápida</div>
-                  <ul id="tcChecklist"></ul>
-                </div>
-
-                <div class="tc-block">
-                  <div class="tc-blockTitle" id="tcCutsTitle">Cortes que suelen funcionar</div>
-                  <ul id="tcCuts"></ul>
-                </div>
-              </aside>
-            </div>
-
-          </div>
+            </section>
         </div>
-      
-    </section>
-  </main>
-
-  <footer>
-    <span id="footer-text">
-      <img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi">
-      <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a>
-      · Made by Alex
-    </span>
-  </footer>
-
-  <script src="titlecut.js"></script>
-
-  <script src="https://cdn.counter.dev/script.js"
-          data-id="dd7fb35a-238d-4948-a5a8-694b141e7608"
-          data-utcoffset="-6"></script>
+    </div>
+    <script src="titlecut.js"></script>
 </body>
 </html>

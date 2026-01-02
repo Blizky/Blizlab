@@ -1,21 +1,20 @@
-/* Color Palette Integration */
 :root { 
     --blue: #0099CC;
     --yellow: #FFCC33;
-    --white: #FDFDF9;
+    --white: #FDFDF9; 
     --black: #1A1A1A;
     --red: #c03221;
 }
 
 body { 
-    font-family: 'Segoe UI', sans-serif; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     background-color: var(--white); 
     color: var(--black);
     margin: 0; 
     padding: 10px; 
     display: flex; 
-    justify-content: center; 
-    touch-action: manipulation; 
+    justify-content: center;
+    touch-action: manipulation;
 }
 
 .container { 
@@ -45,7 +44,7 @@ body {
     margin-top: 15px; 
 }
 
-/* Mobile-friendly large slider using your Red, Yellow, Blue/Green palette */
+/* Large, thumb-friendly slider for mobile */
 #interestSlider { 
     width: 100%; 
     height: 50px; 
@@ -63,15 +62,7 @@ body {
     background: var(--black); 
     border: 5px solid white; 
     border-radius: 50%; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-}
-
-.labels { 
-    display: flex; 
-    justify-content: space-between; 
-    font-weight: bold; 
-    font-size: 0.85rem; 
-    color: var(--black); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 #statusLabel { 
@@ -84,7 +75,7 @@ body {
 
 #timerDisplay { 
     font-family: monospace; 
-    font-size: 1.1rem; 
+    font-size: 1.2rem; 
     background: var(--black); 
     color: white; 
     padding: 5px 15px; 
@@ -102,19 +93,7 @@ input[type="text"] {
     margin-bottom: 10px; 
 }
 
-#loadBtn { 
-    background-color: var(--blue); 
-    color: white; 
-}
-
-#submitBtn { 
-    background-color: var(--blue); 
-    display: none; 
-    margin-top: 20px; 
-    color: white;
-}
-
-#loadBtn, #submitBtn {
+#loadBtn, #submitBtn, #shareBtn {
     width: 100%; 
     padding: 18px; 
     font-size: 1.2rem; 
@@ -122,6 +101,23 @@ input[type="text"] {
     border: none; 
     border-radius: 8px; 
     cursor: pointer;
+    transition: opacity 0.2s;
 }
 
-canvas { max-width: 100% !important; }
+#loadBtn, #submitBtn { background-color: var(--blue); color: white; }
+#shareBtn { background-color: var(--black); color: white; margin-top: 20px; }
+
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+    width: 100%;
+}
+
+.expiration-note { 
+    font-size: 0.8rem; 
+    color: #666; 
+    margin-top: 25px; 
+    line-height: 1.4; 
+    font-style: italic;
+}

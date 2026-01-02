@@ -2,89 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BGone – Offline AI Background Remover</title>
+  <title>OctoFind – Multi-site media search</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SHARED -->
   <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
   <link rel="stylesheet" href="/assets/css/global.css">
+  <script src="/assets/components.js" defer></script>
 
-  <link rel="stylesheet" href="/assets/css/octofind.css"> <!-- App-specific CSS -->
+  <link rel="stylesheet" href="octofind.css"> 
   
 </head>
 
 <body>
 
-<header>
-  <!-- Logo -->
-<div class="header-brand">
-  <a href="/" class="logo-link">
-    <div id="title-main" class="header-text-title">
-      BLI
-      <span class="z-icon">
-        <img src="/assets/svg/blizlab-bolt.svg" alt="">
-      </span>
-      LAB
-    </div>
-  </a>
-</div>
-
-  <!-- Subtitle -->
-  <div class="header-sub">
-    <div id="title-sub" class="header-text-subtitle">
-      Simple offline web-apps for creators over their deadline… again.
-    </div>
-  </div>
-
-  <!-- Right: language only -->
-  <div class="header-right">
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
-      <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
-    </div>
-  </div>
-</header>
-
-<!-- Yellow menu bar -->
-<div class="app-menu-bar">
-  <div class="app-menu-inner">
-    <nav class="main-nav" aria-label="App navigation">
-      <ul class="nav-list">
-
-        <li class="nav-item">
-          <button class="nav-link nav-link--button" type="button">Apps</button>
-          <ul class="nav-submenu">
-            <li><a href="/octofind/">OctoFind</a></li>
-            <li><a href="/bgone/">BGone</a></li>
-            <li><a href="/retroit/">RetroIt</a></li>
-            <li><a href="/skreen/">Skreen</a></li>
-            <li><a href="/checksy/">Checksy</a></li>
-          </ul>
-        </li>
-
-        <li>
-          <a class="nav-link nav-link--button" 
-             href="https://github.com/Blizky/Blizlab" 
-             target="_blank" 
-             rel="noopener noreferrer">
-             Readme
-          </a>
-        </li>
-
-        <li>
-          <a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a>
-        </li>
-
-      </ul>
-    </nav>
-  </div>
-</div>
-<!-- END SHARED-->
-
-
+  <app-header layout="compact"></app-header>
 
   <main class="page-main">
-    <!-- Pop-up hint strip -->
     <div class="popup-strip" id="popupStrip">
       <div class="popup-strip-main">
         <span class="icon">⚠️</span>
@@ -95,23 +28,23 @@
       <button id="popupDismiss">Got it</button>
     </div>
 
-    <!-- OctoFind tool card -->
     <section class="tool-card">
       <div class="tool-header">
+        
+        <div class="app-brand">
+          <div class="app-brand-icon">
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="m12 13.5l6-4l-6-4zm-6.3 8.375q-.825.125-1.487-.387T3.45 20.15L2.125 9.225q-.1-.825.4-1.475T3.85 7L5 6.85V15q0 1.65 1.175 2.825T9 19h9.3q-.15.6-.6 1.038t-1.1.512zM9 17q-.825 0-1.412-.587T7 15V4q0-.825.588-1.412T9 2h11q.825 0 1.413.588T22 4v11q0 .825-.587 1.413T20 17z"/></svg>
+        </div>
+          <div class="app-brand-text">
+            Octo<span class="highlight">Find</span>
+          </div> 
+        </div>
 
-
-      <!-- Header badge -->
-      <div class="app-badge app-badge--large">
-        <span class="app-badge__icon">🐙</span>
-        <span class="app-badge__title">OctoFind</span>
-      </div>
-
-        <p class="tool-subtitle" id="toolSubtitle">
+        <p class="tool-subtitle">
           Search all your favorite free media sites at once — videos, photos, public domain and PNG cutouts.
         </p>
       </div>
 
-      <!-- Search bar -->
       <section class="search-card">
         <div class="search-row">
           <label class="input-wrap">
@@ -122,71 +55,63 @@
             <input id="q" type="text" placeholder="Search term (e.g., forest)">
           </label>
           <button class="btn-main photos" id="btnPhotosMain">
-            <span class="dot"></span><span id="btnPhotosLabel">Photos</span>
+            <span class="dot"></span>Photos
           </button>
           <button class="btn-main videos" id="btnVideosMain">
-            <span class="dot"></span><span id="btnVideosLabel">Videos</span>
+            <span class="dot"></span>Videos
           </button>
           <button class="btn-main public" id="btnPublicMain">
-            <span class="dot"></span><span id="btnPublicLabel">Public</span>
+            <span class="dot"></span>Public
           </button>
           <button class="btn-main png" id="btnPNGsMain">
-            <span class="dot"></span><span id="btnPNGsLabel">PNGs</span>
+            <span class="dot"></span>PNGs
           </button>
         </div>
-        <div class="search-hint" id="searchHint">
+        <div class="search-hint">
           Press Enter to search Videos, or click a button to choose a category.
         </div>
       </section>
 
-      <!-- Sites groups -->
       <section class="groups">
         <div>
-          <div class="group-title" id="videosTitle">VIDEOS</div>
+          <div class="group-title">VIDEOS</div>
           <div class="chips" id="chips-videos"></div>
         </div>
         <div>
-          <div class="group-title" id="photosTitle">PHOTOS</div>
+          <div class="group-title">PHOTOS</div>
           <div class="chips" id="chips-photos"></div>
         </div>
         <div>
-          <div class="group-title" id="publicTitle">PUBLIC DOMAIN</div>
+          <div class="group-title">PUBLIC DOMAIN</div>
           <div class="chips" id="chips-public"></div>
         </div>
         <div>
-          <div class="group-title" id="pngTitle">PNGS (TRANSPARENT)</div>
+          <div class="group-title">PNGS (TRANSPARENT)</div>
           <div class="chips" id="chips-png"></div>
         </div>
       </section>
 
-      <p class="tip-line" id="tipLine">
+      <p class="tip-line">
         Tip: click a site name to enable/disable it for that category. Only enabled sites will open.
       </p>
 
-      <!-- Footer inside card -->
       <div class="tool-footer">
         <div class="tool-footer-controls">
           <button class="btn-ghost" id="btn-manage">
             <span class="icon">⚙️</span>
-            <span id="manageLabel">Manage sites</span>
+            <span>Manage sites</span>
           </button>
         </div>
       </div>
     </section>
   </main>
 
+  <app-footer></app-footer>
 
-<footer>
-  <span id="footer-text">
-<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
-  </span>
-</footer>
-
-  <!-- MODAL: manage sites -->
   <div class="modal-backdrop" id="modal-backdrop">
     <div class="modal">
       <div class="modal-head">
-        <h2 class="modal-title" id="modalTitle">Manage search sites</h2>
+        <h2 class="modal-title">Manage search sites</h2>
         <button class="btn-small" id="btn-close-modal">Close</button>
       </div>
       <div class="modal-body" id="sites-container"></div>
@@ -197,7 +122,7 @@
           <button class="btn-small" id="btn-export-sites">Export</button>
           <button class="btn-small" id="btn-import-sites">Import</button>
         </div>
-        <span id="modalFootNote">
+        <span>
           Use <code>%S</code> in the URL where the search term should go.
         </span>
       </div>
@@ -206,11 +131,9 @@
 
   <input type="file" id="import-file" accept="application/json" style="display:none" />
 
-  <!-- JS: your existing logic, unchanged -->
   <script>
     /* STORAGE KEYS -------------------------------------------------- */
     const KEY_SITES  = "octofind-sites-v1";
-    const KEY_LANG   = "octofind-lang";
     const KEY_POPUP  = "octofind-popup-seen";
 
     /* DEFAULT SITES ------------------------------------------------- */
@@ -253,134 +176,26 @@
 
     let sites = loadSites();
 
-    /* I18N ---------------------------------------------------------- */
-    const I18N = {
-      en: {
-        subtitleHeader: "Simple offline web-apps for creators over their deadline… again.",
-        toolSubtitle: "Search all your favorite free media sites at once — videos, photos, public domain and PNG cutouts.",
-        searchPlaceholder: "Search term (e.g., forest)",
-        searchHint: "Press Enter to search Videos, or click a button to choose a category.",
-        videosTitle: "VIDEOS",
-        photosTitle: "PHOTOS",
-        publicTitle: "PUBLIC DOMAIN",
-        pngTitle: "PNGS (TRANSPARENT)",
-        btnVideos: "Videos",
-        btnPhotos: "Photos",
-        btnPublic: "Public",
-        btnPNGs: "PNGs",
-        tipLine: "Tip: click a site name to enable/disable it for that category. Only enabled sites will open.",
-        manageLabel: "Manage sites",
-        modalTitle: "Manage search sites",
-        btnClose: "Close",
-        btnAdd: "+ Add site",
-        btnSave: "Save",
-        btnExport: "Export",
-        btnImport: "Import",
-        modalFoot: "Use %S in the URL where the search term should go.",
-        popupText: "To open multiple sites at once, please allow pop-ups for this page.",
-        popupBtn: "Got it"
-      },
-      es: {
-        subtitleHeader: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
-        toolSubtitle: "Busca en varios sitios de medios gratuitos a la vez — videos, fotos, dominio público y recortes PNG.",
-        searchPlaceholder: "Término de búsqueda (ej.: bosque)",
-        searchHint: "Pulsa Enter para buscar Videos o usa los botones para elegir categoría.",
-        videosTitle: "VIDEOS",
-        photosTitle: "FOTOS",
-        publicTitle: "DOMINIO PÚBLICO",
-        pngTitle: "PNGS (TRANSPARENTES)",
-        btnVideos: "Videos",
-        btnPhotos: "Fotos",
-        btnPublic: "Público",
-        btnPNGs: "PNGs",
-        tipLine: "Tip: haz clic en el nombre del sitio para activarlo o desactivarlo. Solo se abrirán los sitios activos.",
-        manageLabel: "Administrar sitios",
-        modalTitle: "Administrar sitios de búsqueda",
-        btnClose: "Cerrar",
-        btnAdd: "+ Agregar sitio",
-        btnSave: "Guardar",
-        btnExport: "Exportar",
-        btnImport: "Importar",
-        modalFoot: "Usa %S en la URL donde debe ir el término de búsqueda.",
-        popupText: "Para abrir varios sitios a la vez, permite las ventanas emergentes (pop-ups) de esta página.",
-        popupBtn: "Entendido"
-      }
-    };
-
     /* DOM REFS ------------------------------------------------------ */
-    const titleSub       = document.getElementById("title-sub");
-    const toolSubtitleEl = document.getElementById("toolSubtitle");
     const q              = document.getElementById("q");
-    const searchHint     = document.getElementById("searchHint");
-    const videosTitle    = document.getElementById("videosTitle");
-    const photosTitle    = document.getElementById("photosTitle");
-    const publicTitle    = document.getElementById("publicTitle");
-    const pngTitle       = document.getElementById("pngTitle");
     const btnVideosMain  = document.getElementById("btnVideosMain");
     const btnPhotosMain  = document.getElementById("btnPhotosMain");
     const btnPublicMain  = document.getElementById("btnPublicMain");
     const btnPNGsMain    = document.getElementById("btnPNGsMain");
-    const btnVideosLabel = document.getElementById("btnVideosLabel");
-    const btnPhotosLabel = document.getElementById("btnPhotosLabel");
-    const btnPublicLabel = document.getElementById("btnPublicLabel");
-    const btnPNGsLabel   = document.getElementById("btnPNGsLabel");
-    const tipLine        = document.getElementById("tipLine");
-    const manageLabel    = document.getElementById("manageLabel");
-    const popupStrip     = document.getElementById("popupStrip");
-    const popupText      = document.getElementById("popupText");
-    const popupDismiss   = document.getElementById("popupDismiss");
-
+    
     const btnManage      = document.getElementById("btn-manage");
     const modalBackdrop  = document.getElementById("modal-backdrop");
-    const modalTitle     = document.getElementById("modalTitle");
     const btnCloseModal  = document.getElementById("btn-close-modal");
+    
     const btnAddSite     = document.getElementById("btn-add-site");
     const btnSaveSites   = document.getElementById("btn-save-sites");
     const btnExportSites = document.getElementById("btn-export-sites");
     const btnImportSites = document.getElementById("btn-import-sites");
-    const modalFootNote  = document.getElementById("modalFootNote");
     const sitesContainer = document.getElementById("sites-container");
     const importFile     = document.getElementById("import-file");
 
-    const btnHeaderEN    = document.getElementById("btn-en");
-    const btnHeaderES    = document.getElementById("btn-es");
-
-    /* LANGUAGE ------------------------------------------------------ */
-    function applyLang(lang) {
-      const d = I18N[lang] || I18N.en;
-
-      titleSub.textContent      = d.subtitleHeader;
-      toolSubtitleEl.textContent= d.toolSubtitle;
-      q.placeholder             = d.searchPlaceholder;
-      searchHint.textContent    = d.searchHint;
-      videosTitle.textContent   = d.videosTitle;
-      photosTitle.textContent   = d.photosTitle;
-      publicTitle.textContent   = d.publicTitle;
-      pngTitle.textContent      = d.pngTitle;
-
-      btnVideosLabel.textContent = d.btnVideos;
-      btnPhotosLabel.textContent = d.btnPhotos;
-      btnPublicLabel.textContent = d.btnPublic;
-      btnPNGsLabel.textContent   = d.btnPNGs;
-
-      tipLine.textContent      = d.tipLine;
-      manageLabel.textContent  = d.manageLabel;
-      modalTitle.textContent   = d.modalTitle;
-      btnCloseModal.textContent= d.btnClose;
-      btnAddSite.textContent   = d.btnAdd;
-      btnSaveSites.textContent = d.btnSave;
-      btnExportSites.textContent = d.btnExport;
-      btnImportSites.textContent = d.btnImport;
-      modalFootNote.innerHTML  = d.modalFoot.replace("%S","<code>%S</code>");
-      popupText.textContent    = d.popupText;
-      popupDismiss.textContent = d.popupBtn;
-
-      localStorage.setItem(KEY_LANG, lang);
-
-      const isEN = lang === "en";
-      btnHeaderEN.classList.toggle("active", isEN);
-      btnHeaderES.classList.toggle("active", !isEN);
-    }
+    const popupStrip     = document.getElementById("popupStrip");
+    const popupDismiss   = document.getElementById("popupDismiss");
 
     /* STORAGE ------------------------------------------------------- */
     function loadSites() {
@@ -601,10 +416,6 @@
       if (file) importSitesFromFile(file);
     });
 
-    /* Language buttons (header only) ------------------------------- */
-    btnHeaderEN.onclick = () => applyLang("en");
-    btnHeaderES.onclick = () => applyLang("es");
-
     /* POPUP STRIP --------------------------------------------------- */
     popupDismiss.onclick = () => {
       popupStrip.style.display = "none";
@@ -614,11 +425,6 @@
     /* INIT ---------------------------------------------------------- */
     renderChips();
 
-    const storedLang = localStorage.getItem(KEY_LANG);
-    const browserLang = (navigator.language || "en").toLowerCase();
-    const initialLang = storedLang || (browserLang.startsWith("es") ? "es" : "en");
-    applyLang(initialLang);
-
     if (localStorage.getItem(KEY_POPUP) === "1") {
       popupStrip.style.display = "none";
     } else {
@@ -626,7 +432,6 @@
     }
   </script>
 
-  <!-- Counter.dev analytics -->
   <script src="https://cdn.counter.dev/script.js"
           data-id="dd7fb35a-238d-4948-a5a8-694b141e7608"
           data-utcoffset="-6"></script>

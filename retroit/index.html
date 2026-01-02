@@ -5,127 +5,60 @@
   <title>RetroIt – Offline vintage photo editor by Blizlab</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- SHARED -->
   <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
   <link rel="stylesheet" href="/assets/css/global.css">
-  <link rel="stylesheet" href="/assets/css/retroit.css">
+  <script src="/assets/components.js" defer></script>
   
+  <link rel="stylesheet" href="retroit.css">
 </head>
 
 <body>
 
-<header>
-  <!-- Logo -->
-<div class="header-brand">
-  <a href="/" class="logo-link">
-    <div id="title-main" class="header-text-title">
-      BLI
-      <span class="z-icon">
-        <img src="/assets/svg/blizlab-bolt.svg" alt="">
-      </span>
-      LAB
-    </div>
-  </a>
-</div>
-
-  <!-- Subtitle -->
-  <div class="header-sub">
-    <div id="title-sub" class="header-text-subtitle">
-      Simple offline web-apps for creators over their deadline… again.
-    </div>
-  </div>
-
-  <!-- Right: language only -->
-  <div class="header-right">
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
-      <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
-    </div>
-  </div>
-</header>
-
-
-<!-- Yellow menu bar -->
-<div class="app-menu-bar">
-  <div class="app-menu-inner">
-    <nav class="main-nav" aria-label="App navigation">
-      <ul class="nav-list">
-
-        <li class="nav-item">
-          <button class="nav-link nav-link--button" type="button">Apps</button>
-          <ul class="nav-submenu">
-            <li><a href="/octofind/">OctoFind</a></li>
-            <li><a href="/bgone/">BGone</a></li>
-            <li><a href="/retroit/">RetroIt</a></li>
-            <li><a href="/skreen/">Skreen</a></li>
-            <li><a href="/checksy/">Checksy</a></li>
-          </ul>
-        </li>
-
-        <li>
-          <a class="nav-link nav-link--button" 
-             href="https://github.com/Blizky/Blizlab" 
-             target="_blank" 
-             rel="noopener noreferrer">
-             Readme
-          </a>
-        </li>
-
-        <li>
-          <a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a>
-        </li>
-
-      </ul>
-    </nav>
-  </div>
-</div>
- <!-- END MENU -->
-
-
+  <app-header layout="compact"></app-header>
 
   <main class="page-main">
     <section class="app-shell">
-      <!-- App header row (icon + title + subtitle pill) -->
-      <!-- Header badge -->
-<div class="app-header-row">
-  <div class="app-badge app-badge--large">
-    <span class="app-badge__icon">📷</span>
-    <span class="app-badge__title">RetroIt</span>
-  </div>
-  <div class="status-pill" id="toolSubtitle">
-    Simple retro-style photo tweaks right in your browser.
-  </div>
-</div>
+      
+      <div class="app-header-row">
+       
+       
+        <div class="app-brand">
+          <div class="app-brand-icon">
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32"><path fill="currentColor" d="m11.5 6l-.313.406L10 8H9V7H5v1H3v18h26V8h-7l-1.188-1.594L20.5 6zm1 2h7l1.188 1.594L21 10h6v4h-5.813c-1.042-1.784-2.98-3-5.187-3c-2.206 0-4.145 1.216-5.188 3H5v-4h6l.313-.406zM23 11v2h2v-2zm-7 2c2.22 0 4 1.78 4 4s-1.78 4-4 4s-4-1.78-4-4s1.78-4 4-4M5 16h5.094A6 6 0 0 0 10 17c0 3.302 2.698 6 6 6s6-2.698 6-6c0-.337-.04-.678-.094-1H27v8H5z"/></svg>
+          </div>
+          <div class="app-brand-text">
+            Retro<span class="highlight">it</span>
+          </div> 
+        </div>
 
 
-      <!-- END Header badge -->
+        <div class="status-pill" id="toolSubtitle">
+          Simple retro-style photo tweaks right in your browser.
+        </div>
+      </div>
 
-      <!-- Main layout: sidebar + canvas -->
       <div class="app-layout retroit-main">
-        <!-- Sidebar controls -->
+        
         <aside class="side-panel">
           <div class="card sidebar">
             
-            
             <div class="controls-group">
-              <div class="sidebar-section-title" id="sectionImageTitle">IMAGE</div>
-              <div class="file-label-text" id="loadLabelText">Load photo:</div>
+              <div class="sidebar-section-title">IMAGE</div>
+              <div class="file-label-text">Load photo:</div>
 
               <div class="actions-inline">
                 <label class="file-button">
                   <input type="file" id="fileInput" accept="image/*" />
-                  <span id="fileButtonText">Choose image…</span>
+                  <span>Choose image…</span>
                 </label>
                 <button class="main" id="downloadBtn" disabled>
-                  ⬇ <span id="downloadBtnText">Download PNG</span>
+                  ⬇ <span>Download PNG</span>
                 </button>
               </div>
             </div>
 
             <div class="controls-group">
-              <div class="sidebar-section-title" id="sectionOrientationTitle">
-                ORIENTATION
-              </div>
+              <div class="sidebar-section-title">ORIENTATION</div>
               <div class="orientations">
                 <button class="chip-btn active" data-orientation="landscape43">
                   <span>Landscape 4:3</span>
@@ -143,60 +76,43 @@
             </div>
 
             <div class="controls-group">
-              <div class="sidebar-section-title" id="sectionStyleTitle">STYLE</div>
+              <div class="sidebar-section-title">STYLE</div>
               <div class="styles">
                 <button class="chip-btn active" data-style="bw">
-                  <span class="style-dot bw"></span
-                  ><span id="styleBWText">B&amp;W</span>
+                  <span class="style-dot bw"></span><span>B&amp;W</span>
                 </button>
                 <button class="chip-btn" data-style="sepia">
-                  <span class="style-dot sepia"></span
-                  ><span id="styleSepiaText">Sepia</span>
+                  <span class="style-dot sepia"></span><span>Sepia</span>
                 </button>
                 <button class="chip-btn" data-style="postal">
-                  <span class="style-dot postal"></span
-                  ><span id="stylePostalText">Postcard</span>
+                  <span class="style-dot postal"></span><span>Postcard</span>
                 </button>
               </div>
             </div>
 
             <div class="controls-group">
-              <div class="sidebar-section-title" id="sectionAdjustTitle">
-                ADJUSTMENTS
-              </div>
+              <div class="sidebar-section-title">ADJUSTMENTS</div>
 
               <button class="secondary-btn" id="fillBtn">Fill canvas</button>
 
               <div class="slider-group">
-                <label for="intensity" id="intensityLabel">Style intensity</label>
+                <label for="intensity">Style intensity</label>
                 <div class="slider-row">
-                  <input
-                    type="range"
-                    id="intensity"
-                    min="0"
-                    max="100"
-                    value="50"
-                  />
+                  <input type="range" id="intensity" min="0" max="100" value="50" />
                   <span id="intensityValue">50</span>
                 </div>
               </div>
 
               <div class="slider-group">
-                <label for="roundness" id="roundnessLabel">Rounded corners</label>
+                <label for="roundness">Rounded corners</label>
                 <div class="slider-row">
-                  <input
-                    type="range"
-                    id="roundness"
-                    min="0"
-                    max="80"
-                    value="0"
-                  />
+                  <input type="range" id="roundness" min="0" max="80" value="0" />
                   <span id="roundnessValue">0</span>
                 </div>
               </div>
 
               <div class="slider-group">
-                <label for="noise" id="noiseLabel">Film grain</label>
+                <label for="noise">Film grain</label>
                 <div class="slider-row">
                   <input type="range" id="noise" min="0" max="100" value="15" />
                   <span id="noiseValue">15</span>
@@ -204,20 +120,18 @@
               </div>
             </div>
 
-            <div class="hint" id="hintPanZoomText">
+            <div class="hint">
               Drag to move the image · Mouse wheel to zoom.
             </div>
-            <div class="hint" id="localHintText">
+            <div class="hint">
               Everything runs locally in your browser. No images are uploaded.
             </div>
           </div>
         </aside>
 
-        <!-- Canvas area -->
         <section class="canvas-panel canvas-area">
             <div class="canvas-drop-zone" id="dropZone">
               <canvas id="canvas"></canvas>
-              
             </div>
             <div class="file-name" id="fileNameText">No file selected.</div>
         </section>
@@ -225,541 +139,9 @@
     </section>
   </main>
 
-<footer>
-  <span id="footer-text">
-<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
-  </span>
-</footer>
+  <app-footer></app-footer>
 
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+  <script type="module" src="retroit.js"></script>
 
-const fileInput      = document.getElementById("fileInput");
-const fileNameText   = document.getElementById("fileNameText");
-const downloadBtn    = document.getElementById("downloadBtn");
-
-const styleButtons   = document.querySelectorAll(".styles .chip-btn");
-const orientationBtns= document.querySelectorAll(".orientations .chip-btn");
-const intensitySlider= document.getElementById("intensity");
-const intensityValue = document.getElementById("intensityValue");
-const roundnessSlider= document.getElementById("roundness");
-const roundnessValue = document.getElementById("roundnessValue");
-const noiseSlider    = document.getElementById("noise");
-const noiseValue     = document.getElementById("noiseValue");
-const dropZone       = document.getElementById("dropZone");
-const fillBtn        = document.getElementById("fillBtn");
-const dropHintText   = document.getElementById("dropHintText");
-
-const btnEN          = document.getElementById("btn-en");
-const btnES          = document.getElementById("btn-es");
-const titleSub       = document.getElementById("title-sub");
-const toolSubtitle   = document.getElementById("toolSubtitle");
-const loadLabelText  = document.getElementById("loadLabelText");
-const fileButtonText = document.getElementById("fileButtonText");
-const hintDragText   = document.getElementById("hintDragText");
-const sectionImageTitle      = document.getElementById("sectionImageTitle");
-const sectionOrientationTitle= document.getElementById("sectionOrientationTitle");
-const sectionStyleTitle      = document.getElementById("sectionStyleTitle");
-const sectionAdjustTitle     = document.getElementById("sectionAdjustTitle");
-const styleBWText    = document.getElementById("styleBWText");
-const styleSepiaText = document.getElementById("styleSepiaText");
-const stylePostalText= document.getElementById("stylePostalText");
-const intensityLabel = document.getElementById("intensityLabel");
-const roundnessLabel = document.getElementById("roundnessLabel");
-const noiseLabel     = document.getElementById("noiseLabel");
-const downloadBtnText= document.getElementById("downloadBtnText");
-const hintPanZoomText= document.getElementById("hintPanZoomText");
-const localHintText  = document.getElementById("localHintText");
-const captionText    = document.getElementById("captionText");
-const canvasFileNameText = document.getElementById("canvasFileNameText");
-
-const PAPER = "#fdfdf9";
-const MAT_MARGIN = 40;
-
-let img = null;
-let currentStyle = "bw";
-let orientation  = "landscape43";
-let scale = 1;
-let offsetX = 0;
-let offsetY = 0;
-let dragging = false;
-let lastX = 0;
-let lastY = 0;
-let currentLang = "en";
-
-const LANG_KEY = "retroit-lang";
-
-/* I18N --------------------------------------------------------- */
-const I18N = {
-  en: {
-    subtitleHeader: "Simple offline web-apps for creators over their deadline… again.",
-    toolSubtitle: "Simple retro-style photo tweaks right in your browser.",
-    sectionImage: "IMAGE",
-    sectionOrientation: "ORIENTATION",
-    sectionStyle: "STYLE",
-    sectionAdjust: "ADJUSTMENTS",
-    loadLabel: "Load photo:",
-    fileButton: "Choose image…",
-    fileNone: "No file selected.",
-    hintDrag: "You can also drag an image into the preview area.",
-    styleBW: "B&W",
-    styleSepia: "Sepia",
-    stylePostal: "Postcard",
-    intensityLabel: "Style intensity",
-    roundnessLabel: "Rounded corners",
-    noiseLabel: "Film grain",
-    downloadBtn: "Download PNG",
-    hintPanZoom: "Drag to move the image · Mouse wheel to zoom.",
-    localHint: "Everything runs locally in your browser. No images are uploaded.",
-    dropHint: "Drop an image here",
-    caption: "Export resolution: 4:3, 16:9, 3:4 or 1:1 depending on orientation. Click and drag to reframe.",
-    fillBtn: "Fill canvas",
-  },
-  es: {
-    subtitleHeader: "Aplicaciones web sencillas offline para creadores que han superado su plazo de entrega… otra vez.",
-    toolSubtitle: "Ajustes de foto con estilo retro, directo en tu navegador.",
-    sectionImage: "IMAGEN",
-    sectionOrientation: "ORIENTACIÓN",
-    sectionStyle: "ESTILO",
-    sectionAdjust: "AJUSTES",
-    loadLabel: "Cargar foto:",
-    fileButton: "Elegir imagen…",
-    fileNone: "Ningún archivo seleccionado.",
-    hintDrag: "También puedes arrastrar una imagen al área de vista previa.",
-    styleBW: "B/N",
-    styleSepia: "Sepia",
-    stylePostal: "Postal",
-    intensityLabel: "Intensidad del estilo",
-    roundnessLabel: "Esquinas redondeadas",
-    noiseLabel: "Grano / ruido",
-    downloadBtn: "Descargar PNG",
-    hintPanZoom: "Arrastra para mover la imagen · Usa la rueda del ratón para hacer zoom.",
-    localHint: "Todo se procesa localmente en tu navegador. Ninguna imagen se sube a un servidor.",
-    dropHint: "Suelta una imagen aquí",
-    caption: "Resolución de exportación: 4:3, 16:9, 3:4 o 1:1 según la orientación. Haz clic y arrastra para reencuadrar.",
-    fillBtn: "Llenar lienzo",
-  }
-};
-
-function applyLang(lang) {
-  currentLang = lang;
-  const t = I18N[lang] || I18N.en;
-  document.documentElement.lang = lang;
-
-  titleSub.textContent       = t.subtitleHeader;
-  toolSubtitle.textContent   = t.toolSubtitle;
-  sectionImageTitle.textContent       = t.sectionImage;
-  sectionOrientationTitle.textContent = t.sectionOrientation;
-  sectionStyleTitle.textContent       = t.sectionStyle;
-  sectionAdjustTitle.textContent      = t.sectionAdjust;
-  loadLabelText.textContent  = t.loadLabel;
-  fileButtonText.textContent = t.fileButton;
-  if (!img) fileNameText.textContent = t.fileNone;
-  hintDragText.textContent   = t.hintDrag;
-  styleBWText.textContent    = t.styleBW;
-  styleSepiaText.textContent = t.styleSepia;
-  stylePostalText.textContent= t.stylePostal;
-  intensityLabel.textContent = t.intensityLabel;
-  roundnessLabel.textContent = t.roundnessLabel;
-  noiseLabel.textContent     = t.noiseLabel;
-  downloadBtnText.textContent= t.downloadBtn;
-  hintPanZoomText.textContent= t.hintPanZoom;
-  localHintText.textContent  = t.localHint;
-  dropHintText.textContent = t.dropHint; /* NOT TRANSLATING - pending */
-  if (captionText)  captionText.textContent  = t.caption;
-
-  fillBtn.textContent        = t.fillBtn;
-
-  btnEN.classList.toggle("active", lang === "en");
-  btnES.classList.toggle("active", lang === "es");
-
-  localStorage.setItem(LANG_KEY, lang);
-
-  // NEW: redraw with the new language
-  render();
-}
-
-/* Orientation + canvas setup ---------------------------------- */
-function setOrientation(newOrientation) {
-  orientation = newOrientation;
-
-  if (orientation === "landscape43") {
-    canvas.width = 1440;
-    canvas.height = 1080;
-    dropZone.style.aspectRatio = "4 / 3";
-    dropZone.style.maxWidth = "780px";
-  } else if (orientation === "landscape169") {
-    canvas.width = 1440;
-    canvas.height = 810;
-    dropZone.style.aspectRatio = "16 / 9";
-    dropZone.style.maxWidth = "780px";
-  } else if (orientation === "portrait34") {
-    canvas.width = 1080;
-    canvas.height = 1440;
-    dropZone.style.aspectRatio = "3 / 4";
-    dropZone.style.maxWidth = "560px";
-  } else if (orientation === "square11") {
-    canvas.width = 1200;        // puedes usar 1080x1080 si prefieres
-    canvas.height = 1200;
-    dropZone.style.aspectRatio = "1 / 1";
-    dropZone.style.maxWidth = "620px";  // entre landscape y portrait
-  }
-
-  if (img) {
-    const innerW = canvas.width - MAT_MARGIN * 2;
-    const innerH = canvas.height - MAT_MARGIN * 2;
-    const fitScale = Math.min(innerW / img.width, innerH / img.height);
-    scale = fitScale;
-    offsetX = 0;
-    offsetY = 0;
-  }
-
-  render();
-}
-
-/* IMAGE LOADING ------------------------------------------------ */
-function loadImageFromFile(file) {
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-  image.onload = () => {
-    URL.revokeObjectURL(url);
-    img = image;
-
-    const innerW = canvas.width - MAT_MARGIN * 2;
-    const innerH = canvas.height - MAT_MARGIN * 2;
-    const fitScale = Math.min(innerW / img.width, innerH / img.height);
-    scale = fitScale;
-    offsetX = 0;
-    offsetY = 0;
-
-    render();
-    downloadBtn.disabled = false;
-  };
-  image.onerror = () => {
-    alert("Could not load image.");
-  };
-  image.src = url;
-}
-
-/* RENDERING ---------------------------------------------------- */
-function render() {
-  const w = canvas.width;
-  const h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  // marco/papel
-  ctx.fillStyle = PAPER;
-  ctx.fillRect(0, 0, w, h);
-
-  const innerRadius = Number(roundnessSlider.value) || 0;
-  const ix = MAT_MARGIN;
-  const iy = MAT_MARGIN;
-  const iw = w - MAT_MARGIN * 2;
-  const ih = h - MAT_MARGIN * 2;
-
-  ctx.save();
-  if (innerRadius > 0) {
-    roundedRectPath(ctx, ix, iy, iw, ih, innerRadius);
-    ctx.clip();
-  } else {
-    ctx.beginPath();
-    ctx.rect(ix, iy, iw, ih);
-    ctx.clip();
-  }
-
-  // fondo negro dentro del área de imagen
-  ctx.fillStyle = "#000";
-  ctx.fillRect(ix, iy, iw, ih);
-
-  if (img) {
-    drawPhoto(ctx, ix, iy, iw, ih);
-    applyStyle(ctx, ix, iy, iw, ih);
-  } else {
-    ctx.fillStyle = "#777";
-    ctx.font = "30px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(I18N[currentLang].dropHint, w / 2, h / 2);
-  }
-
-  ctx.restore();
-}
-
-function drawPhoto(targetCtx, ix, iy, iw, ih) {
-  const w = img.width * scale;
-  const h = img.height * scale;
-  const x = ix + (iw - w) / 2 + offsetX;
-  const y = iy + (ih - h) / 2 + offsetY;
-  targetCtx.drawImage(img, x, y, w, h);
-}
-
-function applyStyle(targetCtx, ix, iy, iw, ih) {
-  const tSlider = intensitySlider.value / 100;
-  const noiseAmount = (noiseSlider.value || 0) / 100;
-
-  const imageData = targetCtx.getImageData(ix, iy, iw, ih);
-  const d = imageData.data;
-
-  for (let i = 0; i < d.length; i += 4) {
-    let r = d[i];
-    let g = d[i + 1];
-    let b = d[i + 2];
-
-    if (currentStyle === "bw") {
-      let gray = 0.3 * r + 0.59 * g + 0.11 * b;
-      const minF = 0.44;
-      const maxF = 1.84;
-      const factor = minF + tSlider * (maxF - minF);
-      gray = ((gray - 128) * factor) + 128;
-      r = g = b = clamp(gray);
-    } else if (currentStyle === "sepia") {
-      const sr = 0.393 * r + 0.769 * g + 0.189 * b;
-      const sg = 0.349 * r + 0.686 * g + 0.168 * b;
-      const sb = 0.272 * r + 0.534 * g + 0.131 * b;
-
-      r = clamp(mix(r, sr, 0.4 + 0.6 * tSlider));
-      g = clamp(mix(g, sg, 0.4 + 0.6 * tSlider));
-      b = clamp(mix(b, sb, 0.4 + 0.6 * tSlider));
-
-      const fade = 8 + 15 * tSlider;
-      r = clamp(r + fade * 0.9);
-      g = clamp(g + fade * 0.7);
-      b = clamp(b + fade * 0.4);
-    } else if (currentStyle === "postal") {
-      const gray = (r + g + b) / 3;
-      const satBlend = 0.45;
-      let rr = gray * (1 - satBlend) + r * satBlend;
-      let gg = gray * (1 - satBlend) + g * satBlend;
-      let bb = gray * (1 - satBlend) + b * satBlend;
-
-      const lift = 18 + 20 * tSlider;
-      rr = clamp(rr + lift);
-      gg = clamp(gg + lift);
-      bb = clamp(bb + lift);
-
-      const tone = 12 + 18 * tSlider;
-      rr = clamp(rr + tone * 0.2);
-      gg = clamp(gg + tone * 0.5);
-      bb = clamp(bb - tone * 0.1);
-
-      r = rr; g = gg; b = bb;
-    }
-
-    /* Noise / film grain */
-    if (noiseAmount > 0) {
-      const amp = 35 * noiseAmount; // max +/- ~35
-      const n = (Math.random() - 0.5) * 2 * amp;
-      r = clamp(r + n);
-      g = clamp(g + n);
-      b = clamp(b + n);
-    }
-
-    d[i]     = r;
-    d[i + 1] = g;
-    d[i + 2] = b;
-  }
-
-  targetCtx.putImageData(imageData, ix, iy);
-}
-
-/* Helpers ------------------------------------------------------ */
-function roundedRectPath(ctx, x, y, w, h, r) {
-  r = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function clamp(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
-function mix(a, b, t) { return a + (b - a) * t; }
-
-/* EVENTS ------------------------------------------------------- */
-orientationBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    orientationBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    setOrientation(btn.dataset.orientation);
-  });
-});
-setOrientation("landscape43");
-
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    fileNameText.textContent = file.name;
-    if (canvasFileNameText) canvasFileNameText.textContent = file.name;
-    loadImageFromFile(file);
-  } else {
-    fileNameText.textContent = I18N[currentLang].fileNone;
-    if (canvasFileNameText) canvasFileNameText.textContent = "";
-  }
-});
-
-["dragenter","dragover"].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.add("dragover");
-  });
-});
-["dragleave","dragend","drop"].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.remove("dragover");
-  });
-});
-dropZone.addEventListener("drop", (e) => {
-  const file = e.dataTransfer.files && e.dataTransfer.files[0];
-  if (file && file.type.startsWith("image/")) {
-    fileNameText.textContent = file.name;
-    if (canvasFileNameText) canvasFileNameText.textContent = file.name;
-    loadImageFromFile(file);
-  }
-});
-
-fillBtn.addEventListener("click", () => {
-  if (!img) return;
-  const innerW = canvas.width - MAT_MARGIN * 2;
-  const innerH = canvas.height - MAT_MARGIN * 2;
-  const fillScale = Math.max(innerW / img.width, innerH / img.height);
-  scale = fillScale;
-  offsetX = 0;
-  offsetY = 0;
-  render();
-});
-
-styleButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    styleButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentStyle = btn.dataset.style;
-    if (img) render();
-  });
-});
-
-intensitySlider.addEventListener("input", () => {
-  intensityValue.textContent = intensitySlider.value;
-  if (img) render();
-});
-
-roundnessSlider.addEventListener("input", () => {
-  roundnessValue.textContent = roundnessSlider.value;
-  if (img) render();
-});
-
-noiseSlider.addEventListener("input", () => {
-  noiseValue.textContent = noiseSlider.value;
-  if (img) render();
-});
-
-canvas.addEventListener("wheel", (e) => {
-  if (!img) return;
-  e.preventDefault();
-
-  const rect = canvas.getBoundingClientRect();
-  const mx = (e.clientX - rect.left);
-  const my = (e.clientY - rect.top);
-
-  const zoomAmount = 1.1;
-  const oldScale = scale;
-  scale = e.deltaY < 0 ? scale * zoomAmount : scale / zoomAmount;
-  scale = Math.max(0.2, Math.min(scale, 5));
-
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const sx = (mx - cx) - offsetX;
-  const sy = (my - cy) - offsetY;
-
-  offsetX -= sx * (scale / oldScale - 1);
-  offsetY -= sy * (scale / oldScale - 1);
-
-  render();
-}, { passive: false });
-
-canvas.addEventListener("mousedown", (e) => {
-  if (!img) return;
-  dragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
-});
-
-window.addEventListener("mousemove", (e) => {
-  if (!dragging) return;
-  offsetX += e.clientX - lastX;
-  offsetY += e.clientY - lastY;
-  lastX = e.clientX;
-  lastY = e.clientY;
-  render();
-});
-
-window.addEventListener("mouseup", () => { dragging = false; });
-
-/* DESCARGA SIN MARCO, CON ESQUINAS TRANSPARENTES -------------- */
-downloadBtn.addEventListener("click", () => {
-  if (!img) return;
-
-  const w = canvas.width;
-  const h = canvas.height;
-  const ix = MAT_MARGIN;
-  const iy = MAT_MARGIN;
-  const iw = w - MAT_MARGIN * 2;
-  const ih = h - MAT_MARGIN * 2;
-  const innerRadius = Number(roundnessSlider.value) || 0;
-
-  // 1) recortamos solo el área interna (sin marco)
-  const exportCanvas = document.createElement("canvas");
-  exportCanvas.width = iw;
-  exportCanvas.height = ih;
-  const ectx = exportCanvas.getContext("2d");
-
-  ectx.drawImage(canvas, ix, iy, iw, ih, 0, 0, iw, ih);
-
-  // 2) si hay esquinas redondeadas, aplicamos máscara para que
-  //    las esquinas queden transparentes (sin tocar la foto)
-  if (innerRadius > 0) {
-    ectx.save();
-    ectx.globalCompositeOperation = "destination-in";
-    roundedRectPath(ectx, 0, 0, iw, ih, innerRadius);
-    ectx.fillStyle = "#fff";
-    ectx.fill();
-    ectx.restore();
-  }
-
-  const link = document.createElement("a");
-  link.download = "retroit-image.png";
-  link.href = exportCanvas.toDataURL("image/png");
-  link.click();
-});
-
-/* Language buttons --------------------------------------------- */
-btnEN.addEventListener("click", () => applyLang("en"));
-btnES.addEventListener("click", () => applyLang("es"));
-
-/* INIT --------------------------------------------------------- */
-const storedLang = localStorage.getItem(LANG_KEY);
-const browserLang = (navigator.language || "").toLowerCase();
-const initialLang = storedLang || (browserLang.startsWith("es") ? "es" : "en");
-applyLang(initialLang);
-
-render();
-</script>
-
-
-  <!-- Counter.dev (unchanged) -->
-  <script
-    src="https://cdn.counter.dev/script.js"
-    data-id="dd7fb35a-238d-4948-a5a8-694b141e7608"
-    data-utcoffset="-6"
-  ></script>
 </body>
 </html>

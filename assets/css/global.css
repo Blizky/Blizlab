@@ -3,6 +3,7 @@
   --yellow: #FFCC33;
   --white:  #FDFDF9;
   --text-dark: #1A1A1A;
+  --graphite: #393939;
   --red:    #c03221;
 }
 
@@ -10,11 +11,22 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  height: 100%;
   margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevents horizontal scrollbars globally */
+}
+
+body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text-dark);
   background: radial-gradient(circle at top, #00a8dd 0%, #0099CC 48%, #0081aa 100%);
+  
+  /* STICKY FOOTER SETUP */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* ----------------------------------------------------------
@@ -30,8 +42,7 @@ header {
   gap: 16px;
   flex-wrap: wrap;
   box-shadow: 0 8px 22px rgba(0,0,0,0.08);
-  /*position: sticky;*/
-  top: 0;
+  position: relative;
   z-index: 10;
 }
 
@@ -60,17 +71,26 @@ header {
 
 /* Subtitle */
 .header-sub {
-  flex: 1 1 auto;
-  text-align: center;
-  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.header-sub img {
+  width: 220px; 
+  height: auto;
+  display: block;
 }
 
 .header-text-subtitle {
-  font-size: 1.3rem;
-  opacity: 0.9;
-  color: var(--text-dark);
-  max-width: 680px;
-  margin: 0 auto;
+  font-size: 0.85rem !important; 
+  font-weight: 500;
+  color: #555; 
+  letter-spacing: 0.02em; 
+  margin-top: 8px; 
+  max-width: 600px;
+  line-height: 1.4;
 }
 
 /* Right side (language selector) */
@@ -141,7 +161,7 @@ header {
 ---------------------------------------------------------- */
 .app-menu-bar {
   background: var(--yellow);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.18); /* bigger + softer */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18); 
   position: relative;
   z-index: 150;
 }
@@ -179,7 +199,7 @@ header {
   padding: 4px 10px;
   border-radius: 999px;
   font-weight: 500;
-  color: var(--text-dark);
+  color: var(--graphite);
   cursor: pointer;
   text-decoration: none;
   font-size: 1.00rem;
@@ -251,6 +271,40 @@ header {
 }
 
 /* ----------------------------------------------------------
+   MAIN CONTENT AREAS
+   These flex: 1 to push the footer down naturally
+---------------------------------------------------------- */
+main, 
+.landing-main, 
+.page-main {
+  flex: 1;
+  width: 100%;
+}
+
+.landing-main {
+  max-width: 1180px;
+  margin: 32px auto 40px;
+  padding: 0 16px 16px;
+  margin-top: 24px;   
+}
+
+/* THE FIX: 
+   Use Padding for vertical spacing, NOT margin.
+   Margin on a 100% height container forces scrollbars.
+   Padding keeps the spacing 'inside' the flexible area.
+*/
+.page-main {
+  width: 100%;
+  max-width: 1100px;
+  
+  /* Center Horizontal */
+  margin: 0 auto; 
+  
+  /* Top padding provides the visual gap from the header */
+  padding: 48px 20px 32px; 
+}
+
+/* ----------------------------------------------------------
    FOOTER (shared)
 ---------------------------------------------------------- */
 footer {
@@ -261,6 +315,10 @@ footer {
   color: #f9fafb;
   border-top: 1px solid rgba(0,0,0,0.15);
   backdrop-filter: blur(8px);
+  
+  /* Pushes footer to bottom if content is extremely short */
+  margin-top: auto; 
+  width: 100%;
 }
 
 footer a {
@@ -335,15 +393,6 @@ footer a:hover {
   font-size: 1.1rem;
 }
 
-/* Universal layout for all app main areas */
-.page-main {
-  padding: 24px 20px 32px;   /* top / sides / bottom */
-  max-width: 1100px;         /* keeps content nicely centered */
-  margin: 0 auto;            /* centers layout in all apps */
-  width: 100%;
-  box-sizing: border-box;    /* ensures padding never breaks layout */
-  margin-top: 18px; /* space below header */
-}
 
 /* Shared title-bar wrapper for all Blizlab apps */
 .app-header-row {
@@ -386,4 +435,78 @@ footer a:hover {
   display: inline-block;
 }
 
+/* ----------------------------------------------------------
+   NEW APP BRANDING (Modern Title)
+---------------------------------------------------------- */
 
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px; /* Space between icon and text */
+}
+
+/* The Container for the SVG Icon */
+.app-brand-icon {
+  width: 40px;
+  height: 40px;
+  
+  /* UPDATED: Blue background with radial gradient */
+  background: radial-gradient(circle at center, #00a8dd 0%, var(--blue) 100%);
+  
+  /* UPDATED: Border adjusted to match the blue theme */
+  border: 0px solid rgba(0, 153, 204, 0.3);
+  
+  border-radius: 10px; /* Kept squared as requested */
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* UPDATED: Shadow color changed from yellow to blue */
+  box-shadow: 
+    0 4px 12px rgba(0, 153, 204, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    
+  /* UPDATED: Icon color set to Yellow */
+  color: var(--yellow); 
+  
+  transition: transform 0.2s ease;
+}
+
+.app-brand:hover .app-brand-icon {
+  transform: scale(1.05) rotate(-3deg);
+}
+
+/* The SVG inside the container */
+.app-brand-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor; /* Inherits color from parent */
+  display: block;
+}
+
+/* The Text (Chrono + Meter style) */
+.app-brand-text {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+  font-size: 2.2rem;
+  letter-spacing: -0.04em;
+  
+  /* UPDATED: First part of the word is now Graphite */
+  color: var(--graphite); 
+  
+  line-height: 1;
+
+  /* Blue shadow: Soft glow behind the text */
+  text-shadow: 0 8px 24px rgba(0, 153, 204, 0.2);
+}
+
+/* The blue part (wrap the second half of your word in <span class="highlight">...</span>) */
+.app-brand-text .highlight {
+  color: var(--blue);
+}
+
+/* Optional: Highlight part of the text in Blue */
+.app-brand-text .highlight {
+  color: var(--blue);
+}

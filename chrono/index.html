@@ -1,126 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One-Button Chronometer</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f2f5;
-            margin: 0;
-        }
+  <meta charset="UTF-8" />
+  <title>Chrono – Simple One-Button Stopwatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        .container {
-            text-align: center;
-            background: white;
-            padding: 40px 60px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            min-width: 250px;
-        }
+  <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
+  <link rel="stylesheet" href="/assets/css/global.css">
+  <script src="/assets/components.js" defer></script>
 
-        #display {
-            font-size: 4.5rem;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 20px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        button {
-            padding: 12px 30px;
-            font-size: 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: white;
-            width: 100%;
-            outline: none;
-            user-select: none; 
-            font-weight: bold;
-        }
-
-        button:active { transform: scale(0.98); }
-
-        /* State Colors */
-        .btn-play { background-color: #28a745; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
-        .btn-play:hover { background-color: #218838; }
-
-        .btn-stop { background-color: #dc3545; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3); }
-        .btn-stop:hover { background-color: #c82333; }
-
-        .btn-reset { background-color: #007bff; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); }
-        .btn-reset:hover { background-color: #0069d9; }
-    </style>
+  <link rel="stylesheet" href="chrono.css">
 </head>
+
 <body>
 
-    <div class="container">
-        <div id="display">00:00:00</div>
-        <button id="actionBtn" class="btn-play" onclick="handleAction()">Start</button>
-    </div>
+  <app-header layout="compact"></app-header>
 
-    <script>
-        // Define variables globally so they are never lost
-        let startTime = 0;
-        let elapsedTime = 0;
-        let timerInterval = null;
-        let currentState = 'idle'; 
+  <main class="page-main">
+    
+    <section class="tool-card">
+      
+      <div class="tool-header">
+        
+        <div class="app-brand">
+          
+          <div class="app-brand-icon">
+ <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-4 -2 24 24">
+  <path fill="currentColor" d="M9 11h2a1 1 0 0 1 0 2H8a.997.997 0 0 1-1-1V8a1 1 0 1 1 2 0zM1.869 6.861a1.5 1.5 0 1 1 2.077-1.76a8 8 0 0 1 1.126-.548A2.5 2.5 0 0 1 6.5 0h3a2.5 2.5 0 0 1 1.428 4.553q.586.231 1.126.548a1.5 1.5 0 1 1 2.077 1.76a8 8 0 1 1-12.263 0zM8 18A6 6 0 1 0 8 6a6 6 0 0 0 0 12M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z"/>
+</svg>
+          </div>
 
-        // Main function called by the button
-        function handleAction() {
-            // Grab elements fresh every time to avoid errors
-            const btn = document.getElementById("actionBtn");
-            const display = document.getElementById("display");
+          <div class="app-brand-text">
+            Chrono<span class="highlight">meter</span>
+          </div>
 
-            if (currentState === 'idle') {
-                // START
-                startTime = Date.now() - elapsedTime;
-                timerInterval = setInterval(function() {
-                    const now = Date.now();
-                    elapsedTime = now - startTime;
-                    updateDisplay(elapsedTime, display);
-                }, 10);
+        </div>
 
-                currentState = 'running';
-                btn.textContent = "Stop";
-                btn.className = "btn-stop";
+        <p class="tool-subtitle">
+          A simple, distraction-free chronometer for your sprints.
+        </p>
+      </div>
 
-            } else if (currentState === 'running') {
-                // STOP
-                clearInterval(timerInterval);
-                currentState = 'stopped';
-                btn.textContent = "Reset";
-                btn.className = "btn-reset";
+      <div class="chrono-container">
+        <div id="display" class="chrono-display">00:00:00</div>
+        <button id="actionBtn" class="btn-main btn-play">Start</button>
+      </div>
 
-            } else if (currentState === 'stopped') {
-                // RESET
-                elapsedTime = 0;
-                updateDisplay(0, display);
-                currentState = 'idle';
-                btn.textContent = "Start";
-                btn.className = "btn-play";
-            }
+    </section>
+
+  </main>
+
+  <app-footer></app-footer>
+
+  <script>
+    (function() {
+      let startTime = 0;
+      let elapsedTime = 0;
+      let timerInterval = null;
+      let currentState = 'idle'; 
+
+      const display = document.getElementById("display");
+      const btn = document.getElementById("actionBtn");
+
+      function updateDisplay(time) {
+        let diff = time;
+        let ms = Math.floor((diff % 1000) / 10);
+        let s = Math.floor((diff / 1000) % 60);
+        let m = Math.floor((diff / (1000 * 60)) % 60);
+
+        let mString = m < 10 ? "0" + m : m;
+        let sString = s < 10 ? "0" + s : s;
+        let msString = ms < 10 ? "0" + ms : ms;
+
+        if(display) {
+          display.textContent = `${mString}:${sString}:${msString}`;
         }
+      }
 
-        function updateDisplay(time, displayElement) {
-            let diff = time;
-            let ms = Math.floor((diff % 1000) / 10);
-            let s = Math.floor((diff / 1000) % 60);
-            let m = Math.floor((diff / (1000 * 60)) % 60);
+      function handleAction() {
+        if (currentState === 'idle') {
+          // START
+          startTime = Date.now() - elapsedTime;
+          timerInterval = setInterval(() => {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+            updateDisplay(elapsedTime);
+          }, 10);
 
-            let mString = m < 10 ? "0" + m : m;
-            let sString = s < 10 ? "0" + s : s;
-            let msString = ms < 10 ? "0" + ms : ms;
+          currentState = 'running';
+          btn.textContent = "Stop";
+          btn.className = "btn-main btn-stop";
 
-            displayElement.textContent = `${mString}:${sString}:${msString}`;
+        } else if (currentState === 'running') {
+          // STOP
+          clearInterval(timerInterval);
+          currentState = 'stopped';
+          btn.textContent = "Reset";
+          btn.className = "btn-main btn-reset";
+
+        } else if (currentState === 'stopped') {
+          // RESET
+          elapsedTime = 0;
+          updateDisplay(0);
+          currentState = 'idle';
+          btn.textContent = "Start";
+          btn.className = "btn-main btn-play";
         }
-    </script>
+      }
+
+      // Initialize
+      if (btn) {
+        btn.addEventListener("click", handleAction);
+      }
+    })();
+  </script>
+
 </body>
 </html>

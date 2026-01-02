@@ -5,904 +5,660 @@
   <title>BGone – Offline AI Background Remover</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SHARED -->
   <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
   <link rel="stylesheet" href="/assets/css/global.css">
-  <link rel="stylesheet" href="/assets/css/bgone.css">
+  <script src="/assets/components.js" defer></script>
+
+  <link rel="stylesheet" href="bgone.css">
 </head>
 
 <body>
-<header>
-  <!-- Logo -->
-<div class="header-brand">
-  <a href="/" class="logo-link">
-    <div id="title-main" class="header-text-title">
-      BLI
-      <span class="z-icon">
-        <img src="/assets/svg/blizlab-bolt.svg" alt="">
-      </span>
-      LAB
-    </div>
-  </a>
-</div>
 
-  <!-- Subtitle -->
-  <div class="header-sub">
-    <div id="title-sub" class="header-text-subtitle">
-      Simple offline web-apps for creators over their deadline… again.
-    </div>
-  </div>
+  <app-header layout="compact"></app-header>
 
-  <!-- Right: language only -->
-  <div class="header-right">
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en" id="btn-en">EN</button>
-      <button class="lang-btn" data-lang="es" id="btn-es">ES</button>
-    </div>
-  </div>
-</header>
-
-<!-- Yellow menu bar -->
-<div class="app-menu-bar">
-  <div class="app-menu-inner">
-    <nav class="main-nav" aria-label="App navigation">
-      <ul class="nav-list">
-
-        <li class="nav-item">
-          <button class="nav-link nav-link--button" type="button">Apps</button>
-          <ul class="nav-submenu">
-            <li><a href="/octofind/">OctoFind</a></li>
-            <li><a href="/bgone/">BGone</a></li>
-            <li><a href="/retroit/">RetroIt</a></li>
-            <li><a href="/skreen/">Skreen</a></li>
-            <li><a href="/checksy/">Checksy</a></li>
-          </ul>
-        </li>
-
-        <li>
-          <a class="nav-link nav-link--button" 
-             href="https://github.com/Blizky/Blizlab" 
-             target="_blank" 
-             rel="noopener noreferrer">
-             Readme
-          </a>
-        </li>
-
-        <li>
-          <a class="nav-link nav-disabled" href="#">YouTube (coming soon)</a>
-        </li>
-
-      </ul>
-    </nav>
-  </div>
-</div>
-<!-- END SHARED-->
-
-<main class="page-main">
-  <section class="app-shell">
-    <div class="model-bar">
-      <span class="model-label">AI model</span>
-      <span class="model-note-text" id="modelNote">
-        U²-Net model (~80 MB) downloads once and then works offline in this browser.
-      </span>
-      <button class="model-btn" id="btnReloadModel">Reload model</button>
-      <span class="model-dot" id="modelDot" aria-hidden="true"></span>
-    </div>
-
-    <div class="app-header-row">
+  <main class="page-main">
+    <section class="app-shell">
       
-<!-- Header badge -->
-<div class="app-badge app-badge--large">
-  <span class="app-badge__icon">🧽</span>
-  <span class="app-badge__title">BGone</span>
-</div>
-
-      <div class="status-pill" id="status">
-        Load an image to begin.
+      <div class="model-bar">
+        <span class="model-label">AI model</span>
+        <span class="model-note-text" id="modelNote">
+          U²-Net model (~80 MB) downloads once and then works offline in this browser.
+        </span>
+        <button class="model-btn" id="btnReloadModel">Reload model</button>
+        <span class="model-dot" id="modelDot" aria-hidden="true"></span>
       </div>
-    </div>
 
-    <div class="app-layout">
-      <aside class="side-panel">
-        <!-- Image card -->
-        <div class="card">
-          <h2 class="card-title" id="imageTitle">Image</h2>
-          <div class="card-row">
-            <label
-              for="fileInput"
-              class="fake-input"
-              id="labelSelectImage"
-              tabindex="0"
-            >Select image…</label>
-            <button class="primary-btn" id="btnDownload" disabled>
-              Save PNG
-            </button>
-          </div>
-          <p class="image-filename" id="imageFilename">No file selected.</p>
-          <p class="card-hint" id="imageHint">
-            You can also drag and drop an image. Everything stays on this device.
-          </p>
-          <input
-            id="fileInput"
-            type="file"
-            accept="image/*"
-            aria-label="Image file input"
-            style="display: none"
-          />
+        <div class="app-brand">
+          <div class="app-brand-icon">
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"><path stroke-linejoin="round" d="M11 19c-1.864 0-2.796 0-3.53-.305a4 4 0 0 1-2.166-2.164C5 15.796 5 14.864 5 13v-1c0-2.809 0-4.213.674-5.222a4 4 0 0 1 1.104-1.104C7.787 5 9.19 5 12 5h1.5c1.396 0 2.093 0 2.661.172a4 4 0 0 1 2.667 2.667C19 8.407 19 9.104 19 10.5v0"/><path d="M19.119 14.879L16.997 17m-2.121 2.121L16.997 17m2.122 2.121L16.997 17m0 0l-2.121-2.121"/><path stroke-linejoin="round" d="m6.5 17.5l11-11m1.492 4h.01m-8.01 8.5h.01M5 13l8-8"/></g></svg>
+        </div>
+          <div class="app-brand-text">
+            B<span class="highlight">Gone</span>
+          </div> 
         </div>
 
-        <!-- Tools card -->
-        <div class="card tools-card">
-          <h2 class="card-title" id="toolsTitle">Tools</h2>
-          <div class="card-row">
-            <button class="primary-btn full-width-btn" id="btnRemove" disabled>
-              Remove background
-            </button>
-          </div>
 
-          <div class="brush-label-row">
-            <span id="brushLabel">Brush size</span>
-            <span class="brush-value" id="brushValue">28</span>
-          </div>
-          <input id="brushSize" type="range" min="5" max="120" value="28" />
-
-          <div class="pill-toggle" role="tablist" aria-label="Brush mode">
-            <button
-              id="modeErase"
-              class="active"
-              data-mode="erase"
-              role="tab"
-              aria-selected="true"
-            >
-              Erase
-            </button>
-            <button
-              id="modeRestore"
-              data-mode="restore"
-              role="tab"
-              aria-selected="false"
-            >
-              Restore
-            </button>
-          </div>
-
-          <p class="card-hint" id="brushHint">
-            After auto-removal, paint directly on the image: Erase hides pixels
-            (more transparency) and Restore brings them back. Shortcuts:
-            E = erase, R = restore, Z = undo, Y = redo.
-          </p>
-
-          <div class="undo-redo-row">
-            <button class="secondary-btn" id="btnUndo">Undo</button>
-            <button class="secondary-btn" id="btnRedo">Redo</button>
-          </div>
+        <div class="status-pill" id="status">
+          Load an image to begin.
         </div>
+      </div>
 
-        <!-- Notes card -->
-        <div class="card">
-          <h2 class="card-title" id="notesTitle">Notes</h2>
-          <p class="card-hint" id="notesText">
-            BGone uses U²-Net AI locally in your browser. Once the model is
-            downloaded, no internet is needed. Images never leave your device.
-          </p>
-        </div>
-      </aside>
-
-      <!-- Canvas panel -->
-      <section class="canvas-panel">
-        <div class="canvas-wrap" id="canvasWrap">
-          <canvas id="canvas"></canvas>
-          <div class="brush-preview" id="brushPreview"></div>
-          <div class="overlay-msg" id="overlayMsg">
-            Drop an image here, or use “Select image…” on the left.
+      <div class="app-layout">
+        
+        <aside class="side-panel">
+          
+          <div class="card">
+            <h2 class="card-title" id="imageTitle">Image</h2>
+            <div class="card-row">
+              <label for="fileInput" class="fake-input" id="labelSelectImage" tabindex="0">
+                Select image…
+              </label>
+              <button class="primary-btn" id="btnDownload" disabled>
+                Save PNG
+              </button>
+            </div>
+            <p class="image-filename" id="imageFilename">No file selected.</p>
+            <p class="card-hint" id="imageHint">
+              You can also drag and drop an image. Everything stays on this device.
+            </p>
+            <input id="fileInput" type="file" accept="image/*" aria-label="Image file input" style="display: none" />
           </div>
-        </div>
-        <p class="canvas-tip" id="canvasTip"></p>
-      </section>
-    </div>
-  </section>
-</main>
 
-<footer>
-  <span id="footer-text">
-<img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi"> <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
-  </span>
-</footer>
+          <div class="card tools-card">
+            <h2 class="card-title" id="toolsTitle">Tools</h2>
+            <div class="card-row">
+              <button class="primary-btn full-width-btn" id="btnRemove" disabled>
+                Remove background
+              </button>
+            </div>
 
-<!-- JS: unchanged from working version, except language button IDs -->
-<script type="module">
-  import {
-    removeBackground,
-    preload
-  } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm";
+            <div class="brush-label-row">
+              <span id="brushLabel">Brush size</span>
+              <span class="brush-value" id="brushValue">28</span>
+            </div>
+            <input id="brushSize" type="range" min="5" max="120" value="28" />
 
-  const MODEL_READY_KEY = "bgoneModelReady";
+            <div class="pill-toggle" role="tablist" aria-label="Brush mode">
+              <button id="modeErase" class="active" data-mode="erase" role="tab" aria-selected="true">
+                Erase
+              </button>
+              <button id="modeRestore" data-mode="restore" role="tab" aria-selected="false">
+                Restore
+              </button>
+            </div>
 
-  const TEXTS = {
-    en: {
-      modelNote:
-        "U²-Net model (~80 MB) downloads once and then works offline in this browser.",
-      statusInitial: "Load an image to begin.",
-      imageTitle: "Image",
-      selectImage: "Select image…",
-      noFile: "No file selected.",
-      imageHint:
-        "You can also drag and drop an image. Everything stays on this device.",
-      toolsTitle: "Tools",
-      removeBg: "Remove background",
-      brushLabel: "Brush size",
-      brushHint:
-        "After auto-removal, paint directly on the image: Erase hides pixels (more transparency) and Restore brings them back. Shortcuts: E = erase, R = restore, Z = undo, Y = redo.",
-      undo: "Undo",
-      redo: "Redo",
-      notesTitle: "Notes",
-      notesText:
-        "BGone uses U²-Net AI locally in your browser. Once the model is downloaded, no internet is needed. Images never leave your device.",
-      overlayInitial:
-        "Drop an image here, or use “Select image…” on the left.",
-      overlayDrop: "Drop image to load.",
-      savePng: "Save PNG",
-      erase: "Erase",
-      restore: "Restore",
-      modelDownloading: "Downloading or refreshing AI model…",
-      modelReady: "Model cached in this browser. BGone can work offline."
-    },
-    es: {
-      modelNote:
-        "El modelo U²-Net (~80 MB) se descarga una vez y luego funciona sin conexión en este navegador.",
-      statusInitial: "Carga una imagen para empezar.",
-      imageTitle: "Imagen",
-      selectImage: "Elegir imagen…",
-      noFile: "Ningún archivo seleccionado.",
-      imageHint:
-        "También puedes arrastrar y soltar una imagen. Todo se queda en este dispositivo.",
-      toolsTitle: "Herramientas",
-      removeBg: "Quitar fondo",
-      brushLabel: "Tamaño del pincel",
-      brushHint:
-        "Después de quitar el fondo, pinta directamente sobre la imagen: Borrar esconde píxeles (más transparencia) y Restaurar los trae de vuelta. Atajos: E = borrar, R = restaurar, Z = deshacer, Y = rehacer.",
-      undo: "Deshacer",
-      redo: "Rehacer",
-      notesTitle: "Notas",
-      notesText:
-        "BGone usa U²-Net localmente en tu navegador. Una vez descargado el modelo, no necesitas internet. Las imágenes nunca se suben.",
-      overlayInitial:
-        "Suelta una imagen aquí o usa “Elegir imagen…” a la izquierda.",
-      overlayDrop: "Suelta la imagen para cargarla.",
-      savePng: "Guardar PNG",
-      erase: "Borrar",
-      restore: "Restaurar",
-      modelDownloading: "Descargando o actualizando el modelo de IA…",
-      modelReady:
-        "Modelo en caché en este navegador. BGone puede funcionar sin conexión."
+            <p class="card-hint" id="brushHint">
+              After auto-removal, paint directly on the image: Erase hides pixels (more transparency) and Restore brings them back. Shortcuts: E = erase, R = restore, Z = undo, Y = redo.
+            </p>
+
+            <div class="undo-redo-row">
+              <button class="secondary-btn" id="btnUndo">Undo</button>
+              <button class="secondary-btn" id="btnRedo">Redo</button>
+            </div>
+          </div>
+          
+          </aside>
+
+        <section class="canvas-panel">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="canvas"></canvas>
+            <div class="brush-preview" id="brushPreview"></div>
+            <div class="overlay-msg" id="overlayMsg">
+              Drop an image here, or use “Select image…” on the left.
+            </div>
+          </div>
+          <p class="canvas-tip" id="canvasTip"></p>
+        </section>
+
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+
+  <script type="module">
+    import {
+      removeBackground,
+      preload
+    } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.8/+esm";
+
+    const MODEL_READY_KEY = "bgoneModelReady";
+
+    /* DOM REFS */
+    const modelNoteEl = document.getElementById("modelNote");
+    const btnReloadModel = document.getElementById("btnReloadModel");
+    const modelDot = document.getElementById("modelDot");
+
+    const statusEl = document.getElementById("status");
+    const imageFilenameEl = document.getElementById("imageFilename");
+    const btnRemove = document.getElementById("btnRemove");
+    const brushValueEl = document.getElementById("brushValue");
+    const btnUndo = document.getElementById("btnUndo");
+    const btnRedo = document.getElementById("btnRedo");
+    const canvasTipEl = document.getElementById("canvasTip");
+    const overlayMsg = document.getElementById("overlayMsg");
+    const btnDownload = document.getElementById("btnDownload");
+    const modeEraseBtn = document.getElementById("modeErase");
+    const modeRestoreBtn = document.getElementById("modeRestore");
+
+    const fileInput = document.getElementById("fileInput");
+    const labelSelectImage = document.getElementById("labelSelectImage");
+    const brushSizeEl = document.getElementById("brushSize");
+    const canvas = document.getElementById("canvas");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const brushPreview = document.getElementById("brushPreview");
+
+    const ctx = canvas.getContext("2d");
+
+    // Offscreen canvases
+    const originalCanvas = document.createElement("canvas");
+    const originalCtx = originalCanvas.getContext("2d");
+    const maskCanvas = document.createElement("canvas");
+    const maskCtx = maskCanvas.getContext("2d");
+
+    // Full-res export info
+    let originalImageElement = null;
+    let originalImageWidth = 0;
+    let originalImageHeight = 0;
+
+    // -------- MODEL STATUS --------------------------------------
+
+    function setModelDot(ready) {
+      if (!modelDot) return;
+      modelDot.classList.toggle("ok", ready);
+      modelDot.setAttribute("aria-label", ready ? "Model cached and ready" : "Model not cached yet");
     }
-  };
 
-  let currentLang = "en";
-
-  // ✅ Match the IDs used in the header buttons
-  const btnLangEn = document.getElementById("btn-en");
-  const btnLangEs = document.getElementById("btn-es");
-
-  const modelNoteEl = document.getElementById("modelNote");
-  const btnReloadModel = document.getElementById("btnReloadModel");
-  const modelDot = document.getElementById("modelDot");
-
-  const statusEl = document.getElementById("status");
-  const imageTitleEl = document.getElementById("imageTitle");
-  const labelSelectImage = document.getElementById("labelSelectImage");
-  const imageFilenameEl = document.getElementById("imageFilename");
-  const imageHintEl = document.getElementById("imageHint");
-  const toolsTitleEl = document.getElementById("toolsTitle");
-  const btnRemove = document.getElementById("btnRemove");
-  const brushLabelEl = document.getElementById("brushLabel");
-  const brushValueEl = document.getElementById("brushValue");
-  const brushHintEl = document.getElementById("brushHint");
-  const btnUndo = document.getElementById("btnUndo");
-  const btnRedo = document.getElementById("btnRedo");
-  const notesTitleEl = document.getElementById("notesTitle");
-  const notesTextEl = document.getElementById("notesText");
-  const canvasTipEl = document.getElementById("canvasTip");
-  const overlayMsg = document.getElementById("overlayMsg");
-  const btnDownload = document.getElementById("btnDownload");
-  const modeEraseBtn = document.getElementById("modeErase");
-  const modeRestoreBtn = document.getElementById("modeRestore");
-
-  const fileInput = document.getElementById("fileInput");
-  const brushSizeEl = document.getElementById("brushSize");
-  const canvas = document.getElementById("canvas");
-  const canvasWrap = document.getElementById("canvasWrap");
-  const brushPreview = document.getElementById("brushPreview");
-
-  const ctx = canvas.getContext("2d");
-
-  const originalCanvas = document.createElement("canvas");
-  const originalCtx = originalCanvas.getContext("2d");
-  const maskCanvas = document.createElement("canvas");
-  const maskCtx = maskCanvas.getContext("2d");
-
-  // full-res export info (Option B)
-  let originalImageElement = null;
-  let originalImageWidth = 0;
-  let originalImageHeight = 0;
-
-  function t(key) {
-    return TEXTS[currentLang][key] || TEXTS.en[key] || "";
-  }
-
-  function setModelDot(ready) {
-    if (!modelDot) return;
-    modelDot.classList.toggle("ok", ready);
-    modelDot.setAttribute(
-      "aria-label",
-      ready ? "Model cached and ready" : "Model not cached yet"
-    );
-  }
-
-  function applyLanguage() {
-    document.documentElement.lang = currentLang === "es" ? "es" : "en";
-
-    modelNoteEl.textContent = t("modelNote");
-    statusEl.textContent = t("statusInitial");
-    imageTitleEl.textContent = t("imageTitle");
-    labelSelectImage.textContent = t("selectImage");
-    if (!imageFilenameEl.dataset.hasName) {
-      imageFilenameEl.textContent = t("noFile");
+    function markModelReady() {
+      localStorage.setItem(MODEL_READY_KEY, "1");
+      modelNoteEl.textContent = "Model cached in this browser. BGone can work offline.";
+      setModelDot(true);
     }
-    imageHintEl.textContent = t("imageHint");
-    toolsTitleEl.textContent = t("toolsTitle");
-    btnRemove.textContent = t("removeBg");
-    brushLabelEl.textContent = t("brushLabel");
-    brushHintEl.textContent = t("brushHint");
-    btnUndo.textContent = t("undo");
-    btnRedo.textContent = t("redo");
-    notesTitleEl.textContent = t("notesTitle");
-    notesTextEl.textContent = t("notesText");
-    overlayMsg.textContent = t("overlayInitial");
-    btnDownload.textContent = t("savePng");
-    modeEraseBtn.textContent = t("erase");
-    modeRestoreBtn.textContent = t("restore");
 
-    btnLangEn.classList.toggle("active", currentLang === "en");
-    btnLangEs.classList.toggle("active", currentLang === "es");
-  }
-
-  btnLangEn.addEventListener("click", () => {
-    currentLang = "en";
-    applyLanguage();
-  });
-
-  btnLangEs.addEventListener("click", () => {
-    currentLang = "es";
-    applyLanguage();
-  });
-
-  applyLanguage();
-
-  // -------- MODEL PRELOAD --------------------------------------
-
-  function markModelReady() {
-    localStorage.setItem(MODEL_READY_KEY, "1");
-    modelNoteEl.textContent = t("modelReady");
-    setModelDot(true);
-  }
-
-  function checkModelReady() {
-    const ready = localStorage.getItem(MODEL_READY_KEY) === "1";
-    if (ready) {
-      modelNoteEl.textContent = t("modelReady");
+    function checkModelReady() {
+      const ready = localStorage.getItem(MODEL_READY_KEY) === "1";
+      if (ready) {
+        modelNoteEl.textContent = "Model cached in this browser. BGone can work offline.";
+      }
+      setModelDot(ready);
     }
-    setModelDot(ready);
-  }
 
-  checkModelReady();
+    checkModelReady();
 
-  btnReloadModel.addEventListener("click", async () => {
-    modelNoteEl.textContent = t("modelDownloading");
-    btnReloadModel.disabled = true;
-    setModelDot(false);
-    try {
-      await preload({ debug: true });
-      markModelReady();
-    } catch (err) {
-      console.error(err);
-      modelNoteEl.textContent = t("modelNote");
-    } finally {
-      btnReloadModel.disabled = false;
+    btnReloadModel.addEventListener("click", async () => {
+      modelNoteEl.textContent = "Downloading or refreshing AI model…";
+      btnReloadModel.disabled = true;
+      setModelDot(false);
+      try {
+        await preload({ debug: true });
+        markModelReady();
+      } catch (err) {
+        console.error(err);
+        modelNoteEl.textContent = "Error downloading model. Check connection.";
+      } finally {
+        btnReloadModel.disabled = false;
+      }
+    });
+
+    // -------- IMAGE + CANVAS STATE -------------------------------
+
+    let hasImage = false;
+    let working = false;
+    let brushMode = "erase";
+    let painting = false;
+    let lastPointer = null;
+
+    const history = { stack: [], redos: [], limit: 30 };
+
+    function pushHistory() {
+      if (!hasImage) return;
+      try {
+        const snap = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+        history.stack.push(snap);
+        if (history.stack.length > history.limit) history.stack.shift();
+        history.redos.length = 0;
+      } catch (e) {
+        console.error(e);
+      }
     }
-  });
 
-  // -------- IMAGE + CANVAS STATE -------------------------------
-
-  let hasImage = false;
-  let working = false;
-  let brushMode = "erase";
-  let painting = false;
-  let lastPointer = null;
-
-  const history = { stack: [], redos: [], limit: 30 };
-
-  function pushHistory() {
-    if (!hasImage) return;
-    try {
-      const snap = maskCtx.getImageData(
-        0,
-        0,
-        maskCanvas.width,
-        maskCanvas.height
-      );
-      history.stack.push(snap);
-      if (history.stack.length > history.limit) history.stack.shift();
-      history.redos.length = 0;
-    } catch (e) {
-      console.error(e);
+    function undo() {
+      if (history.stack.length <= 1) return;
+      const current = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+      const prev = history.stack[history.stack.length - 2];
+      history.redos.push(current);
+      history.stack.pop();
+      maskCtx.putImageData(prev, 0, 0);
+      render();
+      statusEl.textContent = "Undid last stroke.";
     }
-  }
 
-  function undo() {
-    if (history.stack.length <= 1) return;
-    const current = maskCtx.getImageData(
-      0,
-      0,
-      maskCanvas.width,
-      maskCanvas.height
-    );
-    const prev = history.stack[history.stack.length - 2];
-    history.redos.push(current);
-    history.stack.pop();
-    maskCtx.putImageData(prev, 0, 0);
-    render();
-    statusEl.textContent = "Undid last stroke.";
-  }
+    function redo() {
+      if (history.redos.length === 0) return;
+      const redoImg = history.redos.pop();
+      history.stack.push(redoImg);
+      maskCtx.putImageData(redoImg, 0, 0);
+      render();
+      statusEl.textContent = "Redid stroke.";
+    }
 
-  function redo() {
-    if (history.redos.length === 0) return;
-    const redoImg = history.redos.pop();
-    history.stack.push(redoImg);
-    maskCtx.putImageData(redoImg, 0, 0);
-    render();
-    statusEl.textContent = "Redid stroke.";
-  }
+    btnUndo.addEventListener("click", undo);
+    btnRedo.addEventListener("click", redo);
 
-  btnUndo.addEventListener("click", undo);
-  btnRedo.addEventListener("click", redo);
+    function setWorking(flag) {
+      working = flag;
+      btnRemove.disabled = flag || !hasImage;
+    }
 
-  function setWorking(flag) {
-    working = flag;
-    btnRemove.disabled = flag || !hasImage;
-  }
+    function setDownloadEnabled(flag) {
+      btnDownload.disabled = !flag;
+    }
 
-  function setDownloadEnabled(flag) {
-    btnDownload.disabled = !flag;
-  }
+    function fitImageDimensions(imgWidth, imgHeight, maxWidth = 1400, maxHeight = 900) {
+      let w = imgWidth;
+      let h = imgHeight;
+      const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+      return { w, h };
+    }
 
-  // FIXED LIMITS 1400×900 (like original BGone)
-  function fitImageDimensions(imgWidth, imgHeight, maxWidth = 1400, maxHeight = 900) {
-    let w = imgWidth;
-    let h = imgHeight;
-    const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
-    w = Math.round(w * ratio);
-    h = Math.round(h * ratio);
-    return { w, h };
-  }
+    function render() {
+      if (!hasImage) return;
+      const w = canvas.width;
+      const h = canvas.height;
 
-  function render() {
-    if (!hasImage) return;
-    const w = canvas.width;
-    const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(originalCanvas, 0, 0, w, h);
 
-    ctx.clearRect(0, 0, w, h);
-    ctx.globalCompositeOperation = "source-over";
-    ctx.drawImage(originalCanvas, 0, 0, w, h);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(maskCanvas, 0, 0, w, h);
 
-    ctx.globalCompositeOperation = "destination-in";
-    ctx.drawImage(maskCanvas, 0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+    }
 
-    ctx.globalCompositeOperation = "source-over";
-  }
+    function initMaskFromImage() {
+      const w = canvas.width;
+      const h = canvas.height;
+      maskCanvas.width = w;
+      maskCanvas.height = h;
+      maskCtx.clearRect(0, 0, w, h);
+      maskCtx.fillStyle = "#fff";
+      maskCtx.fillRect(0, 0, w, h);
+      pushHistory();
+    }
 
-  function initMaskFromImage() {
-    const w = canvas.width;
-    const h = canvas.height;
-    maskCanvas.width = w;
-    maskCanvas.height = h;
-    maskCtx.clearRect(0, 0, w, h);
-    maskCtx.fillStyle = "#fff";
-    maskCtx.fillRect(0, 0, w, h);
-    pushHistory();
-  }
+    function initMaskFromResultBlob(blob) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const w = canvas.width;
+          const h = canvas.height;
 
-  function initMaskFromResultBlob(blob) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(blob);
+          const temp = document.createElement("canvas");
+          temp.width = w;
+          temp.height = h;
+          const tctx = temp.getContext("2d");
+          tctx.drawImage(img, 0, 0, w, h);
+
+          const imgData = tctx.getImageData(0, 0, w, h);
+          const maskData = maskCtx.createImageData(w, h);
+          const src = imgData.data;
+          const dst = maskData.data;
+
+          for (let i = 0; i < src.length; i += 4) {
+            const a = src[i + 3];
+            dst[i] = 255;
+            dst[i + 1] = 255;
+            dst[i + 2] = 255;
+            dst[i + 3] = a;
+          }
+
+          maskCtx.putImageData(maskData, 0, 0);
+          pushHistory();
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Error rendering result."));
+        };
+        img.src = url;
+      });
+    }
+
+    async function loadFile(file) {
+      if (!file) return;
+      const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const w = canvas.width;
-        const h = canvas.height;
+        originalImageElement = img;
+        originalImageWidth = img.width;
+        originalImageHeight = img.height;
 
-        const temp = document.createElement("canvas");
-        temp.width = w;
-        temp.height = h;
-        const tctx = temp.getContext("2d");
-        tctx.drawImage(img, 0, 0, w, h);
+        const { w, h } = fitImageDimensions(img.width, img.height);
+        canvas.width = w;
+        canvas.height = h;
+        originalCanvas.width = w;
+        originalCanvas.height = h;
 
-        const imgData = tctx.getImageData(0, 0, w, h);
-        const maskData = maskCtx.createImageData(w, h);
-        const src = imgData.data;
-        const dst = maskData.data;
+        originalCtx.clearRect(0, 0, w, h);
+        originalCtx.drawImage(img, 0, 0, w, h);
 
-        for (let i = 0; i < src.length; i += 4) {
-          const a = src[i + 3];
-          dst[i] = 255;
-          dst[i + 1] = 255;
-          dst[i + 2] = 255;
-          dst[i + 3] = a;
-        }
+        hasImage = true;
+        setWorking(false);
+        setDownloadEnabled(true);
+        btnRemove.disabled = false;
 
-        maskCtx.putImageData(maskData, 0, 0);
-        pushHistory();
-        resolve();
+        overlayMsg.style.display = "none";
+        statusEl.textContent = `Image loaded (${img.width} × ${img.height}).`;
+        imageFilenameEl.textContent = file.name;
+        imageFilenameEl.dataset.hasName = "1";
+        canvasTipEl.textContent = `Image size: ${img.width} × ${img.height} px · Canvas: ${w} × ${h} px`;
+
+        initMaskFromImage();
+        render();
       };
       img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error("Error rendering result."));
+        statusEl.textContent = "Error loading image.";
       };
       img.src = url;
-    });
-  }
+    }
 
-  async function loadFile(file) {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
+    // ---- Brush preview & painting -------------------------------
 
-      // store full-res data for Option B export
-      originalImageElement = img;
-      originalImageWidth = img.width;
-      originalImageHeight = img.height;
+    function updateBrushPreviewStyle() {
+      if (!brushPreview) return;
+      brushPreview.classList.toggle("restore", brushMode === "restore");
+    }
 
-      const { w, h } = fitImageDimensions(img.width, img.height);
-      canvas.width = w;
-      canvas.height = h;
-      originalCanvas.width = w;
-      originalCanvas.height = h;
+    function getCanvasPointer(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / rect.width) * canvas.width;
+      const y = ((evt.clientY - rect.top) / rect.height) * canvas.height;
+      return { x, y };
+    }
 
-      originalCtx.clearRect(0, 0, w, h);
-      originalCtx.drawImage(img, 0, 0, w, h);
+    function showBrushPreview() {
+      if (!hasImage || working || !brushPreview) return;
+      brushPreview.style.display = "block";
+      updateBrushPreviewStyle();
+    }
 
-      hasImage = true;
-      setWorking(false);
-      setDownloadEnabled(true);
-      btnRemove.disabled = false;
+    function hideBrushPreview() {
+      if (!brushPreview) return;
+      brushPreview.style.display = "none";
+    }
 
-      overlayMsg.style.display = "none";
+    function updateBrushPreview(evt) {
+      if (!hasImage || !brushPreview || working) return;
+      const canvasRect = canvas.getBoundingClientRect();
+      const wrapRect = canvasWrap.getBoundingClientRect();
+      const radius = parseInt(brushSizeEl.value, 10) || 1;
+      const scaleX = canvasRect.width / canvas.width || 1;
+      const size = radius * 2 * scaleX;
+      const x = evt.clientX - wrapRect.left;
+      const y = evt.clientY - wrapRect.top;
+      brushPreview.style.width = `${size}px`;
+      brushPreview.style.height = `${size}px`;
+      brushPreview.style.left = `${x}px`;
+      brushPreview.style.top = `${y}px`;
+      brushPreview.style.display = "block";
+    }
 
-      statusEl.textContent = `Image loaded (${img.width} × ${img.height}).`;
+    function drawStamp(x, y, radius) {
+      maskCtx.save();
+      maskCtx.lineCap = "round";
+      maskCtx.lineJoin = "round";
+      maskCtx.fillStyle = "#fff";
+      maskCtx.strokeStyle = "#fff";
 
-      imageFilenameEl.textContent = file.name;
-      imageFilenameEl.dataset.hasName = "1";
+      if (brushMode === "erase") {
+        maskCtx.globalCompositeOperation = "destination-out";
+      } else {
+        maskCtx.globalCompositeOperation = "source-over";
+      }
 
-      const label =
-        currentLang === "es" ? "Tamaño de la imagen" : "Image size";
-      canvasTipEl.textContent = `${label}: ${img.width} × ${img.height} px · Canvas: ${w} × ${h} px`;
+      maskCtx.beginPath();
+      maskCtx.arc(x, y, radius, 0, Math.PI * 2);
+      maskCtx.fill();
+      maskCtx.restore();
+    }
 
-      initMaskFromImage();
+    function drawStroke(from, to, radius) {
+      maskCtx.save();
+      maskCtx.lineCap = "round";
+      maskCtx.lineJoin = "round";
+      maskCtx.lineWidth = radius * 2;
+      maskCtx.strokeStyle = "#fff";
+
+      if (brushMode === "erase") {
+        maskCtx.globalCompositeOperation = "destination-out";
+      } else {
+        maskCtx.globalCompositeOperation = "source-over";
+      }
+
+      maskCtx.beginPath();
+      maskCtx.moveTo(from.x, from.y);
+      maskCtx.lineTo(to.x, to.y);
+      maskCtx.stroke();
+      maskCtx.restore();
+    }
+
+    function startPaint(evt) {
+      if (!hasImage || working) return;
+      painting = true;
+      canvas.setPointerCapture(evt.pointerId);
+      const p = getCanvasPointer(evt);
+      lastPointer = { x: p.x, y: p.y };
+      const radius = parseInt(brushSizeEl.value, 10);
+      drawStamp(p.x, p.y, radius);
       render();
-    };
-    img.onerror = () => {
-      statusEl.textContent = "Error loading image.";
-    };
-    img.src = url;
-  }
-
-  // ---- Brush preview & painting -------------------------------
-
-  function updateBrushPreviewStyle() {
-    if (!brushPreview) return;
-    brushPreview.classList.toggle("restore", brushMode === "restore");
-  }
-
-  function getCanvasPointer(evt) {
-    const rect = canvas.getBoundingClientRect();
-    const x = ((evt.clientX - rect.left) / rect.width) * canvas.width;
-    const y = ((evt.clientY - rect.top) / rect.height) * canvas.height;
-    return { x, y };
-  }
-
-  function showBrushPreview() {
-    if (!hasImage || working || !brushPreview) return;
-    brushPreview.style.display = "block";
-    updateBrushPreviewStyle();
-  }
-
-  function hideBrushPreview() {
-    if (!brushPreview) return;
-    brushPreview.style.display = "none";
-  }
-
-  function updateBrushPreview(evt) {
-    if (!hasImage || !brushPreview || working) return;
-
-    const canvasRect = canvas.getBoundingClientRect();
-    const wrapRect = canvasWrap.getBoundingClientRect();
-
-    const radius = parseInt(brushSizeEl.value, 10) || 1;
-    const scaleX = canvasRect.width / canvas.width || 1;
-    const size = radius * 2 * scaleX;
-
-    const x = evt.clientX - wrapRect.left;
-    const y = evt.clientY - wrapRect.top;
-
-    brushPreview.style.width = `${size}px`;
-    brushPreview.style.height = `${size}px`;
-    brushPreview.style.left = `${x}px`;
-    brushPreview.style.top = `${y}px`;
-    brushPreview.style.display = "block";
-  }
-
-  function drawStamp(x, y, radius) {
-    maskCtx.save();
-    maskCtx.lineCap = "round";
-    maskCtx.lineJoin = "round";
-    maskCtx.fillStyle = "#fff";
-    maskCtx.strokeStyle = "#fff";
-
-    if (brushMode === "erase") {
-      maskCtx.globalCompositeOperation = "destination-out";
-    } else {
-      maskCtx.globalCompositeOperation = "source-over";
+      updateBrushPreview(evt);
+      evt.preventDefault();
     }
 
-    maskCtx.beginPath();
-    maskCtx.arc(x, y, radius, 0, Math.PI * 2);
-    maskCtx.fill();
-    maskCtx.restore();
-  }
-
-  function drawStroke(from, to, radius) {
-    maskCtx.save();
-    maskCtx.lineCap = "round";
-    maskCtx.lineJoin = "round";
-    maskCtx.lineWidth = radius * 2;
-    maskCtx.strokeStyle = "#fff";
-
-    if (brushMode === "erase") {
-      maskCtx.globalCompositeOperation = "destination-out";
-    } else {
-      maskCtx.globalCompositeOperation = "source-over";
+    function movePaint(evt) {
+      if (!hasImage) return;
+      updateBrushPreview(evt);
+      if (!painting) return;
+      const p = getCanvasPointer(evt);
+      const radius = parseInt(brushSizeEl.value, 10);
+      drawStroke(lastPointer, { x: p.x, y: p.y }, radius);
+      lastPointer = { x: p.x, y: p.y };
+      render();
+      evt.preventDefault();
     }
 
-    maskCtx.beginPath();
-    maskCtx.moveTo(from.x, from.y);
-    maskCtx.lineTo(to.x, to.y);
-    maskCtx.stroke();
-    maskCtx.restore();
-  }
+    function endPaint(evt) {
+      if (!painting) return;
+      painting = false;
+      lastPointer = null;
+      pushHistory();
+      evt && evt.preventDefault();
+    }
 
-  function startPaint(evt) {
-    if (!hasImage || working) return;
-    painting = true;
-    canvas.setPointerCapture(evt.pointerId);
-    const p = getCanvasPointer(evt);
-    lastPointer = { x: p.x, y: p.y };
-    const radius = parseInt(brushSizeEl.value, 10);
-    drawStamp(p.x, p.y, radius);
-    render();
-    updateBrushPreview(evt);
-    evt.preventDefault();
-  }
+    // ---- Full-resolution PNG export ------------------
 
-  function movePaint(evt) {
-    if (!hasImage) return;
-    updateBrushPreview(evt);
-    if (!painting) return;
-    const p = getCanvasPointer(evt);
-    const radius = parseInt(brushSizeEl.value, 10);
-    drawStroke(lastPointer, { x: p.x, y: p.y }, radius);
-    lastPointer = { x: p.x, y: p.y };
-    render();
-    evt.preventDefault();
-  }
+    function downloadPNG() {
+      if (!hasImage || !originalImageElement) return;
 
-  function endPaint(evt) {
-    if (!painting) return;
-    painting = false;
-    lastPointer = null;
-    pushHistory();
-    evt && evt.preventDefault();
-  }
+      const ew = originalImageWidth;
+      const eh = originalImageHeight;
+      if (!ew || !eh) return;
 
-  // ---- Full-resolution PNG export (Option B) ------------------
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = ew;
+      exportCanvas.height = eh;
+      const ectx = exportCanvas.getContext("2d");
 
-  function downloadPNG() {
-    if (!hasImage || !originalImageElement) return;
+      // draw original full-res image
+      ectx.clearRect(0, 0, ew, eh);
+      ectx.drawImage(originalImageElement, 0, 0, ew, eh);
 
-    const ew = originalImageWidth;
-    const eh = originalImageHeight;
-    if (!ew || !eh) return;
+      // scale current mask to full-res
+      const maskFullCanvas = document.createElement("canvas");
+      maskFullCanvas.width = ew;
+      maskFullCanvas.height = eh;
+      const maskFullCtx = maskFullCanvas.getContext("2d");
+      maskFullCtx.clearRect(0, 0, ew, eh);
+      maskFullCtx.drawImage(maskCanvas, 0, 0, ew, eh);
 
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = ew;
-    exportCanvas.height = eh;
-    const ectx = exportCanvas.getContext("2d");
+      // apply mask as alpha
+      ectx.globalCompositeOperation = "destination-in";
+      ectx.drawImage(maskFullCanvas, 0, 0);
+      ectx.globalCompositeOperation = "source-over";
 
-    // draw original full-res image
-    ectx.clearRect(0, 0, ew, eh);
-    ectx.drawImage(originalImageElement, 0, 0, ew, eh);
-
-    // scale current mask to full-res
-    const maskFullCanvas = document.createElement("canvas");
-    maskFullCanvas.width = ew;
-    maskFullCanvas.height = eh;
-    const maskFullCtx = maskFullCanvas.getContext("2d");
-    maskFullCtx.clearRect(0, 0, ew, eh);
-    maskFullCtx.drawImage(maskCanvas, 0, 0, ew, eh);
-
-    // apply mask as alpha
-    ectx.globalCompositeOperation = "destination-in";
-    ectx.drawImage(maskFullCanvas, 0, 0);
-    ectx.globalCompositeOperation = "source-over";
-
-    exportCanvas.toBlob(
-      blob => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "bgone.png";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      },
-      "image/png"
-    );
-  }
-
-  // ---- Background removal -------------------------------------
-
-  btnRemove.addEventListener("click", async () => {
-    if (!hasImage || working) return;
-    setWorking(true);
-    statusEl.textContent = "Removing background…";
-
-    try {
-      const blob = await new Promise(resolve =>
-        originalCanvas.toBlob(resolve, "image/png")
+      exportCanvas.toBlob(
+        blob => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "bgone.png";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        },
+        "image/png"
       );
-      if (!blob) throw new Error("Canvas export returned null blob.");
-
-      const outBlob = await removeBackground(blob, { debug: true });
-      await initMaskFromResultBlob(outBlob);
-      render();
-      statusEl.textContent =
-        "Background removed. Use the brush to refine, then save PNG.";
-      markModelReady();
-    } catch (err) {
-      console.error(err);
-      statusEl.textContent = "Error removing background.";
-    } finally {
-      setWorking(false);
     }
-  });
 
-  // ---- Events -------------------------------------------------
+    // ---- Background removal -------------------------------------
 
-  labelSelectImage.addEventListener("keydown", e => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      fileInput.click();
-    }
-  });
+    btnRemove.addEventListener("click", async () => {
+      if (!hasImage || working) return;
+      setWorking(true);
+      statusEl.textContent = "Removing background…";
 
-  labelSelectImage.addEventListener("click", () => {
-    fileInput.click();
-  });
+      try {
+        const blob = await new Promise(resolve =>
+          originalCanvas.toBlob(resolve, "image/png")
+        );
+        if (!blob) throw new Error("Canvas export returned null blob.");
 
-  fileInput.addEventListener("change", e => {
-    const file = e.target.files && e.target.files[0];
-    loadFile(file);
-  });
+        const outBlob = await removeBackground(blob, { debug: true });
+        await initMaskFromResultBlob(outBlob);
+        render();
+        statusEl.textContent = "Background removed. Use the brush to refine, then save PNG.";
+        markModelReady();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Error removing background.";
+      } finally {
+        setWorking(false);
+      }
+    });
 
-  ["dragenter", "dragover"].forEach(name => {
-    canvasWrap.addEventListener(
-      name,
-      e => {
+    // ---- Events -------------------------------------------------
+
+    // NOTE: We don't need a click listener for labelSelectImage because
+    // the label is already linked to fileInput via "for" attribute.
+    labelSelectImage.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        e.stopPropagation();
-        if (!hasImage) overlayMsg.textContent = t("overlayDrop");
-      },
-      { passive: false }
-    );
-  });
+        fileInput.click();
+      }
+    });
 
-  ["dragleave", "drop"].forEach(name => {
-    canvasWrap.addEventListener(
-      name,
-      e => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!hasImage) overlayMsg.textContent = t("overlayInitial");
-      },
-      { passive: false }
-    );
-  });
+    fileInput.addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      loadFile(file);
+    });
 
-  canvasWrap.addEventListener(
-    "drop",
-    e => {
+    ["dragenter", "dragover"].forEach(name => {
+      canvasWrap.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasImage) overlayMsg.textContent = "Drop image to load.";
+        }, { passive: false });
+    });
+
+    ["dragleave", "drop"].forEach(name => {
+      canvasWrap.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasImage) overlayMsg.textContent = "Drop an image here, or use “Select image…” on the left.";
+        }, { passive: false });
+    });
+
+    canvasWrap.addEventListener("drop", e => {
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       loadFile(file);
-    },
-    { passive: false }
-  );
+    }, { passive: false });
 
-  canvas.addEventListener("pointerdown", startPaint, { passive: false });
-  canvas.addEventListener("pointermove", movePaint, { passive: false });
-  canvas.addEventListener("pointerup", endPaint, { passive: false });
-  canvas.addEventListener("pointercancel", endPaint, { passive: false });
-  canvas.addEventListener("pointerleave", e => {
-    endPaint(e);
-    hideBrushPreview();
-  });
+    canvas.addEventListener("pointerdown", startPaint, { passive: false });
+    canvas.addEventListener("pointermove", movePaint, { passive: false });
+    canvas.addEventListener("pointerup", endPaint, { passive: false });
+    canvas.addEventListener("pointercancel", endPaint, { passive: false });
+    canvas.addEventListener("pointerleave", e => {
+      endPaint(e);
+      hideBrushPreview();
+    });
 
-  canvas.addEventListener("pointerenter", e => {
-    if (!hasImage) return;
-    showBrushPreview();
-    updateBrushPreview(e);
-  });
+    canvas.addEventListener("pointerenter", e => {
+      if (!hasImage) return;
+      showBrushPreview();
+      updateBrushPreview(e);
+    });
 
-  function setBrushMode(mode) {
-    brushMode = mode;
-    const eraseActive = mode === "erase";
-    modeEraseBtn.classList.toggle("active", eraseActive);
-    modeRestoreBtn.classList.toggle("active", !eraseActive);
-    modeEraseBtn.setAttribute(
-      "aria-selected",
-      eraseActive ? "true" : "false"
-    );
-    modeRestoreBtn.setAttribute(
-      "aria-selected",
-      eraseActive ? "false" : "true"
-    );
-    updateBrushPreviewStyle();
-  }
-
-  modeEraseBtn.addEventListener("click", () => setBrushMode("erase"));
-  modeRestoreBtn.addEventListener("click", () => setBrushMode("restore"));
-
-  brushSizeEl.addEventListener("input", () => {
-    brushValueEl.textContent = brushSizeEl.value;
-  });
-
-  btnDownload.addEventListener("click", downloadPNG);
-
-  window.addEventListener("keydown", e => {
-    if (working) return;
-    switch (e.key.toLowerCase()) {
-      case "e":
-        setBrushMode("erase");
-        statusEl.textContent =
-          currentLang === "es" ? "Pincel: borrar" : "Brush: erase";
-        break;
-      case "r":
-        setBrushMode("restore");
-        statusEl.textContent =
-          currentLang === "es" ? "Pincel: restaurar" : "Brush: restore";
-        break;
-      case "z":
-        undo();
-        break;
-      case "y":
-        redo();
-        break;
-      default:
-        break;
+    function setBrushMode(mode) {
+      brushMode = mode;
+      const eraseActive = mode === "erase";
+      modeEraseBtn.classList.toggle("active", eraseActive);
+      modeRestoreBtn.classList.toggle("active", !eraseActive);
+      modeEraseBtn.setAttribute("aria-selected", eraseActive ? "true" : "false");
+      modeRestoreBtn.setAttribute("aria-selected", eraseActive ? "false" : "true");
+      updateBrushPreviewStyle();
     }
-  });
-</script>
+
+    modeEraseBtn.addEventListener("click", () => setBrushMode("erase"));
+    modeRestoreBtn.addEventListener("click", () => setBrushMode("restore"));
+
+    brushSizeEl.addEventListener("input", () => {
+      brushValueEl.textContent = brushSizeEl.value;
+    });
+
+    btnDownload.addEventListener("click", downloadPNG);
+
+    window.addEventListener("keydown", e => {
+      if (working) return;
+      switch (e.key.toLowerCase()) {
+        case "e":
+          setBrushMode("erase");
+          statusEl.textContent = "Brush: erase";
+          break;
+        case "r":
+          setBrushMode("restore");
+          statusEl.textContent = "Brush: restore";
+          break;
+        case "z":
+          undo();
+          break;
+        case "y":
+          redo();
+          break;
+      }
+    });
+
+    // Paste support
+    document.addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          loadFile(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
