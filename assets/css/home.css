@@ -67,6 +67,7 @@
 
   transform-origin: center bottom;
   background: radial-gradient(circle at top, #ffffff, #f3f3f0);
+  /* card border*/
   border: 4px solid var(--blue);
   border-radius: 20px;
 
