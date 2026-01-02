@@ -19,6 +19,9 @@ class AppHeader extends HTMLElement {
           margin: 0;
           padding: 0;
           line-height: 1.5;
+          position: relative; 
+          z-index: 10000;
+          transform: translate3d(0, 0, 100px);
         }
 
         /* 2. HEADER CONTAINER */
@@ -32,7 +35,9 @@ class AppHeader extends HTMLElement {
           position: relative;
           z-index: 100;
           margin: 0;
-          padding: 0;           
+          padding: 0;   
+          z-index: 99999; 
+  position: relative;        
         }
 
         /* 3. LEFT SIDE (White Background) */
