@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Blizky - Links</title>
+  
+  <link rel="icon" type="image/svg+xml" href="../assets/svg/fabicon.svg">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  
+  <script src="../assets/components.js?v=1" defer></script>
+  <script src="../assets/icons.js" defer></script>
+
+  <style>
+    /* --- Base Variables --- */
+    :root {
+      --bg-color: #2c89c4;
+      
+      /* Profile: Dark linear fade (non-button style) */
+      --profile-bg-top:    rgba(0, 0, 0, 0.05);
+      --profile-bg-bottom: rgba(0, 0, 0, 0.25);
+      
+      /* Text Colors */
+      --text-color: #ffffff;
+      --btn-text: #1d1d1f;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .links-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* --- 1. REFINED PROFILE BOX (Non-Button Look) --- */
+    .glass-profile {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      box-sizing: border-box;
+      
+      /* Linear Gradient: subtle top-down shading */
+      background: linear-gradient(180deg, var(--profile-bg-top) 0%, var(--profile-bg-bottom) 100%);
+      
+      /* No heavy border or shadow -> makes it feel like "background" */
+      border: 1px solid rgba(255, 255, 255, 0.08); 
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 32px;
+      
+      /* Keep the blur for readability */
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .profile-pic {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      /* Thinner, cleaner border */
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      background-color: #ddd;
+      flex-shrink: 0;
+      /* Soft shadow for the image only */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .profile-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      line-height: 1.1;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .bio {
+      margin: 0;
+      line-height: 1.5;
+      opacity: 0.95;
+      font-size: 1rem;
+      font-weight: 400;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* --- Links Section --- */
+    .links-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* --- 2. LIQUID / IPHONE GLASS BUTTONS (Kept same) --- */
+    .link-btn {
+      background: linear-gradient(180deg, rgba(255,255,255, 0.95) 0%, rgba(255,255,255, 0.75) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      
+      color: var(--btn-text);
+      padding: 16px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      position: relative;
+      
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      
+      /* Depth shadows */
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 2px rgba(0,0,0,0.05),
+        0 4px 10px rgba(0,0,0,0.1);
+        
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                  background 0.2s ease,
+                  box-shadow 0.2s ease;
+    }
+
+    .link-btn:hover {
+      transform: scale(1.03);
+      background: linear-gradient(180deg, rgba(255,255,255, 1) 0%, rgba(255,255,255, 0.9) 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        0 12px 24px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+    .link-btn:active {
+      transform: scale(0.98);
+    }
+
+    .icon-wrap {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+    }
+
+    .icon-wrap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 550px) {
+      .glass-profile {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+        padding: 24px;
+        border-radius: 20px;
+      }
+      
+      .profile-pic {
+        width: 130px;
+        height: 130px;
+      }
+
+      .links-main {
+        padding: 20px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <app-header></app-header>
+
+  <main class="links-main">
+    
+    <div class="glass-profile">
+      <img src="profile_picture.jpg" alt="Alex Blizky" class="profile-pic">
+      
+      <div class="profile-text">
+        <h1>Alex Blizky</h1>
+        <p class="bio">
+          Creator of PeorCaso & Blizlab. Inspiring curiosity through nature, science, and culture. 
+          Building tools and sharing the creative path.
+        </p>
+      </div>
+    </div>
+
+    <div class="links-container" id="link-list">
+      </div>
+  </main>
+
+  <app-footer></app-footer>
+
+  <script>
+    const MY_LINKS = [
+      { name: "Blizlab Tools", url: "https://www.blizlab.com/", icon: "blizlab" },
+      { name: "WebPrompter", url: "https://webprompter.app/", icon: "webprompter" },
+      { name: "YouTube", url: "https://www.youtube.com/@ablizky", icon: "youtube" },
+      { name: "Instagram", url: "https://www.instagram.com/alexblizky/", icon: "instagram" },
+      { name: "TikTok", url: "https://www.tiktok.com/@alexblizky", icon: "tiktok" },
+      { name: "X / Twitter", url: "https://x.com/AlexBlizky", icon: "twitter" },
+      { name: "Bluesky", url: "https://bsky.app/profile/blizky.bsky.social", icon: "bsky" }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("link-list");
+      
+      MY_LINKS.forEach(link => {
+        const a = document.createElement("a");
+        a.href = link.url;
+        a.className = "link-btn";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        
+        const svg = (typeof ICONS !== 'undefined' && ICONS[link.icon]) ? ICONS[link.icon] : "";
+        
+        a.innerHTML = `
+          <div class="icon-wrap">${svg}</div>
+          <span>${link.name}</span>
+        `;
+        container.appendChild(a);
+      });
+    });
+  </script>
+</body>
+</html>
