@@ -278,11 +278,11 @@ class AppHeader extends HTMLElement {
             </li>
 
             <li>
-              <a class="nav-link" href="https://github.com/Blizky/Blizlab" target="_blank">Readme</a>
+              <a class="nav-link" href="https://github.com/Blizky/Blizlab" target="_blank">GitHub</a>
             </li>
 
             <li>
-              <span class="nav-link nav-disabled">YouTube (soon)</span>
+              <a class="nav-link" href="/links/">About</a>
             </li>
             
           </ul>
