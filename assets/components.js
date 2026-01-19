@@ -270,6 +270,7 @@ class AppHeader extends HTMLElement {
                 <li><a href="/octofind/">OctoFind</a></li>
                 <li><a href="/bgone/">BGone</a></li>
                 <li><a href="/retroit/">RetroIt</a></li>
+                <li><a href="/snapfix/">SnapFix</a></li>
                 <li><a href="/checksy/">Checksy</a></li>
                 <li><a href="/skreen/">Skreen</a></li>
                 <li><a href="/chrono/">Chronometer</a></li>
