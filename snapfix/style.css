@@ -1,0 +1,186 @@
+/* Note: Root variables are inherited from global.css */
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Controls */
+.controls-area {
+    background: #f4f4f4; /* Light grey to contrast with white shell */
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px dashed #ccc;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    transition: opacity 0.3s ease;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.input-group label {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--blue);
+    font-weight: 600;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: var(--text-dark);
+    text-align: center;
+    outline: none;
+    font-size: 1rem;
+}
+
+input[type="text"]:focus {
+    border: 2px solid var(--blue);
+}
+
+input[type="file"] { display: none; }
+
+/* Action Area */
+.action-area {
+    margin: 20px 0;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Buttons */
+.btn {
+    background-color: var(--blue);
+    color: var(--white);
+    border: none;
+    padding: 12px 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    font-weight: 700;
+    display: inline-block;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn:hover { 
+    background-color: #0081aa; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.btn.download { 
+    background-color: var(--yellow); 
+    color: var(--text-dark); 
+}
+
+.btn.secondary { 
+    background-color: var(--graphite); 
+    color: var(--white); 
+}
+
+/* Gallery */
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.img-card {
+    background: #fff;
+    padding: 6px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+    cursor: pointer;
+    border: 1px solid #eee;
+}
+
+.img-card:hover {
+    transform: scale(1.02);
+    border-color: var(--blue);
+}
+
+.img-card canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+    background: #eee; /* Placeholder bg */
+}
+
+.status { 
+    font-size: 0.8rem; 
+    color: var(--graphite); 
+    margin-top: 8px; 
+    font-weight: 500;
+}
+
+/* Loader */
+.loader {
+    display: none;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--blue);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Lightbox */
+.lightbox {
+    display: none; 
+    position: fixed; 
+    z-index: 99999; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.92); 
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 4px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+#closeLightbox {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: #f1f1f1;
+    font-size: 50px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: 0.2s;
+    line-height: 1;
+}
+
+#closeLightbox:hover {
+    color: var(--yellow);
+}
