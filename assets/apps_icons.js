@@ -1,0 +1,82 @@
+/* BLIZLAB APP ICONS
+  Specifically for the Landing Page cards and App Branding
+*/
+
+const APP_ICONS = {
+
+  bgone: `
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#09c"/>
+  <g fill="none" stroke="#fc3" stroke-linecap="round" stroke-width="2">
+    <path stroke-linejoin="round" d="M15 23c-1.864 0-2.796 0-3.53-.305a4 4 0 0 1-2.166-2.164C9 19.796 9 18.864 9 17v-1c0-2.809 0-4.213.674-5.222a4 4 0 0 1 1.104-1.104C11.787 9 13.19 9 16 9h1.5c1.396 0 2.093 0 2.661.172a4 4 0 0 1 2.667 2.667C23 12.407 23 13.104 23 14.5h0"/>
+    <path d="M23.119 18.879 20.997 21m-2.121 2.121L20.997 21m2.122 2.121L20.997 21m0 0-2.121-2.121"/>
+    <path stroke-linejoin="round" d="m10.5 21.5 11-11m1.492 4h.01m-8.01 8.5h.01M9 17l8-8"/>
+  </g>
+  </svg>
+  `,
+  
+  retroit: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(5.3,4.5) scale(1.3)">
+    <path fill="#ffcc33" d="M4.75 9.5a3.25 3.25 0 1 0 6.5 0a3.25 3.25 0 0 0-6.5 0M15 4h-3.5c-.25-1-.5-2-1.5-2H6C5 2 4.75 3 4.5 4H1c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1m-7 9.938a4.438 4.438 0 1 1 0-8.876a4.438 4.438 0 0 1 0 8.876M15 7h-2V6h2z" />
+  </g>
+</svg>
+  `,
+  
+  snapfix: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(3.5,3.1) scale(1)">
+<path fill="#ffcc33" d="M8.5 13.5L5 18h8.03c.08 1.1.44 2.12 1 3H5a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v6.18c-.5-.11-1-.18-1.5-.18c-1.72 0-3.27.67-4.43 1.76L14.5 12L11 16.5zM19 20a2.5 2.5 0 0 1-2.5-2.5c0-.4.09-.78.26-1.12l-1.09-1.09c-.42.63-.67 1.39-.67 2.21c0 2.21 1.79 4 4 4V23l2.25-2.25L19 18.5zm0-6.5V12l-2.25 2.25L19 16.5V15a2.5 2.5 0 0 1 2.5 2.5c0 .4-.09.78-.26 1.12l1.09 1.09c.42-.63.67-1.39.67-2.21c0-2.21-1.79-4-4-4" />
+  </g>
+</svg>
+
+ `,
+
+ 
+  octofind: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(0,0) scale(1)">
+  <path fill="#fc3" d="m15.7 17.5 6-4-6-4zm-6.3 8.375q-.825.125-1.487-.387T7.15 24.15L5.825 13.225q-.1-.825.4-1.475T7.55 11l1.15-.15V19q0 1.65 1.175 2.825T12.7 23H22q-.15.6-.6 1.038t-1.1.512zM12.7 21q-.825 0-1.412-.587T10.7 19V8q0-.825.588-1.412T12.7 6h11q.825 0 1.413.588T25.7 8v11q0 .825-.587 1.413T23.7 21z" stroke="#fc3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
+  `,
+  
+  checksy: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(3, 3.3) scale(1.2)">
+    <path fill="#fc3" d="M16.02 2.036a2 2 0 0 1 1.986 1.997l.008 4.95a2 2 0 0 1-.586 1.417l-.359.359a4.5 4.5 0 1 0-6.31 6.31a2 2 0 0 1-2.79-.038L3.02 12.083a2 2 0 0 1 .002-2.83l6.682-6.665a2 2 0 0 1 1.425-.584zM13 6a1 1 0 1 0 2 0a1 1 0 0 0-2 0m3.303 9.596a3.5 3.5 0 1 0-.707.707l2.55 2.55a.5.5 0 1 0 .708-.707zM16 13.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0"/>
+  </g>
+</svg>
+  `,
+  
+  skreen: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(4,4) scale(1)">
+	<path fill="#fc3" d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1m.64 5l-.71.71a1 1 0 0 0 0 1.41a1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17M12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1m5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41a1 1 0 0 0 .66.29m-12-.29a1 1 0 0 0 .7.29a1 1 0 0 0 .71-.29a1 1 0 0 0 0-1.41l-.71-.71a1 1 0 0 0-1.43 1.41ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2m-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0a1 1 0 0 0 0-1.41ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5m0 9a3.5 3.5 0 1 1 3.5-3.5a3.5 3.5 0 0 1-3.5 3.5m0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1" />
+  </g>
+</svg>
+  `,
+  
+  chrono: `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(8,5.5) scale(1)">
+  <path fill="#fc3" d="M9 11h2a1 1 0 0 1 0 2H8a.997.997 0 0 1-1-1V8a1 1 0 1 1 2 0zM1.869 6.861a1.5 1.5 0 1 1 2.077-1.76a8 8 0 0 1 1.126-.548A2.5 2.5 0 0 1 6.5 0h3a2.5 2.5 0 0 1 1.428 4.553q.586.231 1.126.548a1.5 1.5 0 1 1 2.077 1.76a8 8 0 1 1-12.263 0zM8 18A6 6 0 1 0 8 6a6 6 0 0 0 0 12M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z"/>
+  </g>
+</svg>
+  `,
+  
+  webprompter: `
+ <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+  <g transform="translate(3.9,4) scale(1)">
+	<path fill="#fc3" d="M6 14h8v-2H6zm0-3h12V9H6zm0-3h12V6H6zM2 22V4q0-.825.588-1.412T4 2h16q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18H6zm3.15-6H20V4H4v13.125zM4 16V4z" />
+    </g>
+</svg>
+  `
+};
