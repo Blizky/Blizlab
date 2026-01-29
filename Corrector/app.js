@@ -454,7 +454,11 @@ function htmlToMarkdown(html) {
     const tag = node.tagName.toLowerCase();
     if (tag === "br") return "\n";
     if (tag === "strong" || tag === "b") {
-      return options.stripBold ? childrenText(node, options) : `**${childrenText(node, options)}**`;
+      const inner = childrenText(node, options);
+      if (options.stripBold) return inner;
+      const trimmed = inner.trim();
+      if (trimmed.startsWith("**") && trimmed.endsWith("**")) return inner;
+      return `**${inner}**`;
     }
     if (tag === "em" || tag === "i") return `*${childrenText(node, options)}*`;
     if (tag === "code") return `\`${childrenText(node, options)}\``;
@@ -501,6 +505,18 @@ function htmlToMarkdown(html) {
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function looksLikeMarkdown(text) {
+  const sample = text || "";
+  return [
+    /^#{1,6}\s+\S+/m,
+    /^\s*[-*+]\s+\S+/m,
+    /^\s*\d+\.\s+\S+/m,
+    /\*\*[^*]+\*\*/,
+    /`{1,3}[^`]+`{1,3}/,
+    /\[[^\]]+\]\([^)]+\)/,
+  ].some(pattern => pattern.test(sample));
 }
 
 function insertTextAtCursor(text) {
@@ -554,13 +570,28 @@ input.addEventListener("input", () => {
 });
 
 input.addEventListener("paste", (event) => {
+  const plain = event.clipboardData?.getData("text/plain");
   const html = event.clipboardData?.getData("text/html");
+  if (plain && looksLikeMarkdown(plain)) {
+    event.preventDefault();
+    insertTextAtCursor(plain);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    setCurrentLanguage(detectLanguageHeuristic(plain));
+    return;
+  }
   if (html) {
     event.preventDefault();
     const markdown = htmlToMarkdown(html);
     insertTextAtCursor(markdown);
     input.dispatchEvent(new Event("input", { bubbles: true }));
     setCurrentLanguage(detectLanguageHeuristic(markdown));
+    return;
+  }
+  if (plain) {
+    event.preventDefault();
+    insertTextAtCursor(plain);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    setCurrentLanguage(detectLanguageHeuristic(plain));
   }
 });
 
