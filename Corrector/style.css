@@ -118,6 +118,7 @@ main {
   position: sticky;
   top: 0;
   z-index: 2;
+  padding-bottom: 28px;
 }
 
 .status-pill {
@@ -139,7 +140,13 @@ main {
 .panel-title {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.tool-subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 2px;
 }
 
 .panel-subtitle {
@@ -305,4 +312,8 @@ main {
   header { padding: 20px 6vw 8px; }
   .panel { min-height: 48vh; }
   .status-pill { top: 12px; right: 5vw; }
+}
+.app-brand-icon svg {
+  width: 34px;
+  height: 34px;
 }

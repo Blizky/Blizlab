@@ -4,20 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TitleCut | YouTube Mobile Simulator</title>
+    <link rel="stylesheet" href="../assets/css/global.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="titlecut.css">
+    <script src="../assets/components.js" defer></script>
 </head>
 <body>
-    <div class="tc-app">
-        <header class="tc-header">
-            <span class="tc-logo">✂️ TitleCut</span>
-            <div class="tc-lang">
-                <button id="btn-en" class="active">EN</button>
-                <button id="btn-es">ES</button>
-            </div>
-        </header>
+    <app-header></app-header>
+    <main class="page-main">
+        <div class="tc-app">
+            <div class="tc-shell">
+                <div class="tc-shell-body">
+                    <header class="tc-header">
+                        <span class="tc-logo">
+                            <span class="tc-logo-icon" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+                                  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+                                  <g transform="translate(3.9,4) scale(1)">
+                                  <path fill="#fc3" d="M2 6.75A2.75 2.75 0 0 1 4.75 4h14.5A2.75 2.75 0 0 1 22 6.75v4.51a3.29 3.29 0 0 0-3.606.702l-5.903 5.903a3.7 3.7 0 0 0-.97 1.712l-.105.423H4.75A2.75 2.75 0 0 1 2 17.25zM16.5 8h-9a1.5 1.5 0 1 0 0 3h9a1.5 1.5 0 0 0 0-3m2.6 4.67-5.903 5.902a2.7 2.7 0 0 0-.706 1.247l-.458 1.831a1.087 1.087 0 0 0 1.319 1.318l1.83-.457a2.7 2.7 0 0 0 1.248-.707l5.902-5.902A2.286 2.286 0 0 0 19.1 12.67"/>
+                                    </g>
+                                </svg>
+                            </span>
+                            TitleCut
+                        </span>
+                    </header>
 
-        <div class="tc-main-grid">
+                    <div class="tc-main-grid">
             <section class="tc-input-section">
                 <div class="tc-card">
                     <div class="tc-label-row">
@@ -33,7 +45,10 @@
                         Concrete Fact + Incomplete Hook = Clicks
                     </div>
                     <ul id="tc-tips-list" class="tc-tips">
-                        </ul>
+                        <li>Visible part shows "what happened".</li>
+                        <li>The cut (...) hides the reveal.</li>
+                        <li>Don't finish the idea.</li>
+                    </ul>
                 </aside>
             </section>
 
@@ -56,7 +71,7 @@
                                 <div class="yt-avatar"></div>
                                 <div class="yt-text">
                                     <h3 id="simTitle" class="yt-title-text"></h3>
-                                    <p class="yt-sub">Anton Petrov • 105K views • 2 days ago</p>
+                                    <p class="yt-sub">YouTube Channel • 105K views • 2 days ago</p>
                                 </div>
                                 <div class="yt-more">⋮</div>
                             </div>
@@ -64,8 +79,13 @@
                     </div>
                 </div>
             </section>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+        </div>
+    </main>
+    <app-footer></app-footer>
     <script src="titlecut.js"></script>
 </body>
 </html>

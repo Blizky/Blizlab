@@ -23,6 +23,7 @@
       /* Text Colors */
       --text-color: #ffffff;
       --btn-text: #1d1d1f;
+      --btn-bg: #ffffff;
     }
 
     body {
@@ -116,7 +117,7 @@
 
     /* --- 2. LIQUID / IPHONE GLASS BUTTONS (Kept same) --- */
     .link-btn {
-      background: linear-gradient(180deg, rgba(255,255,255, 0.95) 0%, rgba(255,255,255, 0.75) 100%);
+      background: var(--btn-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       
@@ -137,7 +138,6 @@
       /* Depth shadows */
       box-shadow: 
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        inset 0 -1px 2px rgba(0,0,0,0.05),
         0 4px 10px rgba(0,0,0,0.1);
         
       transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), 
@@ -147,9 +147,8 @@
 
     .link-btn:hover {
       transform: scale(1.03);
-      background: linear-gradient(180deg, rgba(255,255,255, 1) 0%, rgba(255,255,255, 0.9) 100%);
+      background: #ffffff;
       box-shadow: 
-        inset 0 1px 0 rgba(255, 255, 255, 1),
         0 12px 24px rgba(0,0,0,0.15);
       z-index: 10;
     }
@@ -222,6 +221,7 @@
     const MY_LINKS = [
       { name: "Blizlab Tools", url: "https://www.blizlab.com/", icon: "blizlab" },
       { name: "WebPrompter", url: "https://webprompter.app/", icon: "webprompter" },
+      { name: "GitHub", url: "https://github.com/Blizky", icon: "github" },
       { name: "YouTube", url: "https://www.youtube.com/@ablizky", icon: "youtube" },
       { name: "Instagram", url: "https://www.instagram.com/alexblizky/", icon: "instagram" },
       { name: "TikTok", url: "https://www.tiktok.com/@alexblizky", icon: "tiktok" },

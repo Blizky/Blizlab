@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../assets/css/global.css" />
   <link rel="stylesheet" href="style.css" />
   <script src="../assets/components.js" defer></script>
+  <script src="../assets/apps_icons.js" defer></script>
 </head>
 <body>
   <app-header></app-header>
@@ -19,8 +20,19 @@
       <article class="panel">
         <header class="panel-header">
           <div class="panel-title">
-            <h2># Corrector</h2>
-            <p class="panel-subtitle">Pega tu texto, guardalo en Markdown o corrígelo.</p>
+            <h2 class="app-brand">
+              <span class="app-brand-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 32 32">
+                  <rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/>
+                  <g transform="translate(4,5) scale(1)">
+                    <rect x="2" y="1" width="20" height="14" rx="3" fill="#ffcc33"/>
+                    <text x="12" y="12" text-anchor="middle" font-size="7" fill="#0099CC" font-family="Arial, sans-serif">abc</text>
+                  </g>
+                </svg>
+              </span>
+              <span class="app-brand-text">#Correc<span class="highlight">tor</span></span>
+            </h2>
+            <div class="tool-subtitle" id="toolSubtitle">Pega tu texto, guardalo en Markdown o corrígelo.</div>
           </div>
           <div class="toolbar">
             <button id="run">Corregir</button>
@@ -55,6 +67,17 @@
   </div>
 
   <script src="app.js" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof APP_ICONS === "undefined") return;
+      document.querySelectorAll("[data-icon]").forEach((node) => {
+        const key = node.dataset.icon;
+        if (key && APP_ICONS[key]) {
+          node.innerHTML = APP_ICONS[key];
+        }
+      });
+    });
+  </script>
   <app-footer></app-footer>
 </body>
 </html>
