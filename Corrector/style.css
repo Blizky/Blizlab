@@ -53,6 +53,15 @@ header p {
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: center;
+}
+
+.toolbar-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 button {
@@ -147,6 +156,12 @@ main {
   font-size: 0.9rem;
   color: var(--muted);
   margin-top: 2px;
+}
+
+.toolbar-subtitle {
+  margin-top: 0;
+  margin-left: 12px;
+  white-space: nowrap;
 }
 
 .panel-subtitle {

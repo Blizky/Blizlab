@@ -304,36 +304,38 @@ function htmlToMarkdown(html) {
       .replace(/\s+/g, " ");
   }
 
-  function textFrom(node) {
+  function textFrom(node, options = {}) {
     if (node.nodeType === Node.TEXT_NODE) return normalizeInlineText(node.textContent || "");
     if (node.nodeType !== Node.ELEMENT_NODE) return "";
     const tag = node.tagName.toLowerCase();
     if (tag === "br") return "\n";
-    if (tag === "strong" || tag === "b") return `**${childrenText(node)}**`;
-    if (tag === "em" || tag === "i") return `*${childrenText(node)}*`;
-    if (tag === "code") return `\`${childrenText(node)}\``;
+    if (tag === "strong" || tag === "b") {
+      return options.stripBold ? childrenText(node, options) : `**${childrenText(node, options)}**`;
+    }
+    if (tag === "em" || tag === "i") return `*${childrenText(node, options)}*`;
+    if (tag === "code") return `\`${childrenText(node, options)}\``;
     if (tag === "a") {
       const href = node.getAttribute("href") || "";
-      const label = childrenText(node) || href;
+      const label = childrenText(node, options) || href;
       return href ? `[${label}](${href})` : label;
     }
-    if (tag === "h1") return `# ${childrenText(node)}\n\n`;
-    if (tag === "h2") return `## ${childrenText(node)}\n\n`;
-    if (tag === "h3") return `### ${childrenText(node)}\n\n`;
-    if (tag === "h4") return `#### ${childrenText(node)}\n\n`;
-    if (tag === "h5") return `##### ${childrenText(node)}\n\n`;
-    if (tag === "h6") return `###### ${childrenText(node)}\n\n`;
-    if (tag === "p") return `${childrenText(node)}\n\n`;
-    if (tag === "blockquote") return `> ${childrenText(node).replace(/\n/g, "\n> ")}\n\n`;
+    if (tag === "h1") return `# ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "h2") return `## ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "h3") return `### ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "h4") return `#### ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "h5") return `##### ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "h6") return `###### ${childrenText(node, { ...options, stripBold: true })}\n\n`;
+    if (tag === "p") return `${childrenText(node, options)}\n\n`;
+    if (tag === "blockquote") return `> ${childrenText(node, options).replace(/\n/g, "\n> ")}\n\n`;
     if (tag === "ul") return `${listText(node, "- ")}\n`;
     if (tag === "ol") return `${listText(node, "1. ")}\n`;
-    return childrenText(node);
+    return childrenText(node, options);
   }
 
-  function childrenText(node) {
+  function childrenText(node, options = {}) {
     let result = "";
     node.childNodes.forEach(child => {
-      result += textFrom(child);
+      result += textFrom(child, options);
     });
     return result;
   }
