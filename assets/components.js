@@ -155,100 +155,6 @@ class AppHeader extends HTMLElement {
             transform: none; 
         }
 
-        /* --- DROPDOWNS --- */
-        .nav-item {
-          position: relative;
-          display: flex;
-          align-items: center;
-          height: auto; 
-        }
-
-        /* ➤ THE INVISIBLE BRIDGE (Safe Zone) 
-           This pseudo-element creates a hidden bridge from the text 
-           down to the menu so the mouse doesn't fall into the gap. */
-        .nav-item::after {
-          content: "";
-          position: absolute;
-          top: 100%;  /* Starts at bottom of text */
-          left: -10px;
-          right: -10px;
-          height: 40px; /* Extends down to touch the menu */
-          background: transparent;
-          z-index: 10;
-        }
-        
-        /* Arrow */
-        .nav-item > .nav-link::after {
-          content: "▾";
-          font-size: 0.8em;
-          margin-left: 6px;
-          position: relative;
-          top: -1px;
-        }
-
-        /* ➤ ANIMATED SUBMENU 
-           Using opacity/visibility instead of display:none allows for fading 
-           and delay effects. */
-        .nav-submenu {
-          /* HIDDEN STATE */
-          visibility: hidden;
-          opacity: 0;
-          transform: translateY(10px); /* Starts slightly down */
-          
-          position: absolute;
-          top: 40px; 
-          right: -20px;  
-          background: white;
-          min-width: 200px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-          border-radius: 8px; 
-          padding: 10px 0;
-          list-style: none;
-          z-index: 9999;
-          border: 1px solid rgba(0,0,0,0.05);
-
-          /* EXIT TRANSITION (When mouse leaves)
-             Note the 0.3s delay on visibility/opacity */
-          transition: 
-            opacity 0.2s ease-in, 
-            transform 0.2s ease-in, 
-            visibility 0s linear 0.3s; 
-        }
-        
-        /* Triangle indicator */
-        .nav-submenu::after {
-          content: "";
-          position: absolute;
-          bottom: 100%;
-          right: 35px; 
-          border-width: 8px;
-          border-style: solid;
-          border-color: transparent transparent white transparent;
-        }
-
-        /* HOVER STATE (Show Menu) */
-        .nav-item:hover .nav-submenu {
-          visibility: visible;
-          opacity: 1;
-          transform: translateY(0);
-          
-          /* ENTER TRANSITION (Instant) */
-          transition-delay: 0s; 
-        }
-
-        .nav-submenu li a {
-          display: block;
-          padding: 12px 24px;
-          color: #444;
-          text-decoration: none;
-          font-weight: normal;
-          transition: background 0.1s;
-        }
-
-        .nav-submenu li a:hover {
-          background-color: #f4f4f4;
-          color: #000;
-        }
       </style>
 
       <header>
@@ -264,23 +170,8 @@ class AppHeader extends HTMLElement {
         <nav class="nav-section">
           <ul class="nav-list">
             
-            <li class="nav-item">
-              <span class="nav-link" style="cursor: pointer;">Apps</span>
-              <ul class="nav-submenu">
-              <li><a href="/Corrector/">#Corrector</a></li>
-                <li><a href="/octofind/">OctoFind</a></li>
-                <li><a href="/bgone/">BGone</a></li>
-                <li><a href="/retroit/">RetroIt</a></li>
-                <li><a href="/snapfix/">SnapFix</a></li>
-                <li><a href="/checksy/">Checksy</a></li>
-                <li><a href="/skreen/">Skreen</a></li>
-                <li><a href="/chrono/">Chronometer</a></li>
-                <li><a href="https://webprompter.app/">WebPrompter.app</a></li>
-              </ul>
-            </li>
-
             <li>
-              <a class="nav-link" href="https://github.com/Blizky/Blizlab" target="_blank">GitHub</a>
+              <a class="nav-link" href="/index.html">Apps</a>
             </li>
 
             <li>
