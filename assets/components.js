@@ -267,6 +267,7 @@ class AppHeader extends HTMLElement {
             <li class="nav-item">
               <span class="nav-link" style="cursor: pointer;">Apps</span>
               <ul class="nav-submenu">
+              <li><a href="/Corrector/">#Corrector</a></li>
                 <li><a href="/octofind/">OctoFind</a></li>
                 <li><a href="/bgone/">BGone</a></li>
                 <li><a href="/retroit/">RetroIt</a></li>
