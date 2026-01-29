@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,7 +12,7 @@
 <body>
   <app-header></app-header>
   <div class="status-pill" aria-live="polite">
-    <span class="pill"><span class="status-dot" id="statusDot"></span><span id="status">Listo</span></span>
+    <span class="pill"><span class="status-dot" id="statusDot"></span><span id="status">Ready</span></span>
   </div>
 
   <main class="page-main">
@@ -33,7 +33,7 @@
 </svg>
 
               </span>
-              <span class="app-brand-text"><span class="highlight">#</span>Corrector
+              <span class="app-brand-text"><span class="highlight">#MD</span>Corrector
             
             </span>
 
@@ -42,22 +42,23 @@
           </div>
           <div class="toolbar">
             <div class="toolbar-buttons">
-              <button id="run">Corregir</button>
-              <button id="clear" type="button">Limpiar</button>
-              <button id="copyOutput" class="primary" type="button">Copiar</button>
-              <button id="saveMarkdown" class="primary" type="button">Guardar</button>
+              <button id="run">Correct</button>
+              <button id="clear" type="button">Clear</button>
+              <button id="copyOutput" class="primary" type="button">Copy</button>
+              <button id="saveMarkdown" class="primary" type="button">Save</button>
             </div>
-            <div class="tool-subtitle toolbar-subtitle" id="toolSubtitle">Pega tu texto, guardalo en Markdown o corrígelo.</div>
+            <div class="tool-subtitle toolbar-subtitle" id="toolSubtitle"></div>
           </div>
         </header>
         <div class="stack">
-          <div id="input" class="editor-input" contenteditable="true" spellcheck="false" data-placeholder="Pega tu texto aquí..."></div>
+          <div id="input" class="editor-input" contenteditable="true" spellcheck="false" data-placeholder="Paste your text here..."></div>
         </div>
         <div class="meta">
-          <span id="wordCount">0 palabras</span>
-          <span id="changeCount">0 cambios</span>
-          <span>Rojo: cambios. Naranjo: sospechosas. Verde: revertidas.</span>
-          <button id="openIgnored" class="link-button" type="button">Palabras ignoradas</button>
+          <span id="wordCount">0 words</span>
+          <span id="changeCount">0 changes</span>
+          <span id="languageLabel">Language: English</span>
+          <span>Red: changes. Orange: suspicious. Green: reverted.</span>
+          <button id="openIgnored" class="link-button" type="button">Ignored words</button>
         </div>
       </article>
     </section>
@@ -65,12 +66,12 @@
 
   <div class="modal" id="ignoredModal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ignoredTitle">
-      <h3 id="ignoredTitle">Palabras ignoradas</h3>
-      <p>Una palabra o frase por línea. Se ignorarán en futuras correcciones.</p>
-      <textarea id="ignoredList" rows="6" placeholder="Ej: Loeb"></textarea>
+      <h3 id="ignoredTitle">Ignored words</h3>
+      <p>One word or phrase per line. These will be ignored in future corrections.</p>
+      <textarea id="ignoredList" rows="6" placeholder="Ex: Loeb"></textarea>
       <div class="modal-actions">
-        <button id="saveIgnored" class="primary" type="button">Guardar</button>
-        <button id="closeIgnored" type="button">Cerrar</button>
+        <button id="saveIgnored" class="primary" type="button">Save</button>
+        <button id="closeIgnored" type="button">Close</button>
       </div>
     </div>
   </div>

@@ -12,26 +12,63 @@ const ignoredModal = document.getElementById("ignoredModal");
 const ignoredList = document.getElementById("ignoredList");
 const saveIgnored = document.getElementById("saveIgnored");
 const closeIgnored = document.getElementById("closeIgnored");
+const languageLabel = document.getElementById("languageLabel");
 
 const STORAGE_KEY = "blizlab_corrector_ignored";
-const alwaysCorrect = new Set(["mas"]);
+const alwaysCorrectByLanguage = {
+  es: new Set(["mas"]),
+  en: new Set(),
+};
 
-const simpleCorrections = new Map([
-  ["qeu", "que"],
-  ["aun", "aún"],
-  ["mas", "más"],
-  ["solo", "sólo"],
-  ["tmb", "también"],
-  ["tambien", "también"],
-  ["donde", "dónde"],
-  ["como", "cómo"],
-  ["por que", "porque"],
-  ["porqué", "por qué"],
-  ["haber", "a ver"],
-  ["k", "que"],
-  ["xq", "porque"],
-  ["xq?", "¿por qué?"],
-]);
+const simpleCorrectionsByLanguage = {
+  es: new Map([
+    ["qeu", "que"],
+    ["aun", "aún"],
+    ["mas", "más"],
+    ["solo", "sólo"],
+    ["tmb", "también"],
+    ["tambien", "también"],
+    ["donde", "dónde"],
+    ["como", "cómo"],
+    ["por que", "porque"],
+    ["porqué", "por qué"],
+    ["haber", "a ver"],
+    ["k", "que"],
+    ["xq", "porque"],
+    ["xq?", "¿por qué?"],
+  ]),
+  en: new Map([
+    ["teh", "the"],
+    ["dont", "don't"],
+    ["cant", "can't"],
+    ["wont", "won't"],
+    ["im", "I'm"],
+    ["ive", "I've"],
+    ["id", "I'd"],
+    ["i'm", "I'm"],
+  ]),
+};
+
+const languageLabels = {
+  es: "Español",
+  en: "English",
+};
+
+let currentLanguage = "es";
+let languageState = "es";
+
+function setPlaceholderByOS() {
+  const platform = navigator.platform || "";
+  const ua = navigator.userAgent || "";
+  const isMac = /mac/i.test(platform) || /macintosh/i.test(ua);
+  const hint = isMac
+    ? "Shift + Cmd + V to paste text without format."
+    : "Shift + Ctrl + V to paste text without format.";
+  input.setAttribute(
+    "data-placeholder",
+    `Paste your text here...\nPaste from Word to convert to Markdown\n${hint}`
+  );
+}
 
 let ignoredWords = loadIgnoredWords();
 
@@ -61,15 +98,17 @@ function saveIgnoredWords() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-function isIgnoredWord(word) {
+function isIgnoredWord(word, language = currentLanguage) {
   const key = normalizeWord(word);
   if (!key) return false;
+  const alwaysCorrect = alwaysCorrectByLanguage[language] || alwaysCorrectByLanguage.es;
   if (alwaysCorrect.has(key)) return false;
   return ignoredWords.has(key);
 }
 
-function addIgnoredWord(word) {
+function addIgnoredWord(word, language = currentLanguage) {
   const key = normalizeWord(word);
+  const alwaysCorrect = alwaysCorrectByLanguage[language] || alwaysCorrectByLanguage.es;
   if (!key || alwaysCorrect.has(key)) return;
   ignoredWords.add(key);
   saveIgnoredWords();
@@ -89,7 +128,9 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
-function applySimpleCorrections(text) {
+function applySimpleCorrections(text, language = currentLanguage) {
+  const simpleCorrections = simpleCorrectionsByLanguage[language] || simpleCorrectionsByLanguage.es;
+  const alwaysCorrect = alwaysCorrectByLanguage[language] || alwaysCorrectByLanguage.es;
   const edits = [];
   simpleCorrections.forEach((value, key) => {
     const regex = new RegExp(`\\b${key}\\b`, "gi");
@@ -98,7 +139,7 @@ function applySimpleCorrections(text) {
       const original = match[0];
       const originalKey = normalizeWord(original);
       const replacement = original === original.toUpperCase() ? value.toUpperCase() : value;
-      if (original !== replacement && (!isIgnoredWord(original) || alwaysCorrect.has(originalKey))) {
+      if (original !== replacement && (!isIgnoredWord(original, language) || alwaysCorrect.has(originalKey))) {
         edits.push({ offset: match.index, length: original.length, replacement, original });
       }
     }
@@ -191,19 +232,115 @@ function applyEdits(text, edits) {
   return corrected;
 }
 
+function detectLanguageHeuristic(text) {
+  const lower = (text || "").toLowerCase();
+  if (!lower.trim()) return "empty";
+
+  if (/[êçãõâà]/.test(lower)) return "unknown";
+
+  let spanishScore = 0;
+  let englishScore = 0;
+
+  const accentMatches = lower.match(/[áéíóúñ¿¡]/g);
+  if (accentMatches) spanishScore += accentMatches.length * 2;
+
+  const spanishWords = [
+    "que", "de", "y", "la", "el", "en", "los", "las", "por", "para", "con",
+    "como", "más", "pero", "porque", "una", "un", "yo", "tu", "usted",
+    "ustedes", "nosotros", "ellos", "ellas", "esto", "esta", "está", "ser",
+    "haber", "también", "dónde", "cómo",
+  ];
+  const englishWords = [
+    "the", "and", "you", "your", "for", "with", "not", "this", "that", "have",
+    "are", "is", "was", "were", "be", "to", "of", "in", "on", "it", "as",
+    "but", "or", "from", "by", "we", "they", "he", "she", "i",
+  ];
+
+  spanishWords.forEach(word => {
+    const matches = lower.match(new RegExp(`\\b${word}\\b`, "g"));
+    if (matches) spanishScore += matches.length;
+  });
+  englishWords.forEach(word => {
+    const matches = lower.match(new RegExp(`\\b${word}\\b`, "g"));
+    if (matches) englishScore += matches.length;
+  });
+
+  const totalScore = spanishScore + englishScore;
+  const scoreDiff = Math.abs(spanishScore - englishScore);
+  if (totalScore === 0 || (totalScore < 3 && scoreDiff <= 1)) return "unknown";
+  return englishScore > spanishScore ? "en" : "es";
+}
+
+function normalizeLanguageCode(code, fallback = "es") {
+  if (!code) return fallback;
+  const normalized = code.toLowerCase();
+  if (normalized.startsWith("es")) return "es";
+  if (normalized.startsWith("en")) return "en";
+  return fallback;
+}
+
+function updateRunButtonLanguage(language) {
+  if (language === "empty") {
+    runBtn.textContent = "Correct";
+    runBtn.disabled = true;
+    return;
+  }
+  if (language === "en") {
+    runBtn.textContent = "Correct EN";
+    runBtn.disabled = false;
+    return;
+  }
+  if (language === "es") {
+    runBtn.textContent = "Correct ES";
+    runBtn.disabled = false;
+    return;
+  }
+  runBtn.textContent = "Correct N/A";
+  runBtn.disabled = true;
+}
+
+function setCurrentLanguage(language) {
+  languageState = language || "es";
+  currentLanguage = languageState === "unknown"
+    ? "es"
+    : normalizeLanguageCode(languageState, "es");
+  updateRunButtonLanguage(languageState);
+  if (languageLabel) {
+    if (languageState === "unknown" || languageState === "empty") {
+      languageLabel.textContent = "Language: N/A";
+    } else {
+      const label = languageLabels[currentLanguage] || languageLabels.es;
+      languageLabel.textContent = `Language: ${label}`;
+    }
+  }
+  document.documentElement.lang = currentLanguage === "en" ? "en" : "es";
+}
+
 async function runCorrection() {
   const original = input.textContent || "";
   if (!original.trim()) {
     input.textContent = "";
-    changeCount.textContent = "0 cambios";
+    changeCount.textContent = "0 changes";
     return;
   }
 
-  setStatus("Corrigiendo…", true);
+  if (languageState === "unknown" || languageState === "empty") {
+    setStatus("Language not supported", false);
+    updateRunButtonLanguage("unknown");
+    return;
+  }
+
+  setStatus("Correcting…", true);
   runBtn.disabled = true;
 
   let ignoredRanges = [];
   let edits = [];
+  let detectedLanguage = detectLanguageHeuristic(original);
+  if (detectedLanguage === "unknown" || detectedLanguage === "empty") {
+    setCurrentLanguage(detectedLanguage);
+    setStatus("Language not supported", false);
+    return;
+  }
 
   try {
     const response = await fetch("https://api.languagetool.org/v2/check", {
@@ -211,27 +348,33 @@ async function runCorrection() {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         text: original,
-        language: "es",
+        language: "auto",
         enabledOnly: "false",
       }),
     });
     if (!response.ok) throw new Error("HTTP error");
     const data = await response.json();
+    detectedLanguage = normalizeLanguageCode(
+      data?.detectedLanguage?.code || data?.language?.code,
+      detectedLanguage
+    );
+    setCurrentLanguage(detectedLanguage);
     const result = applyLanguageToolFixes(original, data.matches || []);
     ignoredRanges = result.ignoredRanges;
     edits = result.edits;
   } catch (error) {
-    const result = applySimpleCorrections(original);
+    setCurrentLanguage(detectedLanguage);
+    const result = applySimpleCorrections(original, detectedLanguage);
     edits = result.edits;
     ignoredRanges = [];
   }
 
-  const forcedEdits = findForcedEdits(original);
+  const forcedEdits = findForcedEdits(original, detectedLanguage);
   const combinedEdits = mergeEdits(edits, forcedEdits);
 
   input.innerHTML = buildOutputHtml(original, combinedEdits, ignoredRanges);
-  changeCount.textContent = `${combinedEdits.length} cambios`;
-  setStatus("Listo", false);
+  changeCount.textContent = `${combinedEdits.length} changes`;
+  setStatus("Ready", false);
   runBtn.disabled = false;
 }
 
@@ -275,7 +418,8 @@ function applyLanguageToolFixes(text, matches) {
   return { ignoredRanges, edits };
 }
 
-function findForcedEdits(text) {
+function findForcedEdits(text, language = currentLanguage) {
+  if (language !== "es") return [];
   const edits = [];
   const regex = /\bmas\b/gi;
   let match;
@@ -291,7 +435,7 @@ function findForcedEdits(text) {
 
 function updateWordCount() {
   const text = input.textContent || "";
-  wordCount.textContent = `${text.trim() ? text.trim().split(/\s+/).length : 0} palabras`;
+  wordCount.textContent = `${text.trim() ? text.trim().split(/\s+/).length : 0} words`;
 }
 
 function htmlToMarkdown(html) {
@@ -404,7 +548,9 @@ function closeIgnoredModal() {
 
 input.addEventListener("input", () => {
   updateWordCount();
-  changeCount.textContent = `${input.querySelectorAll(".change").length} cambios`;
+  changeCount.textContent = `${input.querySelectorAll(".change").length} changes`;
+  const text = input.textContent || "";
+  setCurrentLanguage(detectLanguageHeuristic(text));
 });
 
 input.addEventListener("paste", (event) => {
@@ -414,6 +560,7 @@ input.addEventListener("paste", (event) => {
     const markdown = htmlToMarkdown(html);
     insertTextAtCursor(markdown);
     input.dispatchEvent(new Event("input", { bubbles: true }));
+    setCurrentLanguage(detectLanguageHeuristic(markdown));
   }
 });
 
@@ -457,9 +604,10 @@ runBtn.addEventListener("click", runCorrection);
 
 clearBtn.addEventListener("click", () => {
   input.textContent = "";
-  changeCount.textContent = "0 cambios";
+  changeCount.textContent = "0 changes";
   updateWordCount();
-  setStatus("Listo", false);
+  setCurrentLanguage("empty");
+  setStatus("Ready", false);
 });
 
 copyOutputBtn.addEventListener("click", async () => {
@@ -467,10 +615,10 @@ copyOutputBtn.addEventListener("click", async () => {
   if (!text.trim()) return;
   try {
     await navigator.clipboard.writeText(text);
-    setStatus("Copiado", true);
-    setTimeout(() => setStatus("Listo", false), 1200);
+    setStatus("Copied", true);
+    setTimeout(() => setStatus("Ready", false), 1200);
   } catch (error) {
-    setStatus("No se pudo copiar", false);
+    setStatus("Copy failed", false);
   }
 });
 
@@ -478,7 +626,7 @@ saveMarkdownBtn.addEventListener("click", () => {
   const text = getCurrentText();
   if (!text.trim()) return;
   const title = getTitleFromMarkdown(text);
-  const filename = title ? `${title}.md` : "texto-corregido.md";
+  const filename = title ? `${title}.md` : "corrected-text.md";
   const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -505,3 +653,5 @@ ignoredModal.addEventListener("click", (event) => {
 });
 
 updateWordCount();
+setCurrentLanguage("empty");
+setPlaceholderByOS();
