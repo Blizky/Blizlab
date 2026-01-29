@@ -10,16 +10,20 @@
   
   <style>
     :root {
-      --blue: #0099CC;
-      --yellow: #FFCC33;
-      --white: #FDFDF9;
-      --black: #1A1A1A;
+      --blue: #0099cc;
+      --deep: #0a6a8c;
+      --yellow: #ffcc33;
+      --white: #fdfdf9;
+      --black: #1a1a1a;
+      --card: #ffffff;
+      --muted: #4c4c4c;
+      --border: rgba(26, 26, 26, 0.12);
+      --shadow: 0 18px 40px rgba(9, 32, 44, 0.2);
     }
 
     body {
-      background-color: var(--blue);
+      background: radial-gradient(circle at 15% 10%, #1cb2dd 0%, #0c8bb6 35%, #0a6a8c 100%);
       color: var(--black);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       display: flex;
       flex-direction: column;
@@ -28,101 +32,134 @@
 
     .landing-main {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 10px 20px;
+      padding: 16px 24px 50px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      gap: 28px;
     }
 
-    /* Category Titles: Clean and centered */
-    .category-label {
-      font-size: 1rem;
-      font-weight: 800;
-      color: var(--white);
-      background: none; /* Removed background per request */
-      margin: 10px 0 5px 0;
-      padding: 0;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    /* Grid Layout: Stays 4 columns longer */
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      color: var(--deep);
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--yellow);
+      color: #1a1a1a;
+    }
+
+    .catalog {
+      display: grid;
+      gap: 16px;
+    }
+
     .app-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      margin-bottom: 25px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      justify-content: start;
     }
 
-    /* Responsive: Skips 2-column, jumps to 1-column only when narrow */
-    @media (max-width: 600px) {
-      .app-grid { grid-template-columns: 1fr; }
-      .app-card { aspect-ratio: auto; min-height: 140px; }
-    }
-
-    /* Compact 3:2 Cards with larger content */
     .app-card {
-      background: white;
-      border-radius: 12px;
+      background: var(--card);
+      border-radius: 18px;
       text-decoration: none;
       color: inherit;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      aspect-ratio: 3 / 2; /* 3:2 Ratio */
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(9, 32, 44, 0.12);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      min-height: 180px;
     }
 
     .app-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 36px rgba(9, 32, 44, 0.2);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
     }
 
     .card-icon {
-      margin-bottom: 12px;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
     }
 
-    /* Larger Icons to fill space */
     .card-icon svg {
-      width: 44px; 
-      height: 44px;
+      width: 42px;
+      height: 42px;
     }
 
-    .card-content {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-    }
-
-    /* Larger Text to fill space */
-    .card-content h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.25rem;
+    .tag {
+      background: rgba(0, 153, 204, 0.15);
+      color: var(--deep);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
       font-weight: 700;
-      color: #1A1A1A;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .card-content p {
+    .card-title {
       margin: 0;
-      font-size: 0.95rem;
-      color: #444;
-      line-height: 1.25;
+      font-size: 1.15rem;
+      font-weight: 800;
     }
 
-    .card-link {
-      text-align: right;
-      font-weight: 800;
-      color: var(--blue);
+    .card-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .card-cta {
+      margin-top: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--deep);
+      font-weight: 700;
       text-transform: uppercase;
       font-size: 0.75rem;
-      margin-top: auto; /* Pushes link to bottom */
+      letter-spacing: 0.08em;
     }
 
+    .card-cta span {
+      display: inline-block;
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+    }
+
+    .app-card:hover .card-cta span {
+      transform: translateX(4px);
+    }
+
+    @media (max-width: 600px) {
+      .landing-main { padding: 24px 18px 50px; }
+    }
   </style>
   
   <script src="assets/components.js?v=2" defer></script>
@@ -132,59 +169,153 @@
   <app-header></app-header>
 
   <main class="landing-main">
-    
-    <h2 class="category-label">Image Manipulation</h2>
-    <section class="app-grid">
-      <a href="/bgone/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#09c"/><g fill="none" stroke="#fc3" stroke-linecap="round" stroke-width="2"><path stroke-linejoin="round" d="M15 23c-1.864 0-2.796 0-3.53-.305a4 4 0 0 1-2.166-2.164C9 19.796 9 18.864 9 17v-1c0-2.809 0-4.213.674-5.222a4 4 0 0 1 1.104-1.104C11.787 9 13.19 9 16 9h1.5c1.396 0 2.093 0 2.661.172a4 4 0 0 1 2.667 2.667C23 12.407 23 13.104 23 14.5h0"/><path d="M23.119 18.879 20.997 21m-2.121 2.121L20.997 21m2.122 2.121L20.997 21m0 0-2.121-2.121"/><path stroke-linejoin="round" d="m10.5 21.5 11-11m1.492 4h.01m-8.01 8.5h.01M9 17l8-8"/></g></svg></div>
-        <div class="card-content"><h3>BGone</h3><p>Remove backgrounds instantly via local AI.</p><span class="card-link">Open App</span></div>
-      </a>
-
-      <a href="/retroit/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(5.3,4.5) scale(1.3)"><path fill="#ffcc33" d="M4.75 9.5a3.25 3.25 0 1 0 6.5 0a3.25 3.25 0 0 0-6.5 0M15 4h-3.5c-.25-1-.5-2-1.5-2H6C5 2 4.75 3 4.5 4H1c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1m-7 9.938a4.438 4.438 0 1 1 0-8.876a4.438 4.438 0 0 1 0 8.876M15 7h-2V6h2z" /></g></svg></div>
-        <div class="card-content"><h3>RetroIt</h3><p>Vintage photo editor with film grain filters.</p><span class="card-link">Open App</span></div>
-      </a>
-
-      <a href="/snapfix/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(3.5,3.1) scale(1)"><path fill="#ffcc33" d="M8.5 13.5L5 18h8.03c.08 1.1.44 2.12 1 3H5a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v6.18c-.5-.11-1-.18-1.5-.18c-1.72 0-3.27.67-4.43 1.76L14.5 12L11 16.5zM19 20a2.5 2.5 0 0 1-2.5-2.5c0-.4.09-.78.26-1.12l-1.09-1.09c-.42.63-.67 1.39-.67 2.21c0 2.21 1.79 4 4 4V23l2.25-2.25L19 18.5zm0-6.5V12l-2.25 2.25L19 16.5V15a2.5 2.5 0 0 1 2.5 2.5c0 .4-.09.78-.26 1.12l1.09 1.09c.42-.63.67-1.39.67-2.21c0-2.21-1.79-4-4-4" /></g></svg></div>
-        <div class="card-content"><h3>SnapFix</h3><p>Batch optimize and resize images.</p><span class="card-link">Open App</span></div>
-      </a>
+    <section class="filter-bar" id="filterBar">
+      <button class="filter-btn active" data-filter="All">All</button>
+      <button class="filter-btn" data-filter="Image">Image</button>
+      <button class="filter-btn" data-filter="Writing">Writing</button>
+      <button class="filter-btn" data-filter="Search">Search</button>
+      <button class="filter-btn" data-filter="Utility">Utility</button>
+      <button class="filter-btn" data-filter="Video">Video</button>
     </section>
 
-    <h2 class="category-label">Search Assist</h2>
-    <section class="app-grid">
-      <a href="/octofind/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(0,0) scale(1)"><path fill="#fc3" d="m15.7 17.5 6-4-6-4zm-6.3 8.375q-.825.125-1.487-.387T7.15 24.15L5.825 13.225q-.1-.825.4-1.475T7.55 11l1.15-.15V19q0 1.65 1.175 2.825T12.7 23H22q-.15.6-.6 1.038t-1.1.512zM12.7 21q-.825 0-1.412-.587T10.7 19V8q0-.825.588-1.412T12.7 6h11q.825 0 1.413.588T25.7 8v11q0 .825-.587 1.413T23.7 21z" stroke="#fc3" stroke-linecap="round" stroke-linejoin="round"/></g></svg></div>
-        <div class="card-content"><h3>OctoFind</h3><p>Search multiple stock sites at once.</p><span class="card-link">Open App</span></div>
-      </a>
-
-      <a href="/checksy/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(3, 3.3) scale(1.2)"><path fill="#fc3" d="M16.02 2.036a2 2 0 0 1 1.986 1.997l.008 4.95a2 2 0 0 1-.586 1.417l-.359.359a4.5 4.5 0 1 0-6.31 6.31a2 2 0 0 1-2.79-.038L3.02 12.083a2 2 0 0 1 .002-2.83l6.682-6.665a2 2 0 0 1 1.425-.584zM13 6a1 1 0 1 0 2 0a1 1 0 0 0-2 0m3.303 9.596a3.5 3.5 0 1 0-.707.707l2.55 2.55a.5.5 0 1 0 .708-.707zM16 13.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0"/></g></svg></div>
-        <div class="card-content"><h3>Checksy</h3><p>Verify username availability in one search.</p><span class="card-link">Open App</span></div>
-      </a>
+    <section class="catalog">
+      <div class="app-grid" id="appGrid">
+        <a class="app-card" href="/Corrector/" data-tags="Writing">
+          <div class="card-top">
+            <div class="card-icon" data-icon="corrector" data-label="C"></div>
+            <span class="tag">Writing</span>
+          </div>
+          <h3 class="card-title">Corrector</h3>
+          <p class="card-desc">Spellcheck + markdown prep for long scripts.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/bgone/" data-tags="Image">
+          <div class="card-top">
+            <div class="card-icon" data-icon="bgone" data-label="B"></div>
+            <span class="tag">Image</span>
+          </div>
+          <h3 class="card-title">BGone</h3>
+          <p class="card-desc">Remove backgrounds instantly via local AI.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/retroit/" data-tags="Image">
+          <div class="card-top">
+            <div class="card-icon" data-icon="retroit" data-label="R"></div>
+            <span class="tag">Image</span>
+          </div>
+          <h3 class="card-title">RetroIt</h3>
+          <p class="card-desc">Retro photo editor with film grain filters.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/snapfix/" data-tags="Image">
+          <div class="card-top">
+            <div class="card-icon" data-icon="snapfix" data-label="S"></div>
+            <span class="tag">Image</span>
+          </div>
+          <h3 class="card-title">SnapFix</h3>
+          <p class="card-desc">Batch optimize and resize product shots.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/octofind/" data-tags="Search">
+          <div class="card-top">
+            <div class="card-icon" data-icon="octofind" data-label="O"></div>
+            <span class="tag">Search</span>
+          </div>
+          <h3 class="card-title">OctoFind</h3>
+          <p class="card-desc">Search multiple stock sites at once.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/checksy/" data-tags="Search">
+          <div class="card-top">
+            <div class="card-icon" data-icon="checksy" data-label="C"></div>
+            <span class="tag">Search</span>
+          </div>
+          <h3 class="card-title">Checksy</h3>
+          <p class="card-desc">Check username availability everywhere.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/skreen/" data-tags="Video">
+          <div class="card-top">
+            <div class="card-icon" data-icon="skreen" data-label="S"></div>
+            <span class="tag">Video</span>
+          </div>
+          <h3 class="card-title">Skreen</h3>
+          <p class="card-desc">Turn your monitor into a key light.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/chrono/" data-tags="Utility">
+          <div class="card-top">
+            <div class="card-icon" data-icon="chrono" data-label="C"></div>
+            <span class="tag">Utility</span>
+          </div>
+          <h3 class="card-title">Chrono</h3>
+          <p class="card-desc">Clean stopwatch for recording sessions.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="https://webprompter.app/" target="_blank" rel="noreferrer" data-tags="Video">
+          <div class="card-top">
+            <div class="card-icon" data-icon="webprompter" data-label="W"></div>
+            <span class="tag">Video</span>
+          </div>
+          <h3 class="card-title">WebPrompter</h3>
+          <p class="card-desc">Teleprompter for video recording.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+        <a class="app-card" href="/titlecut/" data-tags="Writing">
+          <div class="card-top">
+            <div class="card-icon" data-icon="titlecut" data-label="T"></div>
+            <span class="tag">Writing</span>
+          </div>
+          <h3 class="card-title">TitleCut</h3>
+          <p class="card-desc">Title-safe cuts for thumbnails.</p>
+          <div class="card-cta">Open app <span>→</span></div>
+        </a>
+      </div>
     </section>
-
-    <h2 class="category-label">Production Utilities</h2>
-    <section class="app-grid">
-      <a href="/skreen/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(4,4) scale(1)"><path fill="#fc3" d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1m.64 5l-.71.71a1 1 0 0 0 0 1.41a1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17M12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1m5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41a1 1 0 0 0 .66.29m-12-.29a1 1 0 0 0 .7.29a1 1 0 0 0 .71-.29a1 1 0 0 0 0-1.41l-.71-.71a1 1 0 0 0-1.43 1.41ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2m-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0a1 1 0 0 0 0-1.41ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5m0 9a3.5 3.5 0 1 1 3.5-3.5a3.5 3.5 0 0 1-3.5 3.5m0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1" /></g></svg></div>
-        <div class="card-content"><h3>Skreen</h3><p>Turn your monitor into a key light.</p><span class="card-link">Open App</span></div>
-      </a>
-
-      <a href="/chrono/" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(8,5.5) scale(1)"><path fill="#fc3" d="M9 11h2a1 1 0 0 1 0 2H8a.997.997 0 0 1-1-1V8a1 1 0 1 1 2 0zM1.869 6.861a1.5 1.5 0 1 1 2.077-1.76a8 8 0 0 1 1.126-.548A2.5 2.5 0 0 1 6.5 0h3a2.5 2.5 0 0 1 1.428 4.553q.586.231 1.126.548a1.5 1.5 0 1 1 2.077 1.76a8 8 0 1 1-12.263 0zM8 18A6 6 0 1 0 8 6a6 6 0 0 0 0 12M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z"/></g></svg></div>
-        <div class="card-content"><h3>Chrono</h3><p>Simple chronometer to check scripts length.</p><span class="card-link">Open App</span></div>
-      </a>
-
-      <a href="https://webprompter.app/" target="_blank" class="app-card">
-        <div class="card-icon"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="5" ry="5" fill="#0099CC"/><g transform="translate(3.9,4) scale(1)"><path fill="#fc3" d="M6 14h8v-2H6zm0-3h12V9H6zm0-3h12V6H6zM2 22V4q0-.825.588-1.412T4 2h16q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18H6zm3.15-6H20V4H4v13.125zM4 16V4z" /></g></svg></div>
-        <div class="card-content"><h3>WebPrompter</h3><p>Teleprompter that uses your phone as remote.</p><span class="card-link">Open App</span></div>
-      </a>
-    </section>
-
   </main>
 
   <app-footer></app-footer>
+
+  <script src="assets/apps_icons.js"></script>
+  <script>
+    const fallbackIcon = (label) => `
+      <svg viewBox="0 0 32 32" width="28" height="28">
+        <rect width="32" height="32" rx="6" fill="#0099cc"/>
+        <text x="16" y="20" text-anchor="middle" font-size="14" fill="#fff" font-family="Arial, sans-serif">${label}</text>
+      </svg>
+    `;
+
+    const applyIcons = () => {
+      document.querySelectorAll(".card-icon").forEach((node) => {
+        const key = node.dataset.icon;
+        const label = node.dataset.label || "A";
+        if (key && typeof APP_ICONS !== "undefined" && APP_ICONS[key]) {
+          node.innerHTML = APP_ICONS[key];
+        } else {
+          node.innerHTML = fallbackIcon(label.slice(0, 1).toUpperCase());
+        }
+      });
+    };
+
+    const applyFilter = (filter) => {
+      document.querySelectorAll(".app-card").forEach((card) => {
+        const tags = (card.dataset.tags || "").split(",").map(tag => tag.trim());
+        const visible = filter === "All" || tags.includes(filter);
+        card.style.display = visible ? "" : "none";
+      });
+    };
+
+    document.getElementById("filterBar")?.addEventListener("click", (event) => {
+      const button = event.target.closest(".filter-btn");
+      if (!button) return;
+      const filter = button.dataset.filter;
+      document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active"));
+      button.classList.add("active");
+      applyFilter(filter);
+    });
+
+    applyIcons();
+  </script>
 
 </body>
 </html>
