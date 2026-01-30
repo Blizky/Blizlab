@@ -39,21 +39,6 @@ body {
     box-shadow: none;
 }
 
-.tc-logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--primary);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.tc-logo-icon svg {
-    width: 26px;
-    height: 26px;
-    display: block;
-}
-
 .tc-main-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
