@@ -1,5 +1,6 @@
 const input = document.getElementById("input");
 const wordCount = document.getElementById("wordCount");
+const readingTime = document.getElementById("readingTime");
 const changeCount = document.getElementById("changeCount");
 const statusLabel = document.getElementById("status");
 const statusDot = document.getElementById("statusDot");
@@ -7,14 +8,17 @@ const runBtn = document.getElementById("run");
 const clearBtn = document.getElementById("clear");
 const copyOutputBtn = document.getElementById("copyOutput");
 const saveMarkdownBtn = document.getElementById("saveMarkdown");
-const openIgnoredBtn = document.getElementById("openIgnored");
+const openOptionsBtn = document.getElementById("openOptions");
 const ignoredModal = document.getElementById("ignoredModal");
 const ignoredList = document.getElementById("ignoredList");
+const readingSpeedInput = document.getElementById("readingSpeed");
 const saveIgnored = document.getElementById("saveIgnored");
 const closeIgnored = document.getElementById("closeIgnored");
 const languageLabel = document.getElementById("languageLabel");
 
 const STORAGE_KEY = "blizlab_corrector_ignored";
+const READING_SPEED_KEY = "blizlab_corrector_reading_speed";
+const DEFAULT_READING_SPEED = 165;
 const alwaysCorrectByLanguage = {
   es: new Set(["mas"]),
   en: new Set(),
@@ -54,8 +58,11 @@ const languageLabels = {
   en: "English",
 };
 
+const EMOJI_REGEX = /[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F]/gu;
+
 let currentLanguage = "es";
 let languageState = "es";
+let readingSpeed = DEFAULT_READING_SPEED;
 
 function setPlaceholderByOS() {
   const platform = navigator.platform || "";
@@ -93,6 +100,23 @@ function loadIgnoredWords() {
   }
 }
 
+function loadReadingSpeed() {
+  try {
+    const raw = localStorage.getItem(READING_SPEED_KEY);
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return DEFAULT_READING_SPEED;
+    return Math.min(250, Math.max(100, Math.round(parsed)));
+  } catch (error) {
+    return DEFAULT_READING_SPEED;
+  }
+}
+
+function saveReadingSpeed(value) {
+  const safe = Math.min(250, Math.max(100, Math.round(value)));
+  localStorage.setItem(READING_SPEED_KEY, String(safe));
+  readingSpeed = safe;
+}
+
 function saveIgnoredWords() {
   const list = Array.from(ignoredWords.values()).filter(Boolean).sort();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
@@ -128,6 +152,35 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
+function preserveMarkdownMarkers(original, replacement) {
+  if (!original || !replacement) return replacement;
+  const leadingMatch = original.match(/^([*_~`]+)(?=\S)/);
+  const trailingMatch = original.match(/([*_~`]+)$/);
+  let next = replacement;
+
+  if (leadingMatch) {
+    const leading = leadingMatch[1];
+    if (!next.startsWith(leading)) {
+      next = `${leading}${next}`;
+    }
+  }
+
+  if (trailingMatch) {
+    const trailing = trailingMatch[1];
+    if (!next.endsWith(trailing)) {
+      next = `${next}${trailing}`;
+    }
+  }
+
+  return next;
+}
+
+function stripEmojis(text) {
+  return (text || "")
+    .replace(EMOJI_REGEX, "")
+    .replace(/\u200D/g, "");
+}
+
 function applySimpleCorrections(text, language = currentLanguage) {
   const simpleCorrections = simpleCorrectionsByLanguage[language] || simpleCorrectionsByLanguage.es;
   const alwaysCorrect = alwaysCorrectByLanguage[language] || alwaysCorrectByLanguage.es;
@@ -138,7 +191,8 @@ function applySimpleCorrections(text, language = currentLanguage) {
     while ((match = regex.exec(text)) !== null) {
       const original = match[0];
       const originalKey = normalizeWord(original);
-      const replacement = original === original.toUpperCase() ? value.toUpperCase() : value;
+      const nextValue = original === original.toUpperCase() ? value.toUpperCase() : value;
+      const replacement = preserveMarkdownMarkers(original, nextValue);
       if (original !== replacement && (!isIgnoredWord(original, language) || alwaysCorrect.has(originalKey))) {
         edits.push({ offset: match.index, length: original.length, replacement, original });
       }
@@ -317,11 +371,15 @@ function setCurrentLanguage(language) {
 }
 
 async function runCorrection() {
-  const original = input.textContent || "";
+  const raw = input.textContent || "";
+  const original = stripEmojis(raw);
   if (!original.trim()) {
     input.textContent = "";
     changeCount.textContent = "0 changes";
     return;
+  }
+  if (raw !== original) {
+    input.textContent = original;
   }
 
   if (languageState === "unknown" || languageState === "empty") {
@@ -410,7 +468,10 @@ function applyLanguageToolFixes(text, matches) {
     .map(match => ({
       offset: match.offset,
       length: match.length,
-      replacement: match.replacements[0].value,
+      replacement: preserveMarkdownMarkers(
+        text.slice(match.offset, match.offset + match.length),
+        match.replacements[0].value
+      ),
       original: text.slice(match.offset, match.offset + match.length),
     }))
     .sort((a, b) => b.offset - a.offset);
@@ -425,7 +486,8 @@ function findForcedEdits(text, language = currentLanguage) {
   let match;
   while ((match = regex.exec(text)) !== null) {
     const original = match[0];
-    const replacement = original === original.toUpperCase() ? "MÁS" : "más";
+    const nextValue = original === original.toUpperCase() ? "MÁS" : "más";
+    const replacement = preserveMarkdownMarkers(original, nextValue);
     if (original !== replacement) {
       edits.push({ offset: match.index, length: original.length, replacement, original });
     }
@@ -435,7 +497,12 @@ function findForcedEdits(text, language = currentLanguage) {
 
 function updateWordCount() {
   const text = input.textContent || "";
-  wordCount.textContent = `${text.trim() ? text.trim().split(/\s+/).length : 0} words`;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  wordCount.textContent = `${words} words`;
+  if (readingTime) {
+    const minutes = words ? Math.max(1, Math.ceil(words / readingSpeed)) : 0;
+    readingTime.textContent = `${minutes} min read`;
+  }
 }
 
 function htmlToMarkdown(html) {
@@ -444,6 +511,8 @@ function htmlToMarkdown(html) {
 
   function normalizeInlineText(text) {
     return text
+      .replace(EMOJI_REGEX, "")
+      .replace(/\u200D/g, "")
       .replace(/\u00a0/g, " ")
       .replace(/\s+/g, " ");
   }
@@ -455,12 +524,17 @@ function htmlToMarkdown(html) {
     if (tag === "br") return "\n";
     if (tag === "strong" || tag === "b") {
       const inner = childrenText(node, options);
-      if (options.stripBold) return inner;
       const trimmed = inner.trim();
+      if (!trimmed) return inner;
+      if (options.stripBold) return inner;
       if (trimmed.startsWith("**") && trimmed.endsWith("**")) return inner;
       return `**${inner}**`;
     }
-    if (tag === "em" || tag === "i") return `*${childrenText(node, options)}*`;
+    if (tag === "em" || tag === "i") {
+      const inner = childrenText(node, options);
+      if (!inner.trim()) return inner;
+      return `*${inner}*`;
+    }
     if (tag === "code") return `\`${childrenText(node, options)}\``;
     if (tag === "a") {
       const href = node.getAttribute("href") || "";
@@ -520,14 +594,15 @@ function looksLikeMarkdown(text) {
 }
 
 function insertTextAtCursor(text) {
+  const safeText = stripEmojis(text);
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) {
-    input.textContent += text;
+    input.textContent += safeText;
     return;
   }
   const range = selection.getRangeAt(0);
   range.deleteContents();
-  const node = document.createTextNode(text);
+  const node = document.createTextNode(safeText);
   range.insertNode(node);
   range.setStartAfter(node);
   range.collapse(true);
@@ -536,7 +611,7 @@ function insertTextAtCursor(text) {
 }
 
 function getCurrentText() {
-  return input.textContent || "";
+  return stripEmojis(input.textContent || "");
 }
 
 function getTitleFromMarkdown(text) {
@@ -553,6 +628,9 @@ function getTitleFromMarkdown(text) {
 
 function openIgnoredModal() {
   ignoredList.value = Array.from(ignoredWords).sort().join("\n");
+  if (readingSpeedInput) {
+    readingSpeedInput.value = readingSpeed;
+  }
   ignoredModal.classList.add("open");
   ignoredModal.setAttribute("aria-hidden", "false");
 }
@@ -669,13 +747,18 @@ saveMarkdownBtn.addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
-openIgnoredBtn.addEventListener("click", openIgnoredModal);
+if (openOptionsBtn) {
+  openOptionsBtn.addEventListener("click", openIgnoredModal);
+}
 closeIgnored.addEventListener("click", closeIgnoredModal);
 
 saveIgnored.addEventListener("click", () => {
   const lines = ignoredList.value.split(/\r?\n/);
   ignoredWords = new Set(lines.map(line => normalizeWord(line)).filter(Boolean));
   saveIgnoredWords();
+  if (readingSpeedInput) {
+    saveReadingSpeed(readingSpeedInput.value || DEFAULT_READING_SPEED);
+  }
   closeIgnoredModal();
 });
 
@@ -686,3 +769,12 @@ ignoredModal.addEventListener("click", (event) => {
 updateWordCount();
 setCurrentLanguage("empty");
 setPlaceholderByOS();
+
+readingSpeed = loadReadingSpeed();
+if (readingSpeedInput) {
+  readingSpeedInput.value = readingSpeed;
+  readingSpeedInput.addEventListener("change", () => {
+    saveReadingSpeed(readingSpeedInput.value || DEFAULT_READING_SPEED);
+    updateWordCount();
+  });
+}

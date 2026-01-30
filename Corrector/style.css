@@ -257,6 +257,25 @@ main {
   border: 1px solid var(--brand);
 }
 
+.menu-button {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  color: #fff;
+}
+
+.menu-button span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+}
+
 .link-button {
   background: transparent;
   border: none;
@@ -315,6 +334,21 @@ main {
   font-family: var(--mono);
   font-size: 0.95rem;
   resize: vertical;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.field input {
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 0.95rem;
 }
 
 .modal-actions {
