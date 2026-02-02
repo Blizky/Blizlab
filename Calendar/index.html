@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Monthly Planner</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/svg/fabicon.svg">
+    <link rel="stylesheet" href="/assets/css/global.css">
+    <script src="/assets/components.js" defer></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <app-header layout="compact"></app-header>
+
+    <main class="page-main">
+      <section class="app-shell calendar-shell">
+        <div class="app-header-row">
+          <div class="app-brand">
+            <div class="app-brand-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3zm12 8H5v10h14zm0-4H5v2h14z"/>
+              </svg>
+            </div>
+            <div class="app-brand-text">Calendar<span class="highlight">PDF</span></div>
+          </div>
+          <div class="status-pill">Minimal monthly planner for print.</div>
+        </div>
+
+        <section class="controls no-print">
+          <div class="control-group">
+            <label for="year">Year</label>
+            <input id="year" type="number" min="1900" max="2100" />
+          </div>
+          <div class="control-group">
+            <label for="month">Month</label>
+            <select id="month"></select>
+          </div>
+          <button id="generate">Generate</button>
+          <button id="download">Download PDF</button>
+        </section>
+
+        <section class="planner" id="planner">
+          <div class="planner-print" id="planner-print">
+            <div class="planner-body">
+              <div class="calendar" id="calendar"></div>
+            </div>
+            <div class="calendar-footer">Blizlab.com</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <app-footer></app-footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
