@@ -2,7 +2,15 @@ const monthSelect = document.getElementById("month");
 const yearInput = document.getElementById("year");
 const generateButton = document.getElementById("generate");
 const downloadButton = document.getElementById("download");
+const filterToggle = document.getElementById("filter-toggle");
+const filterPanel = document.getElementById("filter-panel");
+const filterOfficial = document.getElementById("filter-official");
+const filterObserved = document.getElementById("filter-observed");
+const filterReligious = document.getElementById("filter-religious");
+const filterOther = document.getElementById("filter-other");
+const filterAstronomical = document.getElementById("filter-astronomical");
 const calendarEl = document.getElementById("calendar");
+const legendEl = document.getElementById("calendar-legend");
 
 const monthNames = [
   "January",
@@ -18,6 +26,93 @@ const monthNames = [
   "November",
   "December",
 ];
+
+const lookupYearMin = 2024;
+const lookupYearMax = 2030;
+let lastWarningYear = null;
+
+const observedLookup = {
+  2024: [{ name: "Lunar New Year", month: 1, day: 10 }],
+  2025: [{ name: "Lunar New Year", month: 0, day: 29 }],
+  2026: [{ name: "Lunar New Year", month: 1, day: 17 }],
+  2027: [{ name: "Lunar New Year", month: 1, day: 6 }],
+  2028: [{ name: "Lunar New Year", month: 0, day: 26 }],
+  2029: [{ name: "Lunar New Year", month: 1, day: 13 }],
+  2030: [{ name: "Lunar New Year", month: 1, day: 3 }],
+};
+
+const religiousLookup = {
+  2024: [
+    { name: "First Night of Ramadan", month: 2, day: 12 },
+    { name: "Eid al-Fitr", month: 3, day: 10 },
+    { name: "Eid al-Adha", month: 5, day: 17 },
+    { name: "Passover (Eve)", month: 3, day: 22 },
+    { name: "Rosh Hashanah", month: 9, day: 3 },
+    { name: "Yom Kippur", month: 9, day: 12 },
+    { name: "Orthodox Easter", month: 4, day: 5 },
+    { name: "Diwali", month: 9, day: 31 },
+  ],
+  2025: [
+    { name: "First Night of Ramadan", month: 2, day: 1 },
+    { name: "Eid al-Fitr", month: 2, day: 30 },
+    { name: "Eid al-Adha", month: 5, day: 6 },
+    { name: "Passover (Eve)", month: 3, day: 12 },
+    { name: "Rosh Hashanah", month: 8, day: 23 },
+    { name: "Yom Kippur", month: 9, day: 2 },
+    { name: "Orthodox Easter", month: 3, day: 20 },
+    { name: "Diwali", month: 9, day: 20 },
+  ],
+  2026: [
+    { name: "First Night of Ramadan", month: 1, day: 18 },
+    { name: "Eid al-Fitr", month: 2, day: 20 },
+    { name: "Eid al-Adha", month: 4, day: 27 },
+    { name: "Passover (Eve)", month: 3, day: 1 },
+    { name: "Rosh Hashanah", month: 8, day: 12 },
+    { name: "Yom Kippur", month: 8, day: 21 },
+    { name: "Orthodox Easter", month: 3, day: 12 },
+    { name: "Diwali", month: 10, day: 8 },
+  ],
+  2027: [
+    { name: "First Night of Ramadan", month: 1, day: 8 },
+    { name: "Eid al-Fitr", month: 2, day: 10 },
+    { name: "Eid al-Adha", month: 4, day: 17 },
+    { name: "Passover (Eve)", month: 3, day: 21 },
+    { name: "Rosh Hashanah", month: 9, day: 2 },
+    { name: "Yom Kippur", month: 9, day: 11 },
+    { name: "Orthodox Easter", month: 4, day: 2 },
+    { name: "Diwali", month: 9, day: 28 },
+  ],
+  2028: [
+    { name: "First Night of Ramadan", month: 0, day: 28 },
+    { name: "Eid al-Fitr", month: 1, day: 27 },
+    { name: "Eid al-Adha", month: 4, day: 5 },
+    { name: "Passover (Eve)", month: 3, day: 10 },
+    { name: "Rosh Hashanah", month: 8, day: 21 },
+    { name: "Yom Kippur", month: 8, day: 30 },
+    { name: "Orthodox Easter", month: 3, day: 16 },
+    { name: "Diwali", month: 9, day: 17 },
+  ],
+  2029: [
+    { name: "First Night of Ramadan", month: 0, day: 16 },
+    { name: "Eid al-Fitr", month: 1, day: 15 },
+    { name: "Eid al-Adha", month: 3, day: 24 },
+    { name: "Passover (Eve)", month: 2, day: 30 },
+    { name: "Rosh Hashanah", month: 8, day: 10 },
+    { name: "Yom Kippur", month: 8, day: 19 },
+    { name: "Orthodox Easter", month: 3, day: 8 },
+    { name: "Diwali", month: 10, day: 5 },
+  ],
+  2030: [
+    { name: "First Night of Ramadan", month: 0, day: 6 },
+    { name: "Eid al-Fitr", month: 1, day: 5 },
+    { name: "Eid al-Adha", month: 3, day: 14 },
+    { name: "Passover (Eve)", month: 3, day: 17 },
+    { name: "Rosh Hashanah", month: 8, day: 28 },
+    { name: "Yom Kippur", month: 9, day: 7 },
+    { name: "Orthodox Easter", month: 3, day: 28 },
+    { name: "Diwali", month: 9, day: 25 },
+  ],
+};
 
 function populateMonthSelect() {
   monthNames.forEach((name, index) => {
@@ -62,17 +157,62 @@ function formatKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function addHoliday(map, date, name, type) {
+  const key = formatKey(date);
+  if (!map[key]) {
+    map[key] = [];
+  }
+  map[key].push({ name, type });
+}
+
+function westernEaster(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function newAndFullMoonDates(year, monthIndex) {
+  const synodicMonth = 29.530588853;
+  const reference = Date.UTC(2000, 0, 6, 18, 14);
+  const monthStart = Date.UTC(year, monthIndex, 1);
+  const monthEnd = Date.UTC(year, monthIndex + 1, 0, 23, 59);
+  const phases = [];
+
+  const kStart = Math.floor((monthStart - reference) / (synodicMonth * 24 * 60 * 60 * 1000)) - 1;
+  const kEnd = kStart + 3;
+
+  for (let k = kStart; k <= kEnd; k += 1) {
+    const newMoon = reference + k * synodicMonth * 24 * 60 * 60 * 1000;
+    const fullMoon = newMoon + synodicMonth / 2 * 24 * 60 * 60 * 1000;
+
+    [ { name: "New Moon", time: newMoon }, { name: "Full Moon", time: fullMoon } ].forEach((phase) => {
+      if (phase.time >= monthStart && phase.time <= monthEnd) {
+        const date = new Date(phase.time);
+        phases.push({ name: phase.name, date });
+      }
+    });
+  }
+
+  return phases;
+}
+
 function federalHolidays(year) {
-  const holidays = [];
+  const holidays = {};
   const pushHoliday = (name, date) => {
     const observed = observedDate(date);
-    holidays.push({
-      name,
-      date,
-      observed,
-      key: formatKey(observed),
-      type: "federal",
-    });
+    addHoliday(holidays, observed, name, "official");
   };
 
   pushHoliday("New Year's Day", new Date(year, 0, 1));
@@ -87,21 +227,13 @@ function federalHolidays(year) {
   pushHoliday("Thanksgiving Day", nthWeekdayOfMonth(year, 10, 4, 4));
   pushHoliday("Christmas Day", new Date(year, 11, 25));
 
-  return holidays.reduce((map, holiday) => {
-    map[holiday.key] = { name: holiday.name, type: holiday.type };
-    return map;
-  }, {});
+  return holidays;
 }
 
 function nonFederalObservances(year) {
-  const observances = [];
+  const observances = {};
   const pushObservance = (name, date) => {
-    observances.push({
-      name,
-      date,
-      key: formatKey(date),
-      type: "casual",
-    });
+    addHoliday(observances, date, name, "observed");
   };
 
   pushObservance("Valentine's Day", new Date(year, 1, 14));
@@ -117,26 +249,175 @@ function nonFederalObservances(year) {
   pushObservance("Christmas Eve", new Date(year, 11, 24));
   pushObservance("New Year's Eve", new Date(year, 11, 31));
 
-  return observances.reduce((map, holiday) => {
-    map[holiday.key] = { name: holiday.name, type: holiday.type };
-    return map;
-  }, {});
+  const lunarDates = observedLookup[year] || [];
+  lunarDates.forEach((entry) => {
+    pushObservance(entry.name, new Date(year, entry.month, entry.day));
+  });
+
+  return observances;
+}
+
+function religiousHolidays(year) {
+  const holidays = {};
+  const lookup = religiousLookup[year] || [];
+  lookup.forEach((entry) => {
+    addHoliday(holidays, new Date(year, entry.month, entry.day), entry.name, "religious");
+  });
+
+  const easterSunday = westernEaster(year);
+  addHoliday(holidays, easterSunday, "Easter (Western)", "religious");
+  const goodFriday = new Date(easterSunday);
+  goodFriday.setDate(goodFriday.getDate() - 2);
+  addHoliday(holidays, goodFriday, "Good Friday", "religious");
+
+  return holidays;
+}
+
+function otherObservances(year) {
+  const holidays = {};
+  const dstStart = nthWeekdayOfMonth(year, 2, 0, 2);
+  const dstEnd = nthWeekdayOfMonth(year, 10, 0, 1);
+  addHoliday(holidays, dstStart, "Daylight Saving Time Starts", "other");
+  addHoliday(holidays, dstEnd, "Daylight Saving Time Ends", "other");
+  return holidays;
+}
+
+function astronomicalEvents(year, monthIndex) {
+  const holidays = {};
+
+  const seasonTable = {
+    2024: [
+      { name: "March Equinox", month: 2, day: 19 },
+      { name: "June Solstice", month: 5, day: 20 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2025: [
+      { name: "March Equinox", month: 2, day: 20 },
+      { name: "June Solstice", month: 5, day: 20 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2026: [
+      { name: "March Equinox", month: 2, day: 20 },
+      { name: "June Solstice", month: 5, day: 21 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2027: [
+      { name: "March Equinox", month: 2, day: 20 },
+      { name: "June Solstice", month: 5, day: 21 },
+      { name: "September Equinox", month: 8, day: 23 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2028: [
+      { name: "March Equinox", month: 2, day: 19 },
+      { name: "June Solstice", month: 5, day: 20 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2029: [
+      { name: "March Equinox", month: 2, day: 20 },
+      { name: "June Solstice", month: 5, day: 21 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+    2030: [
+      { name: "March Equinox", month: 2, day: 20 },
+      { name: "June Solstice", month: 5, day: 21 },
+      { name: "September Equinox", month: 8, day: 22 },
+      { name: "December Solstice", month: 11, day: 21 },
+    ],
+  };
+
+  const eclipseTable = {
+    2024: [
+      { name: "Penumbral Lunar Eclipse (US)", month: 2, day: 25 },
+      { name: "Total Solar Eclipse (US)", month: 3, day: 8 },
+      { name: "Partial Lunar Eclipse (US)", month: 8, day: 18 },
+    ],
+    2025: [
+      { name: "Total Lunar Eclipse (US)", month: 2, day: 14 },
+      { name: "Partial Solar Eclipse (US)", month: 2, day: 29 },
+    ],
+    2026: [
+      { name: "Total Lunar Eclipse (US)", month: 2, day: 3 },
+      { name: "Total Solar Eclipse (US)", month: 7, day: 12 },
+      { name: "Partial Lunar Eclipse (US)", month: 7, day: 28 },
+    ],
+    2027: [
+      { name: "Penumbral Lunar Eclipse (US)", month: 1, day: 20 },
+      { name: "Total Solar Eclipse (US)", month: 7, day: 2 },
+      { name: "Penumbral Lunar Eclipse (US)", month: 7, day: 17 },
+    ],
+    2028: [
+      { name: "Partial Lunar Eclipse (US)", month: 0, day: 11 },
+      { name: "Annular Solar Eclipse (US)", month: 0, day: 26 },
+      { name: "Total Lunar Eclipse (US)", month: 11, day: 31 },
+    ],
+    2029: [
+      { name: "Partial Solar Eclipse (US)", month: 0, day: 14 },
+      { name: "Partial Solar Eclipse (US)", month: 5, day: 12 },
+      { name: "Total Lunar Eclipse (US)", month: 5, day: 25 },
+      { name: "Total Lunar Eclipse (US)", month: 11, day: 20 },
+    ],
+    2030: [
+      { name: "Annular Solar Eclipse (US)", month: 5, day: 1 },
+      { name: "Penumbral Lunar Eclipse (US)", month: 11, day: 9 },
+    ],
+  };
+
+  (seasonTable[year] || []).forEach((entry) => {
+    if (entry.month === monthIndex) {
+      addHoliday(holidays, new Date(year, entry.month, entry.day), entry.name, "astronomical");
+    }
+  });
+
+  if (monthIndex === 7) {
+    addHoliday(holidays, new Date(year, 7, 12), "Perseids Peak", "astronomical");
+  }
+  if (monthIndex === 11) {
+    addHoliday(holidays, new Date(year, 11, 13), "Geminids Peak", "astronomical");
+  }
+
+  (eclipseTable[year] || []).forEach((entry) => {
+    if (entry.month === monthIndex) {
+      addHoliday(holidays, new Date(year, entry.month, entry.day), entry.name, "astronomical");
+    }
+  });
+
+  newAndFullMoonDates(year, monthIndex).forEach((phase) => {
+    addHoliday(holidays, phase.date, phase.name, "astronomical");
+  });
+
+  return holidays;
 }
 
 function buildHolidayMap(year) {
-  const holidays = federalHolidays(year);
-  const observances = nonFederalObservances(year);
-  Object.keys(observances).forEach((key) => {
-    if (!holidays[key]) {
-      holidays[key] = observances[key];
-    }
+  const holidays = {};
+  [federalHolidays(year), nonFederalObservances(year), religiousHolidays(year), otherObservances(year)].forEach((group) => {
+    Object.keys(group).forEach((key) => {
+      if (!holidays[key]) {
+        holidays[key] = [];
+      }
+      holidays[key].push(...group[key]);
+    });
   });
   return holidays;
 }
 
-function buildCalendar(year, monthIndex, title) {
+function filterState() {
+  return {
+    official: filterOfficial ? filterOfficial.checked : true,
+    observed: filterObserved ? filterObserved.checked : true,
+    religious: filterReligious ? filterReligious.checked : true,
+    other: filterOther ? filterOther.checked : true,
+    astronomical: filterAstronomical ? filterAstronomical.checked : true,
+  };
+}
+
+function buildCalendar(year, monthIndex, title, holidays, filters) {
   calendarEl.innerHTML = "";
-  const holidays = buildHolidayMap(year);
 
   const table = document.createElement("table");
   table.className = "calendar-table";
@@ -172,21 +453,27 @@ function buildCalendar(year, monthIndex, title) {
         number.className = "day-number";
         number.textContent = currentDay;
 
-        const holiday = holidays[key];
-        if (holiday) {
-          const note = document.createElement("div");
-          note.className = "holiday";
-          const icon = document.createElement("span");
-          icon.className = `holiday-icon ${holiday.type}`;
+        const dayHolidays = holidays[key] || [];
+        dayHolidays
+          .filter((item) => filters[item.type])
+          .forEach((holiday) => {
+            const note = document.createElement("div");
+            note.className = "holiday";
+            const icon = document.createElement("span");
+            if (holiday.type === "astronomical" && holiday.name.includes("Moon")) {
+              icon.className = "holiday-icon moon";
+            } else {
+              icon.className = `holiday-icon ${holiday.type}`;
+            }
 
-          const label = document.createElement("span");
-          label.className = "holiday-text";
-          label.textContent = holiday.name;
+            const label = document.createElement("span");
+            label.className = "holiday-text";
+            label.textContent = holiday.name;
 
-          note.appendChild(icon);
-          note.appendChild(label);
-          cell.appendChild(note);
-        }
+            note.appendChild(icon);
+            note.appendChild(label);
+            cell.appendChild(note);
+          });
 
         cell.appendChild(number);
       } else {
@@ -207,12 +494,119 @@ function updatePlanner() {
   const year = Number(yearInput.value);
   const monthIndex = Number(monthSelect.value);
   const title = `${monthNames[monthIndex]} ${year}`;
-  buildCalendar(year, monthIndex, title);
+  if ((year < lookupYearMin || year > lookupYearMax) && lastWarningYear !== year) {
+    alert(`Some observance dates are only available for ${lookupYearMin}–${lookupYearMax}. Outside that range, some events may be missing.`);
+    lastWarningYear = year;
+  }
+  const filters = filterState();
+  const holidays = buildHolidayMap(year);
+  const astro = astronomicalEvents(year, monthIndex);
+  Object.keys(astro).forEach((key) => {
+    if (!holidays[key]) {
+      holidays[key] = [];
+    }
+    holidays[key].push(...astro[key]);
+  });
+
+  buildCalendar(year, monthIndex, title, holidays, filters);
+  updateLegend(holidays, year, monthIndex, filters);
 }
 
 populateMonthSelect();
 setDefaults();
 updatePlanner();
+
+function updateLegend(holidays, year, monthIndex, filters) {
+  if (!legendEl) {
+    return;
+  }
+
+  const order = [
+    { type: "official", label: "Official" },
+    { type: "observed", label: "Observed" },
+    { type: "religious", label: "Religious" },
+    { type: "other", label: "Other" },
+    { type: "astronomical", label: "Astronomical" },
+  ];
+
+  const monthKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-`;
+  const present = new Set();
+
+  Object.keys(holidays).forEach((key) => {
+    if (!key.startsWith(monthKey)) {
+      return;
+    }
+    holidays[key].forEach((item) => {
+      if (filters[item.type]) {
+        present.add(item.type);
+      }
+    });
+  });
+
+  legendEl.innerHTML = "";
+  order.forEach((entry) => {
+    if (!present.has(entry.type)) {
+      return;
+    }
+    const item = document.createElement("span");
+    item.className = "legend-item";
+
+    const icon = document.createElement("span");
+    icon.className = `holiday-icon ${entry.type}`;
+
+    const label = document.createElement("span");
+    label.textContent = entry.label;
+
+    item.appendChild(icon);
+    item.appendChild(label);
+    legendEl.appendChild(item);
+  });
+}
+
+if (filterToggle && filterPanel) {
+  let closeTimer = null;
+
+  const openPanel = () => {
+    filterPanel.classList.add("is-open");
+    filterToggle.setAttribute("aria-expanded", "true");
+    filterPanel.setAttribute("aria-hidden", "false");
+  };
+
+  const closePanel = () => {
+    filterPanel.classList.remove("is-open");
+    filterToggle.setAttribute("aria-expanded", "false");
+    filterPanel.setAttribute("aria-hidden", "true");
+  };
+
+  const scheduleClose = () => {
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(closePanel, 300);
+  };
+
+  const cancelClose = () => {
+    clearTimeout(closeTimer);
+  };
+
+  filterToggle.addEventListener("click", () => {
+    cancelClose();
+    if (filterPanel.classList.contains("is-open")) {
+      closePanel();
+    } else {
+      openPanel();
+    }
+  });
+
+  filterPanel.addEventListener("mouseenter", cancelClose);
+  filterPanel.addEventListener("mouseleave", scheduleClose);
+  filterToggle.addEventListener("mouseenter", cancelClose);
+  filterToggle.addEventListener("mouseleave", scheduleClose);
+}
+
+[filterOfficial, filterObserved, filterReligious, filterOther, filterAstronomical].forEach((checkbox) => {
+  if (checkbox) {
+    checkbox.addEventListener("change", updatePlanner);
+  }
+});
 
 async function downloadPdf() {
   const planner = document.getElementById("planner-print");
