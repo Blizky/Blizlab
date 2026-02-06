@@ -193,7 +193,7 @@ class AppFooter extends HTMLElement {
       <footer>
         <span id="footer-text">
           <img src="/assets/svg/icons/ko-fi.svg" alt="Ko-fi" class="icon-kofi" style="width: 20px; height: 20px; vertical-align: -4px; margin-right: 4px;"> 
-          <a href="https://ko-fi.com/" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
+          <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">Buy me a Ko-fi</a> · Made by Alex with ❤️
         </span>
       </footer>
     `;
