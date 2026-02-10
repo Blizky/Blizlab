@@ -4,7 +4,8 @@ const readingTime = document.getElementById("readingTime");
 const changeCount = document.getElementById("changeCount");
 const statusLabel = document.getElementById("status");
 const statusDot = document.getElementById("statusDot");
-const runBtn = document.getElementById("run");
+const runEnBtn = document.getElementById("runEn");
+const runEsBtn = document.getElementById("runEs");
 const clearBtn = document.getElementById("clear");
 const copyOutputBtn = document.getElementById("copyOutput");
 const saveMarkdownBtn = document.getElementById("saveMarkdown");
@@ -60,8 +61,7 @@ const languageLabels = {
 
 const EMOJI_REGEX = /[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F]/gu;
 
-let currentLanguage = "es";
-let languageState = "es";
+let currentLanguage = null;
 let readingSpeed = DEFAULT_READING_SPEED;
 
 function setPlaceholderByOS() {
@@ -286,119 +286,51 @@ function applyEdits(text, edits) {
   return corrected;
 }
 
-function detectLanguageHeuristic(text) {
-  const lower = (text || "").toLowerCase();
-  if (!lower.trim()) return "empty";
-
-  if (/[êçãõâà]/.test(lower)) return "unknown";
-
-  let spanishScore = 0;
-  let englishScore = 0;
-
-  const accentMatches = lower.match(/[áéíóúñ¿¡]/g);
-  if (accentMatches) spanishScore += accentMatches.length * 2;
-
-  const spanishWords = [
-    "que", "de", "y", "la", "el", "en", "los", "las", "por", "para", "con",
-    "como", "más", "pero", "porque", "una", "un", "yo", "tu", "usted",
-    "ustedes", "nosotros", "ellos", "ellas", "esto", "esta", "está", "ser",
-    "haber", "también", "dónde", "cómo",
-  ];
-  const englishWords = [
-    "the", "and", "you", "your", "for", "with", "not", "this", "that", "have",
-    "are", "is", "was", "were", "be", "to", "of", "in", "on", "it", "as",
-    "but", "or", "from", "by", "we", "they", "he", "she", "i",
-  ];
-
-  spanishWords.forEach(word => {
-    const matches = lower.match(new RegExp(`\\b${word}\\b`, "g"));
-    if (matches) spanishScore += matches.length;
-  });
-  englishWords.forEach(word => {
-    const matches = lower.match(new RegExp(`\\b${word}\\b`, "g"));
-    if (matches) englishScore += matches.length;
-  });
-
-  const totalScore = spanishScore + englishScore;
-  const scoreDiff = Math.abs(spanishScore - englishScore);
-  if (totalScore === 0 || (totalScore < 3 && scoreDiff <= 1)) return "unknown";
-  return englishScore > spanishScore ? "en" : "es";
-}
-
-function normalizeLanguageCode(code, fallback = "es") {
-  if (!code) return fallback;
-  const normalized = code.toLowerCase();
-  if (normalized.startsWith("es")) return "es";
-  if (normalized.startsWith("en")) return "en";
-  return fallback;
-}
-
-function updateRunButtonLanguage(language) {
-  if (language === "empty") {
-    runBtn.textContent = "Correct";
-    runBtn.disabled = true;
-    return;
-  }
-  if (language === "en") {
-    runBtn.textContent = "Correct EN";
-    runBtn.disabled = false;
-    return;
-  }
-  if (language === "es") {
-    runBtn.textContent = "Correct ES";
-    runBtn.disabled = false;
-    return;
-  }
-  runBtn.textContent = "Correct N/A";
-  runBtn.disabled = true;
-}
-
 function setCurrentLanguage(language) {
-  languageState = language || "es";
-  currentLanguage = languageState === "unknown"
-    ? "es"
-    : normalizeLanguageCode(languageState, "es");
-  updateRunButtonLanguage(languageState);
+  currentLanguage = language;
   if (languageLabel) {
-    if (languageState === "unknown" || languageState === "empty") {
-      languageLabel.textContent = "Language: N/A";
+    if (!language) {
+      languageLabel.textContent = "Language: Manual";
     } else {
-      const label = languageLabels[currentLanguage] || languageLabels.es;
-      languageLabel.textContent = `Language: ${label}`;
+      const label = languageLabels[language] || languageLabels.es;
+      languageLabel.textContent = `Language: ${label} (manual)`;
     }
   }
-  document.documentElement.lang = currentLanguage === "en" ? "en" : "es";
+  if (language === "en") {
+    document.documentElement.lang = "en";
+  } else if (language === "es") {
+    document.documentElement.lang = "es";
+  }
 }
 
-async function runCorrection() {
+function updateRunButtonsState() {
+  const hasText = Boolean((input.textContent || "").trim());
+  runEnBtn.disabled = !hasText;
+  runEsBtn.disabled = !hasText;
+}
+
+async function runCorrection(language) {
   const raw = input.textContent || "";
   const original = stripEmojis(raw);
   if (!original.trim()) {
     input.textContent = "";
     changeCount.textContent = "0 changes";
+    updateRunButtonsState();
     return;
   }
   if (raw !== original) {
     input.textContent = original;
   }
-
-  if (languageState === "unknown" || languageState === "empty") {
-    setStatus("Language not supported", false);
-    updateRunButtonLanguage("unknown");
-    return;
-  }
+  setCurrentLanguage(language);
 
   setStatus("Correcting…", true);
-  runBtn.disabled = true;
+  runEnBtn.disabled = true;
+  runEsBtn.disabled = true;
 
   let ignoredRanges = [];
   let edits = [];
-  let detectedLanguage = detectLanguageHeuristic(original);
-  if (detectedLanguage === "unknown" || detectedLanguage === "empty") {
-    setCurrentLanguage(detectedLanguage);
-    setStatus("Language not supported", false);
-    return;
-  }
+  const activeLanguage = language === "en" ? "en" : "es";
+  const apiLanguage = activeLanguage === "en" ? "en-US" : "es";
 
   try {
     const response = await fetch("https://api.languagetool.org/v2/check", {
@@ -406,34 +338,28 @@ async function runCorrection() {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         text: original,
-        language: "auto",
+        language: apiLanguage,
         enabledOnly: "false",
       }),
     });
     if (!response.ok) throw new Error("HTTP error");
     const data = await response.json();
-    detectedLanguage = normalizeLanguageCode(
-      data?.detectedLanguage?.code || data?.language?.code,
-      detectedLanguage
-    );
-    setCurrentLanguage(detectedLanguage);
     const result = applyLanguageToolFixes(original, data.matches || []);
     ignoredRanges = result.ignoredRanges;
     edits = result.edits;
   } catch (error) {
-    setCurrentLanguage(detectedLanguage);
-    const result = applySimpleCorrections(original, detectedLanguage);
+    const result = applySimpleCorrections(original, activeLanguage);
     edits = result.edits;
     ignoredRanges = [];
   }
 
-  const forcedEdits = findForcedEdits(original, detectedLanguage);
+  const forcedEdits = findForcedEdits(original, activeLanguage);
   const combinedEdits = mergeEdits(edits, forcedEdits);
 
   input.innerHTML = buildOutputHtml(original, combinedEdits, ignoredRanges);
   changeCount.textContent = `${combinedEdits.length} changes`;
   setStatus("Ready", false);
-  runBtn.disabled = false;
+  updateRunButtonsState();
 }
 
 function shouldIgnoreCorrection(text, match) {
@@ -643,8 +569,7 @@ function closeIgnoredModal() {
 input.addEventListener("input", () => {
   updateWordCount();
   changeCount.textContent = `${input.querySelectorAll(".change").length} changes`;
-  const text = input.textContent || "";
-  setCurrentLanguage(detectLanguageHeuristic(text));
+  updateRunButtonsState();
 });
 
 input.addEventListener("paste", (event) => {
@@ -654,7 +579,6 @@ input.addEventListener("paste", (event) => {
     event.preventDefault();
     insertTextAtCursor(plain);
     input.dispatchEvent(new Event("input", { bubbles: true }));
-    setCurrentLanguage(detectLanguageHeuristic(plain));
     return;
   }
   if (html) {
@@ -662,14 +586,12 @@ input.addEventListener("paste", (event) => {
     const markdown = htmlToMarkdown(html);
     insertTextAtCursor(markdown);
     input.dispatchEvent(new Event("input", { bubbles: true }));
-    setCurrentLanguage(detectLanguageHeuristic(markdown));
     return;
   }
   if (plain) {
     event.preventDefault();
     insertTextAtCursor(plain);
     input.dispatchEvent(new Event("input", { bubbles: true }));
-    setCurrentLanguage(detectLanguageHeuristic(plain));
   }
 });
 
@@ -709,13 +631,15 @@ input.addEventListener("click", (event) => {
   changeCount.textContent = `${input.querySelectorAll(".change").length} cambios`;
 });
 
-runBtn.addEventListener("click", runCorrection);
+runEnBtn.addEventListener("click", () => runCorrection("en"));
+runEsBtn.addEventListener("click", () => runCorrection("es"));
 
 clearBtn.addEventListener("click", () => {
   input.textContent = "";
   changeCount.textContent = "0 changes";
   updateWordCount();
-  setCurrentLanguage("empty");
+  setCurrentLanguage(null);
+  updateRunButtonsState();
   setStatus("Ready", false);
 });
 
@@ -767,8 +691,9 @@ ignoredModal.addEventListener("click", (event) => {
 });
 
 updateWordCount();
-setCurrentLanguage("empty");
+setCurrentLanguage(null);
 setPlaceholderByOS();
+updateRunButtonsState();
 
 readingSpeed = loadReadingSpeed();
 if (readingSpeedInput) {
