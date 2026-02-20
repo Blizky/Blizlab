@@ -133,6 +133,7 @@ const HERO_AUTOPLAY_MS = 6500;
 const HERO_PARALLAX_STEP_BACK = 72;
 const HERO_PARALLAX_STEP_MID = 146;
 const HERO_PARALLAX_STEP_FRONT = 220;
+const ABOUT_CLOSE_ANIM_MS = 280;
 const BOLT_SPARK_VECTORS = [
   { dx: -20, dy: -10, rot: -156 },
   { dx: -22, dy: 0, rot: 180 },
@@ -155,6 +156,7 @@ let upscaleLowResEnabled = false;
 let pendingLayersInsertAt = "top";
 let heroSceneIndex = 0;
 let heroAutoplayTimer = 0;
+let aboutCloseTimer = 0;
 
 function setStatus(text) {
   if (statusPill) statusPill.textContent = text;
@@ -250,16 +252,43 @@ function startHeroAutoplay() {
   }, HERO_AUTOPLAY_MS);
 }
 
+function getAboutCloseDuration() {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return 0;
+  return ABOUT_CLOSE_ANIM_MS;
+}
+
+function clearAboutCloseTimer() {
+  if (!aboutCloseTimer) return;
+  window.clearTimeout(aboutCloseTimer);
+  aboutCloseTimer = 0;
+}
+
 function setAboutPanelOpen(open, { markSeen = false } = {}) {
   if (!aboutPanel || !aboutToggleBtn) return;
   const isOpen = !!open;
-  aboutPanel.hidden = !isOpen;
-  document.body.classList.toggle("about-closed", !isOpen);
-  aboutToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
   if (isOpen) {
+    clearAboutCloseTimer();
+    aboutPanel.classList.remove("is-closing");
+    aboutPanel.hidden = false;
+    document.body.classList.remove("about-closed");
+    aboutToggleBtn.setAttribute("aria-expanded", "true");
     startHeroAutoplay();
   } else {
+    document.body.classList.add("about-closed");
+    aboutToggleBtn.setAttribute("aria-expanded", "false");
     stopHeroAutoplay();
+    if (!aboutPanel.hidden) {
+      clearAboutCloseTimer();
+      aboutPanel.classList.add("is-closing");
+      const closeDuration = getAboutCloseDuration();
+      aboutCloseTimer = window.setTimeout(() => {
+        aboutPanel.hidden = true;
+        aboutPanel.classList.remove("is-closing");
+        aboutCloseTimer = 0;
+      }, closeDuration + 40);
+    } else {
+      aboutPanel.classList.remove("is-closing");
+    }
   }
   if (markSeen) {
     localStorage.setItem(ABOUT_SEEN_KEY, "1");
@@ -932,7 +961,7 @@ sidebarCollapseBtn?.addEventListener("click", () => {
 });
 
 aboutToggleBtn?.addEventListener("click", () => {
-  const nextOpen = aboutPanel?.hidden;
+  const nextOpen = aboutPanel?.hidden || aboutPanel?.classList.contains("is-closing");
   setAboutPanelOpen(nextOpen, { markSeen: true });
   if (nextOpen) setMoreMenuOpen(false);
 });
