@@ -64,36 +64,64 @@
 
   <section class="about-panel" id="appAboutPanel">
     <div class="about-panel-inner">
-      <h2>Build layered visuals in one focused workspace</h2>
-      <div class="about-columns">
-        <div class="about-col">
-          <h3>Compose fast</h3>
-          <p>Import, paste, and layer visuals quickly so ideas move from draft to polished composition without context switching.</p>
+      <section class="hero-carousel" id="heroCarousel" aria-label="Blizlab feature scenes">
+        <div class="hero-parallax" aria-hidden="true">
+          <div class="hero-parallax-layer hero-parallax-back"></div>
+          <div class="hero-parallax-layer hero-parallax-mid"></div>
+          <div class="hero-parallax-layer hero-parallax-front"></div>
+          <div class="hero-parallax-shade"></div>
         </div>
-        <div class="about-col">
-          <h3>Refine every layer</h3>
-          <p>Dial in mood and focus using color, contrast, blur, and precision cutout tools built for iterative visual work.</p>
+        <div class="hero-head">
+          <h2>Build layered visuals in one workspace that works fast and as expected.</h2>
         </div>
-        <div class="about-col">
-          <h3>Export for delivery</h3>
-          <p>Export flattened assets, layered ZIP files, or lightweight parallax animation ready for social, ads, and reels.</p>
+        <div class="hero-scenes-window">
+          <div class="hero-scenes-track" id="heroScenesTrack">
+            <article class="hero-scene">
+              <div class="hero-scene-content">
+                <figure class="hero-scene-visual">
+                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
+                    <span>hero-scene-01.jpg</span>
+                  </div>
+                </figure>
+                <p class="hero-scene-copy">Import, paste, and layer visuals quickly so ideas move from draft to polished composition without context switching.</p>
+              </div>
+            </article>
+            <article class="hero-scene">
+              <div class="hero-scene-content">
+                <figure class="hero-scene-visual">
+                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
+                    <span>hero-scene-02.jpg</span>
+                  </div>
+                </figure>
+                <p class="hero-scene-copy">Full background removal kit with brush and adjustment controls on each layer for fast and easy matching.</p>
+              </div>
+            </article>
+            <article class="hero-scene">
+              <div class="hero-scene-content">
+                <figure class="hero-scene-visual">
+                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
+                    <span>hero-scene-03.gif</span>
+                  </div>
+                </figure>
+                <p class="hero-scene-copy">Create GIF animations ready to share, or pack all the layers in high quality PNG for your video editor.</p>
+              </div>
+            </article>
+          </div>
         </div>
-      </div>
-      <p class="showcase-intro">Examples made in Blizlab. Replace these placeholders with your own hero images and animated GIFs.</p>
-      <div class="showcase-media" aria-label="Showcase media placeholders">
-        <figure class="showcase-card">
-          <div class="showcase-media-box">Image 01</div>
-          <figcaption>Layered composition</figcaption>
-        </figure>
-        <figure class="showcase-card">
-          <div class="showcase-media-box">GIF 02</div>
-          <figcaption>Parallax motion preview</figcaption>
-        </figure>
-        <figure class="showcase-card">
-          <div class="showcase-media-box">Image 03</div>
-          <figcaption>Final export sample</figcaption>
-        </figure>
-      </div>
+        <div class="hero-scene-controls">
+          <button class="hero-scene-arrow" id="heroPrevBtn" type="button" aria-label="Previous scene">
+            <img src="./svg/left_line.svg" alt="" width="14" height="14" aria-hidden="true">
+          </button>
+          <div class="hero-scene-dots" id="heroSceneDots" role="tablist" aria-label="Hero scenes">
+            <button class="hero-scene-dot is-active" type="button" role="tab" aria-selected="true" aria-label="Go to scene 1" data-hero-scene="0"></button>
+            <button class="hero-scene-dot" type="button" role="tab" aria-selected="false" aria-label="Go to scene 2" data-hero-scene="1"></button>
+            <button class="hero-scene-dot" type="button" role="tab" aria-selected="false" aria-label="Go to scene 3" data-hero-scene="2"></button>
+          </div>
+          <button class="hero-scene-arrow" id="heroNextBtn" type="button" aria-label="Next scene">
+            <img src="./svg/right_line.svg" alt="" width="14" height="14" aria-hidden="true">
+          </button>
+        </div>
+      </section>
       <div class="about-actions">
         <button class="about-start-btn" id="aboutStartBtn" type="button">Start using Blizlab</button>
       </div>
@@ -410,6 +438,13 @@
         <button class="secondary-btn" id="btnSaveParallaxGif" type="button">Save GIF</button>
         <button class="secondary-btn" id="btnCloseParallaxPreview" type="button">Close</button>
       </div>
+    </div>
+  </div>
+
+  <div class="mobile-blocker" aria-live="polite">
+    <div class="mobile-blocker-card" role="dialog" aria-modal="true" aria-labelledby="mobileBlockerTitle" aria-describedby="mobileBlockerDesc">
+      <h2 id="mobileBlockerTitle">Desktop Recommended</h2>
+      <p id="mobileBlockerDesc">This app is not optimized for phone screens. Use a desktop or laptop for the best experience.</p>
     </div>
   </div>
 

@@ -29,6 +29,11 @@ const moreToggleBtn = document.getElementById("moreToggleBtn");
 const moreMenu = document.getElementById("moreMenu");
 const logoBoltBtn = document.getElementById("logoBoltBtn");
 const logoSparks = document.getElementById("logoSparks");
+const heroCarousel = document.getElementById("heroCarousel");
+const heroScenesTrack = document.getElementById("heroScenesTrack");
+const heroPrevBtn = document.getElementById("heroPrevBtn");
+const heroNextBtn = document.getElementById("heroNextBtn");
+const heroSceneDots = Array.from(document.querySelectorAll("#heroSceneDots [data-hero-scene]"));
 
 // Mode UI
 const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
@@ -124,6 +129,10 @@ const UPSCALE_LOW_RES_KEY = "retrocutUpscaleLowRes";
 const ABOUT_SEEN_KEY = "retrocutAboutSeen";
 const CANVAS_DEFINITION_SET = new Set(["sd", "hd", "4k"]);
 const MAX_IMPORT_LONG_SIDE = 4096;
+const HERO_AUTOPLAY_MS = 6500;
+const HERO_PARALLAX_STEP_BACK = 72;
+const HERO_PARALLAX_STEP_MID = 146;
+const HERO_PARALLAX_STEP_FRONT = 220;
 const BOLT_SPARK_VECTORS = [
   { dx: -20, dy: -10, rot: -156 },
   { dx: -22, dy: 0, rot: 180 },
@@ -144,6 +153,8 @@ let canvasFormat = "43";
 let canvasOrientation = "horizontal";
 let upscaleLowResEnabled = false;
 let pendingLayersInsertAt = "top";
+let heroSceneIndex = 0;
+let heroAutoplayTimer = 0;
 
 function setStatus(text) {
   if (statusPill) statusPill.textContent = text;
@@ -191,12 +202,65 @@ function setSidebarCollapsed(collapsed) {
   sidebarCollapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
 }
 
+function stopHeroAutoplay() {
+  if (heroAutoplayTimer) {
+    window.clearInterval(heroAutoplayTimer);
+    heroAutoplayTimer = 0;
+  }
+}
+
+function getHeroSceneCount() {
+  if (heroSceneDots.length > 0) return heroSceneDots.length;
+  return heroScenesTrack?.children?.length || 0;
+}
+
+function setHeroScene(index, { immediate = false } = {}) {
+  if (!heroCarousel) return;
+  const sceneCount = getHeroSceneCount();
+  if (sceneCount < 1) return;
+  const nextIndex = ((Math.round(index) % sceneCount) + sceneCount) % sceneCount;
+  heroSceneIndex = nextIndex;
+  if (immediate) {
+    heroCarousel.classList.add("no-anim");
+  } else {
+    heroCarousel.classList.remove("no-anim");
+  }
+  heroCarousel.style.setProperty("--hero-scene-index", String(nextIndex));
+  heroCarousel.style.setProperty("--hero-back-x", `${-nextIndex * HERO_PARALLAX_STEP_BACK}px`);
+  heroCarousel.style.setProperty("--hero-mid-x", `${-nextIndex * HERO_PARALLAX_STEP_MID}px`);
+  heroCarousel.style.setProperty("--hero-front-x", `${-nextIndex * HERO_PARALLAX_STEP_FRONT}px`);
+  heroSceneDots.forEach((dot, dotIndex) => {
+    const isActive = dotIndex === nextIndex;
+    dot.classList.toggle("is-active", isActive);
+    dot.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  if (immediate) {
+    window.requestAnimationFrame(() => {
+      heroCarousel.classList.remove("no-anim");
+    });
+  }
+}
+
+function startHeroAutoplay() {
+  if (!heroCarousel || getHeroSceneCount() < 2) return;
+  stopHeroAutoplay();
+  heroAutoplayTimer = window.setInterval(() => {
+    if (aboutPanel?.hidden) return;
+    setHeroScene(heroSceneIndex + 1);
+  }, HERO_AUTOPLAY_MS);
+}
+
 function setAboutPanelOpen(open, { markSeen = false } = {}) {
   if (!aboutPanel || !aboutToggleBtn) return;
   const isOpen = !!open;
   aboutPanel.hidden = !isOpen;
   document.body.classList.toggle("about-closed", !isOpen);
   aboutToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  if (isOpen) {
+    startHeroAutoplay();
+  } else {
+    stopHeroAutoplay();
+  }
   if (markSeen) {
     localStorage.setItem(ABOUT_SEEN_KEY, "1");
   }
@@ -884,6 +948,33 @@ logoBoltBtn?.addEventListener("click", (event) => {
   triggerLogoBoltSparks();
 });
 
+heroPrevBtn?.addEventListener("click", () => {
+  setHeroScene(heroSceneIndex - 1);
+  startHeroAutoplay();
+});
+
+heroNextBtn?.addEventListener("click", () => {
+  setHeroScene(heroSceneIndex + 1);
+  startHeroAutoplay();
+});
+
+heroSceneDots.forEach((dot) => {
+  dot.addEventListener("click", () => {
+    const index = Number(dot.dataset.heroScene);
+    if (!Number.isFinite(index)) return;
+    setHeroScene(index);
+    startHeroAutoplay();
+  });
+});
+
+heroCarousel?.addEventListener("pointerenter", () => {
+  stopHeroAutoplay();
+});
+
+heroCarousel?.addEventListener("pointerleave", () => {
+  if (!aboutPanel?.hidden) startHeroAutoplay();
+});
+
 btnQuickUpload?.addEventListener("click", () => {
   pendingLayersInsertAt = "top";
   fileInput.click();
@@ -1182,6 +1273,7 @@ applyCanvasAspectFromSettings();
 syncCanvasSettingsUI();
 setSidebarCollapsed(true);
 setMoreMenuOpen(false);
+setHeroScene(0, { immediate: true });
 const hasSeenAbout = localStorage.getItem(ABOUT_SEEN_KEY) === "1";
 setAboutPanelOpen(!hasSeenAbout, { markSeen: !hasSeenAbout });
 setParallaxDefaults();
