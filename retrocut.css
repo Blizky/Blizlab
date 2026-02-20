@@ -949,7 +949,7 @@ body {
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.26);
-  box-shadow: 0 22px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.1);
   background: rgba(14, 18, 24, 0.26);
 }
 
@@ -1069,6 +1069,38 @@ body {
   .hero-scenes-track,
   .hero-parallax-layer {
     transition: none !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .hero-carousel {
+    padding-top: 14px;
+  }
+
+  .about-panel h2 {
+    display: block;
+    margin-bottom: 0;
+    font-size: clamp(3.25rem, 6.3vw, 4.2rem);
+    line-height: 0.95;
+    transform: none;
+  }
+
+  .hero-head {
+    height: auto;
+    overflow: visible;
+    margin-bottom: 0;
+  }
+
+  .hero-scenes-window {
+    margin-top: -8px;
+    padding-top: 8px;
+    min-height: 310px;
+  }
+
+  .hero-scene-content {
+    min-height: 310px;
+    padding: 6px 28px 12px;
+    align-items: center;
   }
 }
 
