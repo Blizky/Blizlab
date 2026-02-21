@@ -52,8 +52,14 @@
             <input type="checkbox" id="upscaleLowResToggle">
             <span>Upscale low-res images</span>
           </label>
+          <label class="setting-toggle" for="downscaleImportsToggle">
+            <input type="checkbox" id="downscaleImportsToggle" checked>
+            <span>Downscale imported images</span>
+          </label>
+          <div class="setting-note">Default ON. Normalizes imports for smoother editing and consistent layer ZIP sizes.</div>
           <div class="setting-note">Simple stretch upscale only. Pixelation can happen.</div>
           <div class="more-links">
+            <p class="more-text">Help &amp; FAQ: <a href="./help.html" target="_blank" rel="noopener">Open guide</a></p>
             <p class="more-text">Support Blizlab: <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener">ko-fi.com/blizky</a></p>
             <p class="more-text">Contact us: coming soon</p>
           </div>
@@ -79,9 +85,7 @@
             <article class="hero-scene">
               <div class="hero-scene-content">
                 <figure class="hero-scene-visual">
-                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
-                    <span>hero-scene-01.jpg</span>
-                  </div>
+                  <img src="./assets/images/hero-scene-01.gif" alt="Hero scene 1 preview">
                 </figure>
                 <p class="hero-scene-copy">Import, paste, and layer visuals quickly so ideas move from draft to polished composition without context switching.</p>
               </div>
@@ -89,9 +93,7 @@
             <article class="hero-scene">
               <div class="hero-scene-content">
                 <figure class="hero-scene-visual">
-                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
-                    <span>hero-scene-02.jpg</span>
-                  </div>
+                  <img src="./assets/images/hero-scene-02.jpg" alt="Hero scene 2 preview">
                 </figure>
                 <p class="hero-scene-copy">Full background removal kit with brush and adjustment controls on each layer for fast and easy matching.</p>
               </div>
@@ -99,9 +101,7 @@
             <article class="hero-scene">
               <div class="hero-scene-content">
                 <figure class="hero-scene-visual">
-                  <div class="hero-scene-media-slot" data-type="JPG / GIF">
-                    <span>hero-scene-03.gif</span>
-                  </div>
+                  <img src="./assets/images/hero-scene-03.gif" alt="Hero scene 3 preview">
                 </figure>
                 <p class="hero-scene-copy">Create GIF animations ready to share, or pack all the layers in high quality PNG for your video editor.</p>
               </div>
@@ -397,7 +397,7 @@
               <div class="layers-panel-head">
                 <div class="layers-head-title">
                   <div class="sidebar-section-title">LAYERS</div>
-                  <span class="layers-count" id="layersCountText" aria-live="polite">0/10</span>
+                  <span class="layers-count" id="layersCountText" aria-live="polite">0/5</span>
                 </div>
                 <div class="layers-head-actions">
                   <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">M+</button>
@@ -450,6 +450,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-  <script type="module" src="imagestudio.js"></script>
+  <script type="module" src="imagestudio.js?v=20260220a"></script>
 </body>
 </html>

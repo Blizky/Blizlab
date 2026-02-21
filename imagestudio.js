@@ -1,7 +1,7 @@
-import { createEditor } from "./modules/editor.js";
-import { createCutoutTool } from "./modules/cutout.js";
-import { createLayersTool } from "./modules/layers.js";
-import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js";
+import { createEditor } from "./modules/editor.js?v=20260220a";
+import { createCutoutTool } from "./modules/cutout.js?v=20260220a";
+import { createLayersTool } from "./modules/layers.js?v=20260220a";
+import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260220a";
 
 const statusPill = document.getElementById("statusPill");
 
@@ -22,6 +22,7 @@ const canvasFormatButtons = Array.from(document.querySelectorAll("#canvasFormatC
 const canvasOrientationButtons = Array.from(document.querySelectorAll("#canvasOrientationChips .chip-btn"));
 const definitionButtons = Array.from(document.querySelectorAll("#definitionChips .chip-btn"));
 const upscaleLowResToggle = document.getElementById("upscaleLowResToggle");
+const downscaleImportsToggle = document.getElementById("downscaleImportsToggle");
 const aboutPanel = document.getElementById("appAboutPanel");
 const aboutToggleBtn = document.getElementById("aboutToggleBtn");
 const aboutStartBtn = document.getElementById("aboutStartBtn");
@@ -126,8 +127,19 @@ let cutoutBgMode = "checker";
 const PARALLAX_EXPORT_LABEL = "Create Parallax Animation";
 const CANVAS_DEFINITION_KEY = "retrocutCanvasDefinition";
 const UPSCALE_LOW_RES_KEY = "retrocutUpscaleLowRes";
+const DOWNSCALE_IMPORTS_KEY = "retrocutDownscaleImports";
 const ABOUT_SEEN_KEY = "retrocutAboutSeen";
 const CANVAS_DEFINITION_SET = new Set(["sd", "hd", "4k"]);
+const CANVAS_DEFINITION_SCALES = {
+  sd: 0.5,
+  hd: 1,
+  "4k": 2
+};
+const IMPORT_TARGET_DEFINITION = {
+  sd: "hd",
+  hd: "4k",
+  "4k": "4k"
+};
 const MAX_IMPORT_LONG_SIDE = 4096;
 const HERO_AUTOPLAY_MS = 6500;
 const HERO_PARALLAX_STEP_BACK = 72;
@@ -153,6 +165,7 @@ let canvasDefinition = "sd";
 let canvasFormat = "43";
 let canvasOrientation = "horizontal";
 let upscaleLowResEnabled = false;
+let downscaleImportsEnabled = true;
 let pendingLayersInsertAt = "top";
 let heroSceneIndex = 0;
 let heroAutoplayTimer = 0;
@@ -180,6 +193,12 @@ function triggerLogoBoltSparks() {
 function readCanvasDefinition() {
   const stored = localStorage.getItem(CANVAS_DEFINITION_KEY);
   return CANVAS_DEFINITION_SET.has(stored) ? stored : "sd";
+}
+
+function readDownscaleImportsSetting() {
+  const stored = localStorage.getItem(DOWNSCALE_IMPORTS_KEY);
+  if (stored === "0") return false;
+  return true;
 }
 
 function syncDefinitionUI() {
@@ -351,6 +370,70 @@ async function upscaleImageToTargetIfNeeded(image, targetSize) {
   const blob = await canvasToBlob(work, "image/png");
   const stretched = await loadImageFromBlob(blob);
   return { image: stretched, upscaled: true, width: outW, height: outH };
+}
+
+function getImportTargetDefinition() {
+  return IMPORT_TARGET_DEFINITION[canvasDefinition] || canvasDefinition;
+}
+
+function getImportTargetLabel() {
+  const definition = getImportTargetDefinition();
+  return definition === "4k" ? "4K" : definition.toUpperCase();
+}
+
+function getImportTargetSize(baseTargetSize) {
+  if (!baseTargetSize) return null;
+  const baseW = Math.max(1, Math.round(Number(baseTargetSize.width) || 1));
+  const baseH = Math.max(1, Math.round(Number(baseTargetSize.height) || 1));
+  const selectedScale = CANVAS_DEFINITION_SCALES[canvasDefinition] || CANVAS_DEFINITION_SCALES.hd;
+  const importDefinition = getImportTargetDefinition();
+  const importScale = CANVAS_DEFINITION_SCALES[importDefinition] || selectedScale;
+  const boost = Math.max(1, importScale / selectedScale);
+  return {
+    width: Math.max(1, Math.round(baseW * boost)),
+    height: Math.max(1, Math.round(baseH * boost))
+  };
+}
+
+async function downscaleImageToTargetIfNeeded(image, targetSize) {
+  if (!downscaleImportsEnabled || !targetSize) {
+    return { image, downscaled: false, width: image.width, height: image.height };
+  }
+
+  const targetW = Math.max(1, Math.round(Number(targetSize.width) || 1));
+  const targetH = Math.max(1, Math.round(Number(targetSize.height) || 1));
+  const sourceW = Math.max(1, image.naturalWidth || image.width);
+  const sourceH = Math.max(1, image.naturalHeight || image.height);
+  const scaleFactor = Math.min(targetW / sourceW, targetH / sourceH, 1);
+  if (!Number.isFinite(scaleFactor) || scaleFactor >= 1) {
+    return { image, downscaled: false, width: sourceW, height: sourceH };
+  }
+
+  const outW = Math.max(1, Math.round(sourceW * scaleFactor));
+  const outH = Math.max(1, Math.round(sourceH * scaleFactor));
+  const work = document.createElement("canvas");
+  work.width = outW;
+  work.height = outH;
+  const wctx = work.getContext("2d");
+  wctx.imageSmoothingEnabled = true;
+  wctx.imageSmoothingQuality = "high";
+  wctx.drawImage(image, 0, 0, outW, outH);
+  const blob = await canvasToBlob(work, "image/png");
+  const downscaled = await loadImageFromBlob(blob);
+  return { image: downscaled, downscaled: true, width: outW, height: outH };
+}
+
+async function normalizeImportedImage(image, targetSize) {
+  const limited = constrainImageLongSide(image, MAX_IMPORT_LONG_SIDE);
+  const importTarget = getImportTargetSize(targetSize);
+  const downscaled = await downscaleImageToTargetIfNeeded(limited.image, importTarget);
+  const stretched = await upscaleImageToTargetIfNeeded(downscaled.image, importTarget);
+  return {
+    image: stretched.image,
+    limited,
+    downscaled,
+    stretched
+  };
 }
 
 function editorPresetFromCanvasSelection(format, orientation) {
@@ -624,7 +707,7 @@ function syncLayersActionButtons() {
 }
 
 function showLayerLimitPopup() {
-  const max = layers?.getMaxLayers?.() || 6;
+  const max = layers?.getMaxLayers?.() || 5;
   window.alert(`Maximum layers reached (${max}). Delete a layer before adding more.`);
 }
 
@@ -700,9 +783,8 @@ async function loadNewFile(file) {
 
   try {
     const loadedImage = await loadImageFromFile(file);
-    const limited = constrainImageLongSide(loadedImage, MAX_IMPORT_LONG_SIDE);
-    const stretched = await upscaleImageToTargetIfNeeded(limited.image, editor.getInnerCanvasSize?.());
-    sourceImage = stretched.image;
+    const normalized = await normalizeImportedImage(loadedImage, editor.getInnerCanvasSize?.());
+    sourceImage = normalized.image;
     setRetroOrientationLock(null);
     cutoutImage = null;
     editor.setImage(sourceImage);
@@ -711,10 +793,12 @@ async function loadNewFile(file) {
     setCutoutContextAvailability(false);
     setCutoutPreviewBackground("checker");
     setButtonsForImageLoaded(true);
-    if (stretched.upscaled) {
-      setStatus(`Image loaded and stretched to ${stretched.width}x${stretched.height}.`);
-    } else if (limited.resized) {
-      setStatus(`Image loaded and resized to ${limited.width}x${limited.height} (4K max).`);
+    if (normalized.stretched.upscaled) {
+      setStatus(`Image loaded and stretched to ${normalized.stretched.width}x${normalized.stretched.height}.`);
+    } else if (normalized.downscaled.downscaled) {
+      setStatus(`Image loaded and downscaled to ${normalized.downscaled.width}x${normalized.downscaled.height} (${getImportTargetLabel()} import target).`);
+    } else if (normalized.limited.resized) {
+      setStatus(`Image loaded and resized to ${normalized.limited.width}x${normalized.limited.height} (4K max).`);
     } else {
       setStatus(`Image loaded: ${sourceFileName}`);
     }
@@ -728,7 +812,7 @@ async function loadNewFile(file) {
 async function addFileAsLayer(file, insertAt = "top") {
   if (!file) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 6;
+    const max = layers.getMaxLayers?.() || 5;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -739,16 +823,17 @@ async function addFileAsLayer(file, insertAt = "top") {
   }
   try {
     const loadedImage = await loadImageFromFile(file);
-    const limited = constrainImageLongSide(loadedImage, MAX_IMPORT_LONG_SIDE);
-    const stretched = await upscaleImageToTargetIfNeeded(limited.image, layers.getCanvasSize?.());
-    const image = stretched.image;
+    const normalized = await normalizeImportedImage(loadedImage, layers.getCanvasSize?.());
+    const image = normalized.image;
     const added = layers.addLayerFromImage(image, file.name || "layer", { at: insertAt });
     if (added) {
       setMode("layers");
-      if (stretched.upscaled) {
-        setStatus(`Layer added and stretched to ${stretched.width}x${stretched.height}.`);
-      } else if (limited.resized) {
-        setStatus(`Layer added and resized to ${limited.width}x${limited.height} (4K max).`);
+      if (normalized.stretched.upscaled) {
+        setStatus(`Layer added and stretched to ${normalized.stretched.width}x${normalized.stretched.height}.`);
+      } else if (normalized.downscaled.downscaled) {
+        setStatus(`Layer added and downscaled to ${normalized.downscaled.width}x${normalized.downscaled.height} (${getImportTargetLabel()} import target).`);
+      } else if (normalized.limited.resized) {
+        setStatus(`Layer added and resized to ${normalized.limited.width}x${normalized.limited.height} (4K max).`);
       }
     }
   } catch (err) {
@@ -955,6 +1040,11 @@ upscaleLowResToggle?.addEventListener("change", () => {
   localStorage.setItem(UPSCALE_LOW_RES_KEY, upscaleLowResEnabled ? "1" : "0");
 });
 
+downscaleImportsToggle?.addEventListener("change", () => {
+  downscaleImportsEnabled = !!downscaleImportsToggle.checked;
+  localStorage.setItem(DOWNSCALE_IMPORTS_KEY, downscaleImportsEnabled ? "1" : "0");
+});
+
 sidebarCollapseBtn?.addEventListener("click", () => {
   const collapsed = !sidePanel?.classList.contains("is-collapsed");
   setSidebarCollapsed(collapsed);
@@ -1064,7 +1154,7 @@ btnApplyCutout.addEventListener("click", async () => {
 sendToLayersBtn.addEventListener("click", async () => {
   if (!editor.getHasImage()) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 6;
+    const max = layers.getMaxLayers?.() || 5;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1084,7 +1174,7 @@ sendToLayersBtn.addEventListener("click", async () => {
 btnSendCutoutToLayers.addEventListener("click", async () => {
   if (!sourceImage) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 6;
+    const max = layers.getMaxLayers?.() || 5;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1126,7 +1216,7 @@ btnLayersHideAll?.addEventListener("click", () => {
 btnAddCompositionLayer?.addEventListener("click", async () => {
   if (!layers.getHasLayers()) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 6;
+    const max = layers.getMaxLayers?.() || 5;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1174,8 +1264,8 @@ btnDownloadLayersZip.addEventListener("click", async () => {
   try {
     setStatus("Preparing layers ZIP...");
     const zipBlob = await layers.exportLayersZipBlob();
-    downloadBlob(zipBlob, "retrocut-layers.zip");
-    setStatus("Downloaded layers ZIP.");
+    downloadBlob(zipBlob, "blizlab-layers.zip");
+    setStatus("Downloaded layers ZIP (01_blizlab_layer.png format, fixed canvas size).");
   } catch (err) {
     console.error(err);
     setStatus(err?.message || "Could not export layers ZIP.");
@@ -1296,7 +1386,9 @@ downloadEditorBtn.addEventListener("click", async () => {
 // Init
 canvasDefinition = readCanvasDefinition();
 upscaleLowResEnabled = localStorage.getItem(UPSCALE_LOW_RES_KEY) === "1";
+downscaleImportsEnabled = readDownscaleImportsSetting();
 if (upscaleLowResToggle) upscaleLowResToggle.checked = upscaleLowResEnabled;
+if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEnabled;
 applyCanvasDefinition(canvasDefinition, { persist: false });
 applyCanvasAspectFromSettings();
 syncCanvasSettingsUI();

@@ -37,17 +37,13 @@ function truncateName(name = "layer") {
   return clean.length > 28 ? `${clean.slice(0, 25)}…` : clean;
 }
 
-function safeFilenamePart(text = "layer") {
-  return text.replace(/[^\w\-]+/g, "_").replace(/^_+|_+$/g, "") || "layer";
-}
-
 const WB_LIMIT = 25;
 const TINT_LIMIT = 25;
 const BRIGHT_LIMIT = 30;
 const SAT_LIMIT = 30;
 const CONTRAST_LIMIT = 30;
 const BLUR_LIMIT = 30;
-const MAX_LAYERS = 10;
+const MAX_LAYERS = 5;
 const MODEL_READY_KEY = "bgoneModelReady";
 const RETRO_DEFAULT_INTENSITY = 50;
 const RETRO_DEFAULT_GRAIN = 15;
@@ -1720,25 +1716,42 @@ export function createLayersTool(opts) {
     for (let index = 0; index < ordered.length; index += 1) {
       const layer = ordered[index];
       const layerCanvas = document.createElement("canvas");
-      const source = getLayerRenderSource(layer);
-      const angle = (layer.rotationDeg || 0) * Math.PI / 180;
-      const cos = Math.abs(Math.cos(angle));
-      const sin = Math.abs(Math.sin(angle));
-      const outW = Math.max(1, Math.ceil(source.width * cos + source.height * sin));
-      const outH = Math.max(1, Math.ceil(source.width * sin + source.height * cos));
-      layerCanvas.width = outW;
-      layerCanvas.height = outH;
+      layerCanvas.width = canvas.width;
+      layerCanvas.height = canvas.height;
       const lctx = layerCanvas.getContext("2d");
+      lctx.imageSmoothingEnabled = true;
+      lctx.imageSmoothingQuality = "high";
+      const source = getLayerRenderSource(layer);
+      const drawW = source.width * layer.scale;
+      const drawH = source.height * layer.scale;
+      const cx = layerCanvas.width / 2 + layer.x;
+      const cy = layerCanvas.height / 2 + layer.y;
+      const angle = (layer.rotationDeg || 0) * Math.PI / 180;
+
+      if (layer.shadowEnabled) {
+        const shadow = computeShadowMetrics(drawW, drawH);
+        lctx.save();
+        lctx.translate(cx, cy + shadow.offsetY);
+        lctx.rotate(angle);
+        lctx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
+        lctx.globalAlpha = shadow.opacity;
+        lctx.filter = `brightness(0) saturate(0) blur(${shadow.blur}px)`;
+        lctx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
+        lctx.filter = "none";
+        lctx.globalAlpha = 1;
+        lctx.restore();
+      }
+
       lctx.save();
-      lctx.translate(outW / 2, outH / 2);
+      lctx.translate(cx, cy);
       lctx.rotate(angle);
       lctx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-      lctx.drawImage(source, -source.width / 2, -source.height / 2);
+      lctx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
       lctx.restore();
       const blob = await canvasToBlob(layerCanvas, "image/png");
       const arr = await blob.arrayBuffer();
       const serial = String(index + 1).padStart(2, "0");
-      const name = `${serial}_${safeFilenamePart(layer.name)}.png`;
+      const name = `${serial}_blizlab_layer.png`;
       zip.file(name, arr);
     }
     return zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });

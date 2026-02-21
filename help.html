@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blizlab Help</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/svg/fabicon.svg">
+  <style>
+    :root {
+      --text: #eef3f7;
+      --muted: rgba(238, 243, 247, 0.82);
+      --line: rgba(255, 255, 255, 0.16);
+      --blue: #0099cc;
+      --blue-soft: #1db1e8;
+      --warn-bg: rgba(255, 204, 51, 0.12);
+      --warn-line: rgba(255, 204, 51, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #2f353a 0, #1f262d 160px, #1f262d 100%);
+    }
+
+    .help-topbar {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+      background: #2f353a;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .help-topbar img {
+      width: 142px;
+      height: auto;
+      display: block;
+    }
+
+    .help-back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 9px;
+      border: 1px solid rgba(88, 211, 255, 0.9);
+      background: linear-gradient(180deg, var(--blue-soft) 0%, var(--blue) 100%);
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .help-wrap {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: 20px 16px 32px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 4.8vw, 3rem);
+      line-height: 1.03;
+      letter-spacing: -0.02em;
+    }
+
+    .intro {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.48;
+      max-width: 78ch;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.02rem, 1.7vw, 1.25rem);
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 9px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    li + li { margin-top: 4px; }
+
+    .sep {
+      margin: 15px 0;
+      color: rgba(238, 243, 247, 0.48);
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .warn {
+      margin-top: 10px;
+      border-left: 4px solid var(--warn-line);
+      background: var(--warn-bg);
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #ffe8b1;
+      line-height: 1.45;
+      font-size: 0.94rem;
+    }
+
+    .icon-grid {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px;
+    }
+
+    .icon-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 24px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .icon-row img {
+      width: 16px;
+      height: 16px;
+      display: block;
+      filter: brightness(0) saturate(100%) invert(94%) sepia(7%) saturate(542%) hue-rotate(175deg) brightness(104%) contrast(98%);
+      opacity: 0.95;
+      flex: 0 0 auto;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      min-height: 20px;
+      padding: 0 6px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.22);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    code {
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 6px;
+      color: #fff;
+      font-size: 0.86em;
+    }
+
+    a { color: #73d3ff; }
+
+    @media (max-width: 860px) {
+      .icon-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="help-topbar">
+    <img src="./assets/svg/blizlab_logo_flat.svg" alt="Blizlab">
+    <a class="help-back" href="./index.html">Back To App</a>
+  </header>
+
+  <main class="help-wrap">
+    <h1>Blizlab Help & FAQ</h1>
+    <p class="intro">Quick answers about import, cutout, chroma key cleanup, layers, and exports. This page is practical on purpose: what each button does, what is destructive, and where limits are.</p>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>How do I add an image?</h2>
+      <ul>
+        <li>Click <code>Image</code> to upload from file.</li>
+        <li>Drag and drop directly on the canvas area.</li>
+        <li>Click <code>Paste</code> or use <code>Ctrl/Cmd + V</code>.</li>
+      </ul>
+      <p>In <code>Layers</code> mode, imported files are added as new layers. In <code>Retro</code> and <code>BGone</code>, new imports replace the current source image.</p>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>What formats are accepted?</h2>
+      <p>Blizlab accepts browser-decoded <code>image/*</code> types (JPG, PNG, WebP, GIF, and others your browser supports).</p>
+      <div class="warn">⚠️ Exact format support depends on the browser. If your browser cannot decode the file, import fails.</div>
+      <p>Large images are constrained to <code>4096px</code> on the longest side to keep editing responsive.</p>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>Why did my image resize or look softer?</h2>
+      <p>If <code>Upscale low-res images</code> is enabled, Blizlab may stretch small sources to fit the working canvas and selected definition (<code>SD / HD / 4K</code>).</p>
+      <div class="warn">⚠️ Upscale is simple stretch upscale (not AI super-resolution). Expect softness or pixelation on very small inputs.</div>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>How to cut out a subject (AI)</h2>
+      <ul>
+        <li>Open <code>BGone</code> mode.</li>
+        <li>Click <code>Cutout</code>.</li>
+        <li>Use <code>Border</code> slider and brush tools <code>Erase</code>/<code>Restore</code> to refine.</li>
+        <li>Use <code>Undo</code>/<code>Redo</code> while refining.</li>
+      </ul>
+      <div class="warn">⚠️ First use downloads the U²-Net model once. After that, model runs offline in that browser profile.</div>
+      <p>Useful shortcuts in BGone: <code>E</code> erase, <code>R</code> restore, <code>Z</code> undo, <code>Y</code> redo, hold <code>Space</code> to pan.</p>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>How to remove chroma key color</h2>
+      <p>In BGone, click <code>Remove chroma key</code>. It is tuned for green-screen style keys and includes despill logic, then you can refine with brush tools.</p>
+      <div class="warn">⚠️ Green-biased by design. Non-green keys may require more manual cleanup.</div>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>Layers limits and destructive behavior</h2>
+      <ul>
+        <li>Maximum layers: <code>5</code>.</li>
+        <li>If limit is reached, add/duplicate actions are blocked until you delete one.</li>
+      </ul>
+      <div class="warn">⚠️ To keep the workflow simple and fast, some actions are destructive.
+        <br>Background tools on a layer (cutout/chroma from the layer tool) apply changes directly to that layer image.
+        <br>Delete removes a layer immediately.
+        <br>Best practice: duplicate a layer first before heavy edits.
+      </div>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>How to create GIF animations</h2>
+      <ul>
+        <li>Need at least <code>2</code> layers.</li>
+        <li>Open Layers mode and use <code>Create Parallax Animation</code>.</li>
+        <li>Tune duration, intensity, quality preset, FPS, loop mode, and motion type.</li>
+        <li>Render opens a preview. Save when it looks right.</li>
+      </ul>
+      <div class="warn">⚠️ Longer duration, higher FPS, and higher quality increase render time and file size.</div>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>Layers panel buttons (icons + meaning)</h2>
+      <p>Top-right Layers panel controls:</p>
+      <div class="icon-grid">
+        <div class="icon-row"><span class="chip">M+</span><span>Hide all / show all layers</span></div>
+        <div class="icon-row"><span class="chip">+</span><span>Add image as new top layer</span></div>
+        <div class="icon-row"><span class="chip">+ Bottom</span><span>Add image as bottom layer</span></div>
+      </div>
+
+      <p style="margin-top:12px;">Per-layer row controls:</p>
+      <div class="icon-grid">
+        <div class="icon-row"><span class="chip">↑</span><span>Move layer up</span></div>
+        <div class="icon-row"><span class="chip">↓</span><span>Move layer down</span></div>
+        <div class="icon-row"><span class="chip">M</span><span>Mute/unmute layer visibility</span></div>
+        <div class="icon-row"><span class="chip">S</span><span>Solo selected layer</span></div>
+        <div class="icon-row"><img src="./svg/copy_2_line.svg" alt="Duplicate"><span>Duplicate layer</span></div>
+      </div>
+
+      <p style="margin-top:12px;">Layer tool icons:</p>
+      <div class="icon-grid">
+        <div class="icon-row"><img src="./svg/fullscreen_2_line.svg" alt="Fill canvas"><span>Fill canvas</span></div>
+        <div class="icon-row"><img src="./svg/flip_vertical_line.svg" alt="Flip horizontal"><span>Flip horizontally</span></div>
+        <div class="icon-row"><img src="./svg/flip_horizontal_line.svg" alt="Flip vertical"><span>Flip vertically</span></div>
+        <div class="icon-row"><img src="./svg/background_line.svg" alt="Toggle shadow"><span>Toggle shadow</span></div>
+        <div class="icon-row"><img src="./svg/scissors_line.svg" alt="Background tools"><span>Background tools (cutout/chroma)</span></div>
+        <div class="icon-row"><img src="./svg/settings_6_line.svg" alt="Adjust"><span>Layer adjustments (rotate/bright/contrast/sat/temp/tint/blur)</span></div>
+        <div class="icon-row"><img src="./svg/history_anticlockwise_line.svg" alt="Reset"><span>Reset layer image</span></div>
+        <div class="icon-row"><img src="./svg/delete_fill.svg" alt="Delete"><span>Delete layer</span></div>
+      </div>
+    </section>
+
+    <div class="sep">---</div>
+
+    <section>
+      <h2>Common confusion points</h2>
+      <ul>
+        <li><strong>"Download" in Layers mode</strong> exports merged composition PNG, not separate files.</li>
+        <li><strong>ZIP export</strong> is where you get each layer as individual PNG.</li>
+        <li><strong>Solo mode</strong> temporarily mutes other layers until solo is toggled off.</li>
+        <li><strong>Canvas definition</strong> changes working/export scale and can affect speed.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
