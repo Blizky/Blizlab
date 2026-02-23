@@ -108,6 +108,65 @@ export function createEditor(opts) {
     setOrientation(orientation);
   }
 
+  function getProjectState() {
+    return {
+      orientation,
+      canvasDefinition,
+      style: currentStyle,
+      intensity: Number(intensitySlider.value || 50),
+      roundness: Number(roundnessSlider.value || 0),
+      noise: Number(noiseSlider.value || 15),
+      scale,
+      offsetX,
+      offsetY
+    };
+  }
+
+  function applyProjectState(projectState = {}) {
+    const nextDefinition = CANVAS_DEFINITION_SCALES[projectState.canvasDefinition]
+      ? projectState.canvasDefinition
+      : canvasDefinition;
+    const nextOrientation = ORIENTATION_PRESETS[projectState.orientation]
+      ? projectState.orientation
+      : orientation;
+    canvasDefinition = nextDefinition;
+    setOrientation(nextOrientation);
+
+    const nextStyle = ["bw", "sepia", "postal"].includes(projectState.style)
+      ? projectState.style
+      : currentStyle;
+    currentStyle = nextStyle;
+    setActiveChip(styleButtons, button => button.dataset.style === currentStyle);
+
+    const nextIntensity = Number.isFinite(Number(projectState.intensity))
+      ? Number(projectState.intensity)
+      : Number(intensitySlider.value || 50);
+    intensitySlider.value = String(Math.max(0, Math.min(100, Math.round(nextIntensity))));
+    intensityValue.textContent = intensitySlider.value;
+
+    const nextRoundness = Number.isFinite(Number(projectState.roundness))
+      ? Number(projectState.roundness)
+      : Number(roundnessSlider.value || 0);
+    roundnessSlider.value = String(Math.max(0, Math.min(80, Math.round(nextRoundness))));
+    roundnessValue.textContent = roundnessSlider.value;
+
+    const nextNoise = Number.isFinite(Number(projectState.noise))
+      ? Number(projectState.noise)
+      : Number(noiseSlider.value || 15);
+    noiseSlider.value = String(Math.max(0, Math.min(100, Math.round(nextNoise))));
+    noiseValue.textContent = noiseSlider.value;
+
+    if (img) {
+      const nextScale = Number(projectState.scale);
+      if (Number.isFinite(nextScale) && nextScale > 0.01) scale = nextScale;
+      const nextOffsetX = Number(projectState.offsetX);
+      if (Number.isFinite(nextOffsetX)) offsetX = nextOffsetX;
+      const nextOffsetY = Number(projectState.offsetY);
+      if (Number.isFinite(nextOffsetY)) offsetY = nextOffsetY;
+    }
+    render();
+  }
+
   function drawPhoto(targetCtx, ix, iy, iw, ih) {
     const w = img.width * scale;
     const h = img.height * scale;
@@ -258,6 +317,14 @@ export function createEditor(opts) {
     render();
   }
 
+  function clearImage() {
+    img = null;
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    render();
+  }
+
   function getHasImage() { return !!img; }
 
   function setStyle(newStyle) {
@@ -381,9 +448,12 @@ export function createEditor(opts) {
 
   return {
     setImage,
+    clearImage,
     render,
     exportInnerPngBlob,
     getHasImage,
+    getProjectState,
+    applyProjectState,
     setOrientation,
     setCanvasDefinition,
     getInnerCanvasSize,

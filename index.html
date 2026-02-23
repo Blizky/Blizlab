@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link rel="icon" type="image/svg+xml" href="./assets/svg/fabicon.svg">
-  <link rel="stylesheet" href="retrocut.css?v=20260223h">
+  <link rel="stylesheet" href="retrocut.css?v=20260223x">
 </head>
 
 <body>
@@ -456,7 +456,28 @@
           </div>
           <div class="layers-head-actions">
             <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">M+</button>
+            <button class="layers-menu-btn" id="btnLayersBackgroundMenu" type="button" title="Canvas background options" aria-label="Canvas background options" aria-haspopup="true" aria-expanded="false">
+              <span class="layers-menu-icon" aria-hidden="true"></span>
+            </button>
             <button class="layers-add-btn" id="btnLayersAdd" type="button" title="Add image layer" aria-label="Add image layer">+</button>
+          </div>
+          <div class="layers-head-menu" id="layersBackgroundMenu" role="menu" aria-label="Canvas background options" hidden>
+            <div class="menu-title-bar layers-head-menu-title-bar">
+              <div class="sidebar-section-title menu-title">Canvas background</div>
+            </div>
+            <label class="layers-bg-row">
+              <span>Solid color</span>
+              <input id="layersBgColorInput" type="color" value="#ffffff" aria-label="Solid background color">
+            </label>
+            <label class="layers-bg-row layers-bg-row-hex">
+              <span>Hex</span>
+              <input id="layersBgHexInput" type="text" value="#ffffff" maxlength="7" spellcheck="false" inputmode="text" aria-label="Background color hex value">
+            </label>
+            <div class="layers-bg-actions">
+              <button class="secondary-btn layers-bg-action-btn" id="btnLayersBgTransparent" type="button">Transparent</button>
+              <button class="secondary-btn layers-bg-action-btn" id="btnLayersBgApply" type="button">Apply color</button>
+            </div>
+            <div class="layers-bg-menu-note">More options can be added here later (gradient, pattern, etc.).</div>
           </div>
         </div>
         <div class="layers-list" id="layersList"></div>
@@ -505,6 +526,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-  <script type="module" src="imagestudio.js?v=20260223f"></script>
+  <script type="module" src="imagestudio.js?v=20260223m"></script>
 </body>
 </html>

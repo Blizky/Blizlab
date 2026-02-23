@@ -1,6 +1,6 @@
 import { createEditor } from "./modules/editor.js?v=20260221d";
 import { createCutoutTool } from "./modules/cutout.js?v=20260221d";
-import { createLayersTool } from "./modules/layers.js?v=20260221d";
+import { createLayersTool } from "./modules/layers.js?v=20260223m";
 import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
 import { APP_VERSION } from "./modules/version.js";
 
@@ -102,6 +102,12 @@ const layersCanvasWrap = document.getElementById("layersCanvasWrap");
 const layersList = document.getElementById("layersList");
 const layersOverlayMsg = document.getElementById("layersOverlayMsg");
 const btnLayersHideAll = document.getElementById("btnLayersHideAll");
+const btnLayersBackgroundMenu = document.getElementById("btnLayersBackgroundMenu");
+const layersBackgroundMenu = document.getElementById("layersBackgroundMenu");
+const layersBgColorInput = document.getElementById("layersBgColorInput");
+const layersBgHexInput = document.getElementById("layersBgHexInput");
+const btnLayersBgTransparent = document.getElementById("btnLayersBgTransparent");
+const btnLayersBgApply = document.getElementById("btnLayersBgApply");
 const btnLayersAdd = document.getElementById("btnLayersAdd");
 const btnLayersAddBottom = document.getElementById("btnLayersAddBottom");
 const layersCountText = document.getElementById("layersCountText");
@@ -165,6 +171,7 @@ const HERO_PARALLAX_STEP_BACK = 72;
 const HERO_PARALLAX_STEP_MID = 146;
 const HERO_PARALLAX_STEP_FRONT = 220;
 const ABOUT_CLOSE_ANIM_MS = 280;
+const SIDEBAR_AUTO_COLLAPSE_QUERY = "(max-width: 1120px)";
 const BOLT_SPARK_VECTORS = [
   { dx: -20, dy: -10, rot: -156 },
   { dx: -22, dy: 0, rot: 180 },
@@ -177,6 +184,7 @@ const BOLT_SPARK_VECTORS = [
   { dx: 8, dy: 16, rot: 68 },
   { dx: -8, dy: 16, rot: 112 }
 ];
+const HEX_COLOR_RE = /^#([0-9a-f]{6})$/i;
 let parallaxPreviewBlob = null;
 let parallaxPreviewUrl = "";
 let lockedRetroOrientation = null;
@@ -191,6 +199,10 @@ let heroSceneIndex = 0;
 let heroAutoplayTimer = 0;
 let aboutCloseTimer = 0;
 let incomingProjectOpenRequestId = readIncomingProjectOpenRequestId();
+let layersBackgroundMenuOpen = false;
+let sidebarManualCollapsed = false;
+let sidebarAutoCollapseActive = false;
+const sidebarAutoCollapseMedia = window.matchMedia?.(SIDEBAR_AUTO_COLLAPSE_QUERY) || null;
 
 function setStatus(text) {
   if (statusPill) statusPill.textContent = text;
@@ -531,6 +543,29 @@ function setSidebarCollapsed(collapsed) {
   }, 230);
 }
 
+function isSidebarAutoCollapseViewport() {
+  return !!sidebarAutoCollapseMedia?.matches;
+}
+
+function syncSidebarAutoCollapse({ force = false } = {}) {
+  if (!sidePanel) return;
+  const shouldAutoCollapse = isSidebarAutoCollapseViewport();
+  if (shouldAutoCollapse) {
+    if (!sidebarAutoCollapseActive || force) {
+      if (!sidebarAutoCollapseActive) {
+        sidebarManualCollapsed = sidePanel.classList.contains("is-collapsed");
+      }
+      sidebarAutoCollapseActive = true;
+      setSidebarCollapsed(true);
+    }
+    return;
+  }
+  if (sidebarAutoCollapseActive || force) {
+    sidebarAutoCollapseActive = false;
+    setSidebarCollapsed(sidebarManualCollapsed);
+  }
+}
+
 function stopHeroAutoplay() {
   if (heroAutoplayTimer) {
     window.clearInterval(heroAutoplayTimer);
@@ -628,6 +663,128 @@ function setMoreMenuOpen(open) {
   moreMenu.hidden = !isOpen;
   moreToggleBtn.classList.toggle("is-open", isOpen);
   moreToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+function normalizeHexColor(value, fallback = "#ffffff") {
+  const raw = String(value || "").trim();
+  if (HEX_COLOR_RE.test(raw)) return raw.toLowerCase();
+  const compact = raw.replace(/^#/, "");
+  if (/^[0-9a-f]{6}$/i.test(compact)) {
+    return `#${compact.toLowerCase()}`;
+  }
+  if (/^[0-9a-f]{3}$/i.test(compact)) {
+    const expanded = compact.split("").map((part) => `${part}${part}`).join("");
+    return `#${expanded.toLowerCase()}`;
+  }
+  return fallback;
+}
+
+function getLayersSolidBackgroundColor() {
+  const background = layers?.getCanvasBackground?.();
+  if (!background || background.type !== "solid") return "";
+  return normalizeHexColor(background.color, "");
+}
+
+function updateLayersBackgroundButtonState() {
+  if (!btnLayersBackgroundMenu) return;
+  const solidColor = getLayersSolidBackgroundColor();
+  const hasSolidBackground = !!solidColor;
+  btnLayersBackgroundMenu.classList.toggle("is-active", layersBackgroundMenuOpen || hasSolidBackground);
+  btnLayersBackgroundMenu.setAttribute("aria-expanded", layersBackgroundMenuOpen ? "true" : "false");
+  btnLayersBackgroundMenu.setAttribute("data-has-bg", hasSolidBackground ? "true" : "false");
+  if (hasSolidBackground) {
+    btnLayersBackgroundMenu.style.setProperty("--layers-menu-icon-color", solidColor);
+  } else {
+    btnLayersBackgroundMenu.style.removeProperty("--layers-menu-icon-color");
+  }
+}
+
+function syncLayersBackgroundMenuInputs() {
+  const currentColor = getLayersSolidBackgroundColor() || "#ffffff";
+  if (layersBgColorInput) layersBgColorInput.value = currentColor;
+  if (layersBgHexInput) layersBgHexInput.value = currentColor.toUpperCase();
+  updateLayersBackgroundButtonState();
+}
+
+function setLayersBackgroundMenuOpen(open) {
+  const next = !!open;
+  layersBackgroundMenuOpen = next;
+  if (layersBackgroundMenu) layersBackgroundMenu.hidden = !next;
+  updateLayersBackgroundButtonState();
+}
+
+function applyLayersSolidBackground(rawColor) {
+  const color = normalizeHexColor(rawColor, "");
+  if (!color) {
+    setStatus("Use a valid hex color like #FFCC33.");
+    return false;
+  }
+  const changed = layers?.setCanvasBackground?.({ type: "solid", color });
+  syncLayersBackgroundMenuInputs();
+  syncLayersActionButtons();
+  if (changed) {
+    setStatus(`Canvas background set to ${color.toUpperCase()}.`);
+  }
+  return true;
+}
+
+function clearLayersBackground() {
+  const changed = layers?.setCanvasBackground?.(null);
+  syncLayersBackgroundMenuInputs();
+  syncLayersActionButtons();
+  if (changed) {
+    setStatus("Canvas background set to transparent.");
+  }
+}
+
+function initLayersBackgroundMenu() {
+  if (!btnLayersBackgroundMenu || !layersBackgroundMenu) return;
+
+  btnLayersBackgroundMenu.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setLayersBackgroundMenuOpen(!layersBackgroundMenuOpen);
+    if (layersBackgroundMenuOpen) {
+      syncLayersBackgroundMenuInputs();
+      layersBgHexInput?.focus();
+      layersBgHexInput?.select();
+    }
+  });
+
+  layersBgColorInput?.addEventListener("input", () => {
+    const color = normalizeHexColor(layersBgColorInput.value, "#ffffff");
+    if (layersBgHexInput) layersBgHexInput.value = color.toUpperCase();
+  });
+
+  layersBgHexInput?.addEventListener("input", () => {
+    const color = normalizeHexColor(layersBgHexInput.value, "");
+    if (color && layersBgColorInput) layersBgColorInput.value = color;
+  });
+
+  layersBgHexInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const nextColor = layersBgHexInput.value || layersBgColorInput?.value || "";
+    applyLayersSolidBackground(nextColor);
+  });
+
+  btnLayersBgApply?.addEventListener("click", () => {
+    const nextColor = layersBgHexInput?.value || layersBgColorInput?.value || "";
+    applyLayersSolidBackground(nextColor);
+  });
+
+  btnLayersBgTransparent?.addEventListener("click", () => {
+    clearLayersBackground();
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!layersBackgroundMenuOpen) return;
+    const target = event.target;
+    if (layersBackgroundMenu?.contains(target) || btnLayersBackgroundMenu?.contains(target)) return;
+    setLayersBackgroundMenuOpen(false);
+  });
+
+  syncLayersBackgroundMenuInputs();
 }
 
 function syncParallaxDurationLabel() {
@@ -914,6 +1071,9 @@ function setMode(mode) {
   if (imagestudioMain) {
     imagestudioMain.classList.toggle("is-layers", inLayers);
   }
+  if (!inLayers && layersBackgroundMenuOpen) {
+    setLayersBackgroundMenuOpen(false);
+  }
   if (inLayers) {
     window.requestAnimationFrame(() => {
       layers?.refreshLayout?.();
@@ -1012,6 +1172,8 @@ layers = createLayersTool({
   }
 });
 
+initLayersBackgroundMenu();
+
 function syncDownloadButton() {
   if (currentMode === "layers") {
     downloadEditorBtn.disabled = !layers.getHasLayers();
@@ -1062,6 +1224,10 @@ function syncLayersActionButtons() {
     btnLayersHideAll.setAttribute("aria-label", allHidden ? "Show all layers" : "Hide all layers");
     btnLayersHideAll.classList.toggle("is-active", allHidden);
   }
+  if (btnLayersBackgroundMenu) {
+    btnLayersBackgroundMenu.disabled = false;
+  }
+  updateLayersBackgroundButtonState();
   if (btnQuickDownload) btnQuickDownload.disabled = !!downloadEditorBtn.disabled;
   if (btnQuickMergeVisibleLayers) btnQuickMergeVisibleLayers.disabled = !!btnMergeVisibleLayers?.disabled;
   if (btnQuickParallax) btnQuickParallax.disabled = isParallaxExporting || !canParallax;
@@ -1430,7 +1596,21 @@ downscaleImportsToggle?.addEventListener("change", () => {
 sidebarCollapseBtn?.addEventListener("click", () => {
   const collapsed = !sidePanel?.classList.contains("is-collapsed");
   setSidebarCollapsed(collapsed);
+  if (!sidebarAutoCollapseActive) {
+    sidebarManualCollapsed = collapsed;
+  }
 });
+
+if (sidebarAutoCollapseMedia) {
+  const onSidebarAutoCollapseChange = () => {
+    syncSidebarAutoCollapse();
+  };
+  if (typeof sidebarAutoCollapseMedia.addEventListener === "function") {
+    sidebarAutoCollapseMedia.addEventListener("change", onSidebarAutoCollapseChange);
+  } else if (typeof sidebarAutoCollapseMedia.addListener === "function") {
+    sidebarAutoCollapseMedia.addListener(onSidebarAutoCollapseChange);
+  }
+}
 
 aboutToggleBtn?.addEventListener("click", () => {
   const nextOpen = aboutPanel?.hidden || aboutPanel?.classList.contains("is-closing");
@@ -1708,6 +1888,7 @@ async function saveProjectToBlz() {
       layers: {
         ratio: layersState.ratio,
         canvasDefinition: layersState.canvasDefinition,
+        background: layersState.background || null,
         activeLayerIndex: layersState.activeLayerIndex,
         layers: layersState.layers
       }
@@ -1800,6 +1981,7 @@ async function openProjectFromBlz(file) {
     layers.importProjectState({
       ratio: layersManifest.ratio,
       canvasDefinition: layersManifest.canvasDefinition,
+      background: layersManifest.background || null,
       activeLayerIndex: layersManifest.activeLayerIndex,
       layers: hydratedLayers
     });
@@ -1925,6 +2107,9 @@ parallaxPreviewOverlay?.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setMoreMenuOpen(false);
+  if (event.key === "Escape" && layersBackgroundMenuOpen) {
+    setLayersBackgroundMenuOpen(false);
+  }
   if (event.key === "Escape" && parallaxPreviewOverlay && !parallaxPreviewOverlay.hidden) {
     closeParallaxPreview();
   }
@@ -1967,7 +2152,9 @@ if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEna
 applyCanvasDefinition(canvasDefinition, { persist: false });
 applyCanvasAspectFromSettings();
 syncCanvasSettingsUI();
-setSidebarCollapsed(false);
+sidebarManualCollapsed = false;
+setSidebarCollapsed(sidebarManualCollapsed);
+syncSidebarAutoCollapse({ force: true });
 setMoreMenuOpen(false);
 setHeroScene(0, { immediate: true });
 const hasSeenAbout = localStorage.getItem(ABOUT_SEEN_KEY) === "1";

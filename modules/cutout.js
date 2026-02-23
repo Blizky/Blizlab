@@ -66,7 +66,35 @@ export function createCutoutTool(opts) {
 
   function isTextEntryTarget(target) {
     const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
-    return tag === "input" || tag === "textarea" || tag === "select" || !!target?.isContentEditable;
+    if (tag === "textarea" || !!target?.isContentEditable) return true;
+    if (tag !== "input" && tag !== "select") return false;
+    if (tag === "select") return true;
+    const inputType = String(target?.type || "").toLowerCase();
+    // Range sliders should not block Space-to-move in the cutout canvas.
+    return inputType !== "range";
+  }
+
+  function canUseSpaceMoveShortcut() {
+    const active = document.activeElement;
+    if (!active) return true;
+    return !isTextEntryTarget(active);
+  }
+
+  function isSpaceKeyEvent(event) {
+    if (!event) return false;
+    return (
+      event.code === "Space" ||
+      event.key === " " ||
+      event.key === "Spacebar" ||
+      event.key === "Space"
+    );
+  }
+
+  function releaseSpaceMove() {
+    if (!spaceMove && !moving) return;
+    spaceMove = false;
+    moving = false;
+    updateViewModeUI();
   }
 
   const history = { stack: [], redos: [], limit: 30 };
@@ -499,6 +527,20 @@ export function createCutoutTool(opts) {
     return { x, y };
   }
 
+  function getCanvasDisplayScale() {
+    const rect = canvas.getBoundingClientRect();
+    const scale = rect.width / Math.max(1, canvas.width);
+    return Number.isFinite(scale) && scale > 0.0001 ? scale : 1;
+  }
+
+  function getBrushRadiusScreenPx() {
+    return Math.max(1, parseInt(brushSizeEl.value, 10) || 1);
+  }
+
+  function getBrushRadiusCanvasPx() {
+    return Math.max(0.5, getBrushRadiusScreenPx() / getCanvasDisplayScale());
+  }
+
   function showBrushPreview() {
     if (!hasImage || working || !brushPreview || isMoveActive()) return;
     brushPreview.style.display = "block";
@@ -512,11 +554,8 @@ export function createCutoutTool(opts) {
 
   function updateBrushPreview(evt) {
     if (!hasImage || !brushPreview || working || isMoveActive()) return;
-    const canvasRect = canvas.getBoundingClientRect();
     const wrapRect = canvasWrap.getBoundingClientRect();
-    const radius = parseInt(brushSizeEl.value, 10) || 1;
-    const scaleX = canvasRect.width / canvas.width || 1;
-    const size = radius * 2 * scaleX;
+    const size = getBrushRadiusScreenPx() * 2;
     const x = evt.clientX - wrapRect.left;
     const y = evt.clientY - wrapRect.top;
     brushPreview.style.width = `${size}px`;
@@ -556,6 +595,7 @@ export function createCutoutTool(opts) {
 
   function startPaint(evt) {
     if (!hasImage || working) return;
+    canvas.focus({ preventScroll: true });
     if (isMoveActive()) {
       moving = true;
       moveStartClientX = evt.clientX;
@@ -571,7 +611,7 @@ export function createCutoutTool(opts) {
     canvas.setPointerCapture(evt.pointerId);
     const p = getCanvasPointer(evt);
     lastPointer = { x: p.x, y: p.y };
-    const radius = parseInt(brushSizeEl.value, 10);
+    const radius = getBrushRadiusCanvasPx();
     drawStamp(p.x, p.y, radius);
     render();
     updateBrushPreview(evt);
@@ -592,7 +632,7 @@ export function createCutoutTool(opts) {
     updateBrushPreview(evt);
     if (!painting) return;
     const p = getCanvasPointer(evt);
-    const radius = parseInt(brushSizeEl.value, 10);
+    const radius = getBrushRadiusCanvasPx();
     drawStroke(lastPointer, { x: p.x, y: p.y }, radius);
     lastPointer = { x: p.x, y: p.y };
     render();
@@ -631,6 +671,11 @@ export function createCutoutTool(opts) {
   brushSizeEl.addEventListener("input", () => {
     brushValueEl.textContent = brushSizeEl.value;
   });
+  brushSizeEl.addEventListener("change", () => {
+    if (document.activeElement === brushSizeEl) {
+      brushSizeEl.blur();
+    }
+  });
 
   if (aiStrengthEl) {
     aiStrengthEl.addEventListener("input", () => {
@@ -664,6 +709,9 @@ export function createCutoutTool(opts) {
     showBrushPreview();
     updateBrushPreview(e);
   });
+  if (!canvas.hasAttribute("tabindex")) {
+    canvas.setAttribute("tabindex", "0");
+  }
   canvasWrap.addEventListener("wheel", (event) => {
     if (!isMoveActive()) return;
     event.preventDefault();
@@ -838,15 +886,77 @@ export function createCutoutTool(opts) {
     setUndoRedoState();
   }
 
-  window.addEventListener("keydown", e => {
-    if (!hasImage || working || canvasWrap.hidden) return;
-    if (e.code === "Space") {
-      if (isTextEntryTarget(e.target)) return;
-      if (spaceMove) return;
-      const activeTag = document.activeElement?.tagName?.toLowerCase?.() || "";
-      if (activeTag === "button" || activeTag === "a") {
-        document.activeElement.blur?.();
+  function clearImage() {
+    hasImage = false;
+    originalImageElement = null;
+    originalImageWidth = 0;
+    originalImageHeight = 0;
+    chromaPreviewCanvas = null;
+    chromaFullCanvas = null;
+    aiMaskAlpha = null;
+    history.stack.length = 0;
+    history.redos.length = 0;
+    maskCanvas.width = 1;
+    maskCanvas.height = 1;
+    originalCanvas.width = 1;
+    originalCanvas.height = 1;
+    canvas.width = 1;
+    canvas.height = 1;
+    canvasWrap.scrollLeft = 0;
+    canvasWrap.scrollTop = 0;
+    applyZoom(100);
+    overlayMsg.style.display = "grid";
+    hideBrushPreview();
+    setEnabled(false);
+    setWorking(false);
+  }
+
+  function getProjectState() {
+    return {
+      aiStrength,
+      brushSize: Number(brushSizeEl?.value || 28),
+      brushMode,
+      viewMode,
+      zoomPercent
+    };
+  }
+
+  function applyProjectState(projectState = {}) {
+    const nextAiStrength = Number(projectState.aiStrength);
+    if (Number.isFinite(nextAiStrength)) {
+      aiStrength = clamp(nextAiStrength, 0, 100);
+      if (aiStrengthEl) aiStrengthEl.value = String(Math.round(aiStrength));
+      updateAiStrengthLabel();
+      if (!working && rebuildMaskFromAiAlpha(false)) {
+        render();
       }
+    }
+
+    const nextBrushSize = Number(projectState.brushSize);
+    if (Number.isFinite(nextBrushSize) && brushSizeEl) {
+      const clamped = clamp(nextBrushSize, 5, 120);
+      brushSizeEl.value = String(Math.round(clamped));
+      if (brushValueEl) brushValueEl.textContent = brushSizeEl.value;
+    }
+
+    const nextBrushMode = projectState.brushMode === "restore" ? "restore" : "erase";
+    setBrushMode(nextBrushMode);
+
+    const nextViewMode = projectState.viewMode === "move" ? "move" : "brush";
+    setViewMode(nextViewMode);
+
+    const nextZoom = Number(projectState.zoomPercent);
+    if (Number.isFinite(nextZoom)) {
+      applyZoom(nextZoom);
+    }
+  }
+
+  const onWindowKeyDown = (e) => {
+    if (!hasImage || working || canvasWrap.hidden) return;
+    if (isSpaceKeyEvent(e)) {
+      if (!canUseSpaceMoveShortcut()) return;
+      if (spaceMove) return;
+      document.activeElement?.blur?.();
       spaceMove = true;
       moving = false;
       updateViewModeUI();
@@ -870,22 +980,22 @@ export function createCutoutTool(opts) {
         redo();
         break;
     }
-  });
-  window.addEventListener("keyup", e => {
-    if (e.code !== "Space") return;
-    if (isTextEntryTarget(e.target)) return;
+  };
+  const onWindowKeyUp = (e) => {
+    if (!isSpaceKeyEvent(e)) return;
     e.preventDefault();
     e.stopPropagation();
-    if (!spaceMove) return;
-    spaceMove = false;
-    moving = false;
-    updateViewModeUI();
-  });
+    releaseSpaceMove();
+  };
+  window.addEventListener("keydown", onWindowKeyDown, true);
+  window.addEventListener("keyup", onWindowKeyUp, true);
+  document.addEventListener("keydown", onWindowKeyDown, true);
+  document.addEventListener("keyup", onWindowKeyUp, true);
   window.addEventListener("blur", () => {
-    if (!spaceMove && !moving) return;
-    spaceMove = false;
-    moving = false;
-    updateViewModeUI();
+    releaseSpaceMove();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) releaseSpaceMove();
   });
 
   checkModelReady();
@@ -898,8 +1008,12 @@ export function createCutoutTool(opts) {
 
   return {
     setImage,
+    clearImage,
     resetMask,
     exportCutoutBlob,
+    getProjectState,
+    applyProjectState,
+    getHasImage: () => hasImage,
     setEnabled,
     removeBg,
     setReferenceBackground,
