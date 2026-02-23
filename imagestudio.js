@@ -1,14 +1,19 @@
-import { createEditor } from "./modules/editor.js?v=20260220a";
-import { createCutoutTool } from "./modules/cutout.js?v=20260220a";
-import { createLayersTool } from "./modules/layers.js?v=20260220a";
-import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260220a";
+import { createEditor } from "./modules/editor.js?v=20260221d";
+import { createCutoutTool } from "./modules/cutout.js?v=20260221d";
+import { createLayersTool } from "./modules/layers.js?v=20260221d";
+import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
+import { APP_VERSION } from "./modules/version.js";
 
 const statusPill = document.getElementById("statusPill");
 
 // Shared image controls
 const fileInput = document.getElementById("fileInput");
+const projectFileInput = document.getElementById("projectFileInput");
 const pasteImageBtn = document.getElementById("pasteImageBtn");
 const fileNameText = document.getElementById("fileNameText");
+const projectSectionTitle = document.getElementById("projectSectionTitle");
+const btnSaveProject = document.getElementById("btnSaveProject");
+const btnOpenProject = document.getElementById("btnOpenProject");
 const exportMenuWrap = document.getElementById("exportMenuWrap");
 const downloadEditorBtn = document.getElementById("downloadEditorBtn");
 const sidePanel = document.getElementById("sidePanel");
@@ -16,7 +21,7 @@ const sidebarCollapseBtn = document.getElementById("sidebarCollapseBtn");
 const btnQuickUpload = document.getElementById("btnQuickUpload");
 const btnQuickPaste = document.getElementById("btnQuickPaste");
 const btnQuickDownload = document.getElementById("btnQuickDownload");
-const btnQuickAddComposition = document.getElementById("btnQuickAddComposition");
+const btnQuickMergeVisibleLayers = document.getElementById("btnQuickMergeVisibleLayers");
 const btnQuickParallax = document.getElementById("btnQuickParallax");
 const canvasFormatButtons = Array.from(document.querySelectorAll("#canvasFormatChips .chip-btn"));
 const canvasOrientationButtons = Array.from(document.querySelectorAll("#canvasOrientationChips .chip-btn"));
@@ -28,6 +33,7 @@ const aboutToggleBtn = document.getElementById("aboutToggleBtn");
 const aboutStartBtn = document.getElementById("aboutStartBtn");
 const moreToggleBtn = document.getElementById("moreToggleBtn");
 const moreMenu = document.getElementById("moreMenu");
+const settingsVersionText = document.getElementById("settingsVersionText");
 const logoBoltBtn = document.getElementById("logoBoltBtn");
 const logoSparks = document.getElementById("logoSparks");
 const heroCarousel = document.getElementById("heroCarousel");
@@ -35,6 +41,8 @@ const heroScenesTrack = document.getElementById("heroScenesTrack");
 const heroPrevBtn = document.getElementById("heroPrevBtn");
 const heroNextBtn = document.getElementById("heroNextBtn");
 const heroSceneDots = Array.from(document.querySelectorAll("#heroSceneDots [data-hero-scene]"));
+const mobileBlocker = document.getElementById("mobileBlocker");
+const btnMobileBlockerContinue = document.getElementById("btnMobileBlockerContinue");
 
 // Mode UI
 const modeTabs = Array.from(document.querySelectorAll(".mode-tab"));
@@ -45,6 +53,7 @@ const editorDropZone = document.getElementById("editorDropZone");
 const cutoutWrap = document.getElementById("cutoutWrap");
 const layersWrap = document.getElementById("layersWrap");
 const canvasStack = document.querySelector(".canvas-stack");
+const imagestudioMain = document.querySelector(".imagestudio-main");
 const modelBarCanvas = document.getElementById("modelBarCanvas");
 const canvasArea = document.querySelector(".canvas-area");
 
@@ -96,7 +105,7 @@ const btnLayersHideAll = document.getElementById("btnLayersHideAll");
 const btnLayersAdd = document.getElementById("btnLayersAdd");
 const btnLayersAddBottom = document.getElementById("btnLayersAddBottom");
 const layersCountText = document.getElementById("layersCountText");
-const btnAddCompositionLayer = document.getElementById("btnAddCompositionLayer");
+const btnMergeVisibleLayers = document.getElementById("btnMergeVisibleLayers");
 const btnDownloadLayersZip = document.getElementById("btnDownloadLayersZip");
 const btnParallaxToggle = document.getElementById("btnParallaxToggle");
 const parallaxPanelBody = document.getElementById("parallaxPanelBody");
@@ -129,7 +138,17 @@ const CANVAS_DEFINITION_KEY = "retrocutCanvasDefinition";
 const UPSCALE_LOW_RES_KEY = "retrocutUpscaleLowRes";
 const DOWNSCALE_IMPORTS_KEY = "retrocutDownscaleImports";
 const ABOUT_SEEN_KEY = "retrocutAboutSeen";
+const MOBILE_BLOCKER_DISMISSED_KEY = "retrocutMobileBlockerDismissed";
 const CANVAS_DEFINITION_SET = new Set(["sd", "hd", "4k"]);
+const PROJECT_SCHEMA_VERSION = 1;
+const PROJECT_FILE_EXT = ".blz";
+const PROJECT_TITLE_FALLBACK = "IMAGE";
+const PROJECT_TITLE_MAX = 28;
+const PROJECT_OPEN_REQUEST_PARAM = "openProjectRequest";
+const PROJECT_OPEN_READY_MSG = "blizlab-open-project-ready";
+const PROJECT_OPEN_PAYLOAD_MSG = "blizlab-open-project-payload";
+const PROJECT_OPEN_ACK_MSG = "blizlab-open-project-ack";
+const PROJECT_OPEN_HANDOFF_TIMEOUT_MS = 15000;
 const CANVAS_DEFINITION_SCALES = {
   sd: 0.5,
   hd: 1,
@@ -167,12 +186,295 @@ let canvasOrientation = "horizontal";
 let upscaleLowResEnabled = false;
 let downscaleImportsEnabled = true;
 let pendingLayersInsertAt = "top";
+let currentProjectName = "";
 let heroSceneIndex = 0;
 let heroAutoplayTimer = 0;
 let aboutCloseTimer = 0;
+let incomingProjectOpenRequestId = readIncomingProjectOpenRequestId();
 
 function setStatus(text) {
   if (statusPill) statusPill.textContent = text;
+}
+
+function renderSettingsVersion() {
+  if (!settingsVersionText) return;
+  settingsVersionText.textContent = `Version ${APP_VERSION}`;
+}
+
+function sanitizeProjectName(rawName = "") {
+  const cleaned = String(rawName || "")
+    .replace(/\.[^.]+$/, "")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || "blizlab-project";
+}
+
+function buildProjectDownloadName(projectName = "") {
+  const safe = sanitizeProjectName(projectName).replace(/\s+/g, "_");
+  return `${safe}${PROJECT_FILE_EXT}`;
+}
+
+function getProjectNameFromFilename(filename = "") {
+  const base = String(filename || "").replace(/\.[^.]+$/, "");
+  return sanitizeProjectName(base);
+}
+
+function formatProjectTitle(name = "") {
+  const trimmed = String(name || "").trim();
+  if (!trimmed) return PROJECT_TITLE_FALLBACK;
+  if (trimmed.length <= PROJECT_TITLE_MAX) return trimmed;
+  return `${trimmed.slice(0, PROJECT_TITLE_MAX - 1)}…`;
+}
+
+function updateProjectSectionTitle() {
+  if (!projectSectionTitle) return;
+  if (!currentProjectName) {
+    projectSectionTitle.textContent = PROJECT_TITLE_FALLBACK;
+    projectSectionTitle.title = PROJECT_TITLE_FALLBACK;
+    return;
+  }
+  projectSectionTitle.textContent = formatProjectTitle(currentProjectName);
+  projectSectionTitle.title = currentProjectName;
+}
+
+function setCurrentProjectName(name = "") {
+  currentProjectName = name ? sanitizeProjectName(name) : "";
+  updateProjectSectionTitle();
+}
+
+function buildProjectOpenRequestId() {
+  const suffix = Math.random().toString(36).slice(2, 10);
+  return `${Date.now()}-${suffix}`;
+}
+
+function readIncomingProjectOpenRequestId() {
+  const params = new URLSearchParams(window.location.search || "");
+  return String(params.get(PROJECT_OPEN_REQUEST_PARAM) || "").trim();
+}
+
+function clearIncomingProjectOpenRequestParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(PROJECT_OPEN_REQUEST_PARAM)) return;
+  url.searchParams.delete(PROJECT_OPEN_REQUEST_PARAM);
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState(null, "", nextUrl);
+}
+
+function buildProjectOpenWindowUrl(requestId) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(PROJECT_OPEN_REQUEST_PARAM, requestId);
+  return url.toString();
+}
+
+function dismissMobileBlocker({ persist = true } = {}) {
+  if (!mobileBlocker) return;
+  mobileBlocker.hidden = true;
+  mobileBlocker.setAttribute("aria-hidden", "true");
+  if (persist) {
+    try {
+      sessionStorage.setItem(MOBILE_BLOCKER_DISMISSED_KEY, "1");
+    } catch (_) {
+      // Ignore storage failures (private mode / blocked storage).
+    }
+  }
+}
+
+function initMobileBlocker() {
+  if (!mobileBlocker) return;
+  const dismissed = (() => {
+    try {
+      return sessionStorage.getItem(MOBILE_BLOCKER_DISMISSED_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  })();
+  if (dismissed) dismissMobileBlocker({ persist: false });
+}
+
+async function imageLikeToPngBlob(imageLike) {
+  const source = imageLike;
+  if (!source) return null;
+  const width = Math.max(1, Number(source.naturalWidth || source.width || 0));
+  const height = Math.max(1, Number(source.naturalHeight || source.height || 0));
+  const work = document.createElement("canvas");
+  work.width = width;
+  work.height = height;
+  const wctx = work.getContext("2d");
+  wctx.imageSmoothingEnabled = true;
+  wctx.imageSmoothingQuality = "high";
+  wctx.drawImage(source, 0, 0, width, height);
+  return canvasToBlob(work, "image/png");
+}
+
+async function loadImageFromZipAsset(zip, path) {
+  if (!zip || !path) return null;
+  const entry = zip.file(path);
+  if (!entry) return null;
+  const blob = await entry.async("blob");
+  return loadImageFromBlob(blob);
+}
+
+async function openProjectWithLayerAwareBehavior(file) {
+  if (!file) return;
+  const hasExistingLayers = !!layers?.getHasLayers?.();
+  if (!hasExistingLayers) {
+    await openProjectFromBlz(file);
+    return;
+  }
+  const openedInNewWindow = await openProjectInNewWindow(file);
+  if (openedInNewWindow) {
+    setStatus(`Project opened in new window: ${getProjectNameFromFilename(file.name)}.`);
+    return;
+  }
+  setStatus("Could not open a new window. Opening project here...");
+  await openProjectFromBlz(file);
+}
+
+async function openProjectInNewWindow(file) {
+  if (!file) return false;
+  const requestId = buildProjectOpenRequestId();
+  const targetUrl = buildProjectOpenWindowUrl(requestId);
+  let childWindow = null;
+  let payloadBuffer = null;
+  let childReady = false;
+  let payloadSent = false;
+  let settled = false;
+  let closePollId = 0;
+  let timeoutId = 0;
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      window.removeEventListener("message", onMessage);
+      if (closePollId) {
+        window.clearInterval(closePollId);
+        closePollId = 0;
+      }
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+        timeoutId = 0;
+      }
+    };
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(!!ok);
+    };
+    const trySendPayload = () => {
+      if (!childWindow || childWindow.closed || !childReady || !payloadBuffer || payloadSent) return;
+      payloadSent = true;
+      try {
+        childWindow.postMessage({
+          type: PROJECT_OPEN_PAYLOAD_MSG,
+          requestId,
+          fileName: file.name || "blizlab-project.blz",
+          mimeType: file.type || "application/zip",
+          buffer: payloadBuffer
+        }, window.location.origin, [payloadBuffer]);
+        payloadBuffer = null;
+      } catch (error) {
+        console.error(error);
+        finish(false);
+      }
+    };
+    const onMessage = (event) => {
+      if (!childWindow || event.source !== childWindow) return;
+      if (event.origin !== window.location.origin) return;
+      const data = event.data || {};
+      if (data.requestId !== requestId) return;
+      if (data.type === PROJECT_OPEN_READY_MSG) {
+        childReady = true;
+        trySendPayload();
+        return;
+      }
+      if (data.type === PROJECT_OPEN_ACK_MSG) {
+        finish(data.ok !== false);
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    childWindow = window.open(targetUrl, "_blank");
+    if (!childWindow) {
+      finish(false);
+      return;
+    }
+
+    setStatus("Opening project in new window...");
+    closePollId = window.setInterval(() => {
+      if (!childWindow || childWindow.closed) {
+        finish(false);
+      }
+    }, 450);
+    timeoutId = window.setTimeout(() => {
+      finish(false);
+    }, PROJECT_OPEN_HANDOFF_TIMEOUT_MS);
+
+    file.arrayBuffer()
+      .then((buffer) => {
+        if (settled) return;
+        payloadBuffer = buffer;
+        trySendPayload();
+      })
+      .catch((error) => {
+        console.error(error);
+        finish(false);
+      });
+  });
+}
+
+function announceProjectOpenReadyIfNeeded() {
+  if (!incomingProjectOpenRequestId) return;
+  clearIncomingProjectOpenRequestParam();
+  if (!window.opener || window.opener === window) return;
+  try {
+    window.opener.postMessage({
+      type: PROJECT_OPEN_READY_MSG,
+      requestId: incomingProjectOpenRequestId
+    }, window.location.origin);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function postProjectOpenAck(ok) {
+  if (!incomingProjectOpenRequestId) return;
+  if (!window.opener || window.opener === window) return;
+  try {
+    window.opener.postMessage({
+      type: PROJECT_OPEN_ACK_MSG,
+      requestId: incomingProjectOpenRequestId,
+      ok: !!ok
+    }, window.location.origin);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function handleIncomingProjectOpenPayload(event) {
+  if (!incomingProjectOpenRequestId) return;
+  if (event.origin !== window.location.origin) return;
+  if (!window.opener || event.source !== window.opener) return;
+  const data = event.data || {};
+  if (data.type !== PROJECT_OPEN_PAYLOAD_MSG) return;
+  if (data.requestId !== incomingProjectOpenRequestId) return;
+  const rawBuffer = data.buffer;
+  const fileBuffer = rawBuffer instanceof ArrayBuffer
+    ? rawBuffer
+    : (ArrayBuffer.isView(rawBuffer) ? rawBuffer.buffer : null);
+  if (!fileBuffer) {
+    postProjectOpenAck(false);
+    incomingProjectOpenRequestId = "";
+    return;
+  }
+  const incomingFile = new File(
+    [fileBuffer],
+    String(data.fileName || "blizlab-project.blz"),
+    { type: String(data.mimeType || "application/zip") }
+  );
+  const loaded = await openProjectFromBlz(incomingFile);
+  postProjectOpenAck(loaded);
+  incomingProjectOpenRequestId = "";
 }
 
 function triggerLogoBoltSparks() {
@@ -221,6 +523,12 @@ function setSidebarCollapsed(collapsed) {
   if (!sidePanel || !sidebarCollapseBtn) return;
   sidePanel.classList.toggle("is-collapsed", !!collapsed);
   sidebarCollapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  window.requestAnimationFrame(() => {
+    layers?.refreshLayout?.();
+  });
+  window.setTimeout(() => {
+    layers?.refreshLayout?.();
+  }, 230);
 }
 
 function stopHeroAutoplay() {
@@ -503,6 +811,50 @@ function setRetroOrientationLock(orientationOrNull) {
   }
 }
 
+function getCurrentProjectSettings() {
+  return {
+    canvasDefinition,
+    canvasFormat,
+    canvasOrientation,
+    lockedRetroOrientation,
+    upscaleLowResEnabled,
+    downscaleImportsEnabled,
+    cutoutBgMode,
+    currentMode
+  };
+}
+
+function applyProjectSettings(settings = {}) {
+  const nextCanvasDefinition = CANVAS_DEFINITION_SET.has(settings.canvasDefinition)
+    ? settings.canvasDefinition
+    : canvasDefinition;
+  applyCanvasDefinition(nextCanvasDefinition);
+
+  const nextFormat = ["11", "43", "45", "169"].includes(settings.canvasFormat)
+    ? settings.canvasFormat
+    : canvasFormat;
+  const nextOrientation = ["horizontal", "vertical"].includes(settings.canvasOrientation)
+    ? settings.canvasOrientation
+    : canvasOrientation;
+  canvasFormat = nextFormat;
+  canvasOrientation = nextFormat === "11" ? "horizontal" : nextOrientation;
+  applyCanvasAspectFromSettings();
+
+  upscaleLowResEnabled = settings.upscaleLowResEnabled !== false;
+  if (upscaleLowResToggle) upscaleLowResToggle.checked = upscaleLowResEnabled;
+  localStorage.setItem(UPSCALE_LOW_RES_KEY, upscaleLowResEnabled ? "1" : "0");
+
+  downscaleImportsEnabled = settings.downscaleImportsEnabled !== false;
+  if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEnabled;
+  localStorage.setItem(DOWNSCALE_IMPORTS_KEY, downscaleImportsEnabled ? "1" : "0");
+
+  setRetroOrientationLock(settings.lockedRetroOrientation || null);
+  cutoutBgMode = ["checker", "white", "black", "context"].includes(settings.cutoutBgMode)
+    ? settings.cutoutBgMode
+    : "checker";
+  setCutoutContextAvailability(cutoutHasContext);
+}
+
 function setCutoutPreviewBackground(mode) {
   if (!cutoutWrap) return;
   if (mode === "context" && !cutoutHasContext) mode = "checker";
@@ -558,6 +910,14 @@ function setMode(mode) {
     canvasStack.classList.toggle("is-edit", inEdit);
     canvasStack.classList.toggle("is-cutout", inCutout);
     canvasStack.classList.toggle("is-layers", inLayers);
+  }
+  if (imagestudioMain) {
+    imagestudioMain.classList.toggle("is-layers", inLayers);
+  }
+  if (inLayers) {
+    window.requestAnimationFrame(() => {
+      layers?.refreshLayout?.();
+    });
   }
 
   if (exportModeButtons.length > 0) {
@@ -666,11 +1026,18 @@ function syncLayersActionButtons() {
   const hasLayers = layers.getHasLayers();
   const allHidden = hasLayers && !!layers.allLayersHidden?.();
   const layerCount = layers.getLayerCount();
-  const maxLayers = layers.getMaxLayers?.() || 10;
+  const visibleLayerCount = layers.getVisibleLayerCount?.() || 0;
+  const maxLayers = layers.getMaxLayers?.() || 5;
   const canParallax = layerCount >= 2;
+  const canMergeVisible = visibleLayerCount >= 2;
   const canAddLayer = layers.getCanAddLayer();
   if (layersCountText) layersCountText.textContent = `${layerCount}/${maxLayers}`;
-  if (btnAddCompositionLayer) btnAddCompositionLayer.disabled = !hasLayers || !canAddLayer;
+  if (btnMergeVisibleLayers) {
+    btnMergeVisibleLayers.disabled = !canMergeVisible;
+    btnMergeVisibleLayers.title = canMergeVisible
+      ? "Merge visible layers into one layer"
+      : "Need at least 2 visible layers";
+  }
   if (btnImportLayersComposition) btnImportLayersComposition.disabled = !hasLayers;
   btnDownloadLayersZip.disabled = !hasLayers;
   if (btnExportParallaxGif) {
@@ -696,7 +1063,7 @@ function syncLayersActionButtons() {
     btnLayersHideAll.classList.toggle("is-active", allHidden);
   }
   if (btnQuickDownload) btnQuickDownload.disabled = !!downloadEditorBtn.disabled;
-  if (btnQuickAddComposition) btnQuickAddComposition.disabled = !!btnAddCompositionLayer?.disabled;
+  if (btnQuickMergeVisibleLayers) btnQuickMergeVisibleLayers.disabled = !!btnMergeVisibleLayers?.disabled;
   if (btnQuickParallax) btnQuickParallax.disabled = isParallaxExporting || !canParallax;
   if (currentMode === "edit" && sendToLayersBtn) {
     sendToLayersBtn.disabled = !editor.getHasImage() || !canAddLayer;
@@ -779,6 +1146,7 @@ async function loadNewFile(file) {
   }
 
   sourceFileName = file.name || "";
+  setCurrentProjectName("");
   fileNameText.textContent = sourceFileName || "Image loaded.";
 
   try {
@@ -931,6 +1299,20 @@ fileInput.addEventListener("change", (e) => {
   handleImageInputByMode(file, { layersInsertAt: pendingLayersInsertAt });
   pendingLayersInsertAt = "top";
   e.target.value = "";
+});
+
+projectFileInput?.addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  await openProjectWithLayerAwareBehavior(file);
+  e.target.value = "";
+});
+window.addEventListener("message", (event) => {
+  handleIncomingProjectOpenPayload(event).catch((error) => {
+    console.error(error);
+    postProjectOpenAck(false);
+    incomingProjectOpenRequestId = "";
+    setStatus("Could not open project.");
+  });
 });
 
 pasteImageBtn?.addEventListener("click", async () => {
@@ -1107,8 +1489,8 @@ btnQuickDownload?.addEventListener("click", () => {
   downloadEditorBtn.click();
 });
 
-btnQuickAddComposition?.addEventListener("click", () => {
-  btnAddCompositionLayer?.click();
+btnQuickMergeVisibleLayers?.addEventListener("click", () => {
+  btnMergeVisibleLayers?.click();
 });
 
 btnQuickParallax?.addEventListener("click", () => {
@@ -1119,6 +1501,14 @@ btnQuickParallax?.addEventListener("click", () => {
   setParallaxDefaults();
   setParallaxPanelOpen(true);
   btnExportParallaxGif?.click();
+});
+
+btnSaveProject?.addEventListener("click", () => {
+  saveProjectToBlz();
+});
+
+btnOpenProject?.addEventListener("click", () => {
+  projectFileInput?.click();
 });
 
 btnResetCutout.addEventListener("click", () => {
@@ -1213,26 +1603,28 @@ btnLayersHideAll?.addEventListener("click", () => {
   setStatus(result.hiddenAll ? "All layers hidden." : "All layers shown.");
 });
 
-btnAddCompositionLayer?.addEventListener("click", async () => {
-  if (!layers.getHasLayers()) return;
-  if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 5;
-    setStatus(`Layer limit reached (${max}). Delete one to add another.`);
-    showLayerLimitPopup();
+btnMergeVisibleLayers?.addEventListener("click", async () => {
+  const visibleLayerCount = layers.getVisibleLayerCount?.() || 0;
+  if (visibleLayerCount < 2) {
+    setStatus("Need at least 2 visible layers to merge.");
     return;
   }
+  const confirmed = window.confirm(
+    `Merge ${visibleLayerCount} visible layers into one layer? The original visible layers will be removed.`
+  );
+  if (!confirmed) return;
   try {
-    setStatus("Creating composition layer...");
-    const blob = await layers.exportPngBlob();
-    const image = await loadImageFromBlob(blob);
-    const added = layers.addLayerFromImage(image, "composition");
-    if (added) {
-      setMode("layers");
-      setStatus("Composition added as new layer.");
+    setStatus("Merging visible layers...");
+    const result = await layers.mergeVisibleLayers?.("Merged");
+    if (!result?.merged) {
+      setStatus("Need at least 2 visible layers to merge.");
+      return;
     }
+    setMode("layers");
+    setStatus(`Merged ${result.mergedCount} visible layers.`);
   } catch (err) {
     console.error(err);
-    setStatus("Could not add composition as layer.");
+    setStatus("Could not merge visible layers.");
   }
 });
 
@@ -1254,6 +1646,185 @@ async function importLayersCompositionToRetro() {
   } catch (err) {
     console.error(err);
     setStatus("Could not send composition to Retro.");
+  }
+}
+
+async function saveProjectToBlz() {
+  const ZipCtor = globalThis.JSZip;
+  if (!ZipCtor) {
+    setStatus("ZIP library not loaded.");
+    return;
+  }
+
+  const hasSource = !!sourceImage || !!editor.getHasImage?.();
+  const hasLayers = !!layers.getHasLayers?.();
+  if (!hasSource && !hasLayers) {
+    setStatus("Nothing to save yet. Add at least one image or layer.");
+    return;
+  }
+
+  const suggestedName = sanitizeProjectName(
+    currentProjectName || sourceFileName || "blizlab-project"
+  );
+  const askedName = window.prompt("Project name", suggestedName);
+  if (askedName == null) return;
+  const projectName = sanitizeProjectName(askedName);
+
+  try {
+    setStatus("Packing project…");
+    const zip = new ZipCtor();
+    const layersState = await layers.exportProjectState();
+
+    for (const asset of layersState.assets) {
+      zip.file(asset.path, asset.blob);
+    }
+
+    let sourceImagePath = null;
+    let cutoutImagePath = null;
+    if (sourceImage) {
+      sourceImagePath = "assets/source/source-image.png";
+      const sourceBlob = await imageLikeToPngBlob(sourceImage);
+      if (sourceBlob) zip.file(sourceImagePath, sourceBlob);
+    }
+    if (cutoutImage) {
+      cutoutImagePath = "assets/source/cutout-image.png";
+      const cutoutBlob = await imageLikeToPngBlob(cutoutImage);
+      if (cutoutBlob) zip.file(cutoutImagePath, cutoutBlob);
+    }
+
+    const manifest = {
+      schemaVersion: PROJECT_SCHEMA_VERSION,
+      app: "blizlab-retrocut",
+      savedAt: new Date().toISOString(),
+      projectName,
+      settings: getCurrentProjectSettings(),
+      source: {
+        fileName: sourceFileName || "",
+        sourceImage: sourceImagePath,
+        cutoutImage: cutoutImagePath
+      },
+      editor: editor.getProjectState?.() || {},
+      cutout: cutout.getProjectState?.() || {},
+      layers: {
+        ratio: layersState.ratio,
+        canvasDefinition: layersState.canvasDefinition,
+        activeLayerIndex: layersState.activeLayerIndex,
+        layers: layersState.layers
+      }
+    };
+
+    zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+    const outBlob = await zip.generateAsync({
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 }
+    });
+    downloadBlob(outBlob, buildProjectDownloadName(projectName));
+    setCurrentProjectName(projectName);
+    setStatus(`Project saved: ${buildProjectDownloadName(projectName)}.`);
+  } catch (err) {
+    console.error(err);
+    setStatus("Could not save project.");
+  }
+}
+
+async function openProjectFromBlz(file) {
+  if (!file) return false;
+  const ZipCtor = globalThis.JSZip;
+  if (!ZipCtor) {
+    setStatus("ZIP library not loaded.");
+    return false;
+  }
+
+  try {
+    setStatus("Opening project…");
+    const zip = await ZipCtor.loadAsync(file);
+    const manifestEntry = zip.file("manifest.json");
+    if (!manifestEntry) throw new Error("Invalid project: manifest.json missing.");
+    const manifestText = await manifestEntry.async("string");
+    const manifest = JSON.parse(manifestText);
+    if (!manifest || typeof manifest !== "object") {
+      throw new Error("Invalid project manifest.");
+    }
+    if (Number(manifest.schemaVersion) !== PROJECT_SCHEMA_VERSION) {
+      throw new Error("Project version not supported in this build.");
+    }
+
+    applyProjectSettings(manifest.settings || {});
+
+    const projectName = sanitizeProjectName(
+      manifest.projectName || getProjectNameFromFilename(file.name)
+    );
+
+    const sourcePath = manifest.source?.sourceImage || "";
+    const loadedSourceImage = await loadImageFromZipAsset(zip, sourcePath);
+    if (loadedSourceImage) {
+      sourceImage = loadedSourceImage;
+      sourceFileName = manifest.source?.fileName || `${projectName}.png`;
+      fileNameText.textContent = sourceFileName;
+      editor.setImage(sourceImage);
+      await cutout.setImage(sourceImage, sourceFileName);
+      cutout.setReferenceBackground(null);
+      setCutoutContextAvailability(false);
+      setCutoutPreviewBackground(cutoutBgMode);
+      setButtonsForImageLoaded(true);
+    } else {
+      sourceImage = null;
+      sourceFileName = "";
+      cutoutImage = null;
+      fileNameText.textContent = "No file selected.";
+      editor.clearImage?.();
+      cutout.clearImage?.();
+      cutout.setReferenceBackground(null);
+      setCutoutContextAvailability(false);
+      setCutoutPreviewBackground("checker");
+      setButtonsForImageLoaded(false);
+    }
+
+    const cutoutPath = manifest.source?.cutoutImage || "";
+    cutoutImage = await loadImageFromZipAsset(zip, cutoutPath);
+
+    const layersManifest = manifest.layers || {};
+    const layerDefs = Array.isArray(layersManifest.layers) ? layersManifest.layers : [];
+    const hydratedLayers = [];
+    for (const layer of layerDefs) {
+      const currentImage = await loadImageFromZipAsset(zip, layer.currentImage);
+      if (!currentImage) continue;
+      const originalImage = await loadImageFromZipAsset(zip, layer.originalImage);
+      hydratedLayers.push({
+        ...layer,
+        currentImage,
+        originalImage: originalImage || currentImage
+      });
+    }
+    layers.importProjectState({
+      ratio: layersManifest.ratio,
+      canvasDefinition: layersManifest.canvasDefinition,
+      activeLayerIndex: layersManifest.activeLayerIndex,
+      layers: hydratedLayers
+    });
+
+    editor.applyProjectState?.(manifest.editor || {});
+    cutout.applyProjectState?.(manifest.cutout || {});
+
+    const requestedMode = manifest.settings?.currentMode;
+    if (requestedMode === "edit" || requestedMode === "cutout" || requestedMode === "layers") {
+      setMode(requestedMode);
+    } else if (layers.getHasLayers()) {
+      setMode("layers");
+    } else if (sourceImage) {
+      setMode("edit");
+    }
+
+    setCurrentProjectName(projectName);
+    syncDownloadButton();
+    syncLayersActionButtons();
+    setStatus(`Project loaded: ${projectName}.`);
+    return true;
+  } catch (err) {
+    console.error(err);
+    setStatus(err?.message || "Could not open project.");
+    return false;
   }
 }
 
@@ -1344,6 +1915,10 @@ btnCloseParallaxPreview?.addEventListener("click", () => {
   closeParallaxPreview();
 });
 
+btnMobileBlockerContinue?.addEventListener("click", () => {
+  dismissMobileBlocker();
+});
+
 parallaxPreviewOverlay?.addEventListener("click", (event) => {
   if (event.target === parallaxPreviewOverlay) closeParallaxPreview();
 });
@@ -1392,7 +1967,7 @@ if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEna
 applyCanvasDefinition(canvasDefinition, { persist: false });
 applyCanvasAspectFromSettings();
 syncCanvasSettingsUI();
-setSidebarCollapsed(true);
+setSidebarCollapsed(false);
 setMoreMenuOpen(false);
 setHeroScene(0, { immediate: true });
 const hasSeenAbout = localStorage.getItem(ABOUT_SEEN_KEY) === "1";
@@ -1406,4 +1981,8 @@ cutoutBgButtons.forEach((btn) => {
 });
 setCutoutContextAvailability(false);
 setCutoutPreviewBackground("checker");
+renderSettingsVersion();
+initMobileBlocker();
 setMode("layers");
+updateProjectSectionTitle();
+announceProjectOpenReadyIfNeeded();

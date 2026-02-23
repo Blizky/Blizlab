@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link rel="icon" type="image/svg+xml" href="./assets/svg/fabicon.svg">
-  <link rel="stylesheet" href="retrocut.css">
+  <link rel="stylesheet" href="retrocut.css?v=20260223h">
 </head>
 
 <body>
@@ -27,6 +27,9 @@
           <img class="menu-main-icon" src="./svg/menu_line.svg" alt="" width="18" height="18" aria-hidden="true">
         </button>
         <div class="topbar-dropdown more-menu" id="moreMenu" hidden>
+          <div class="menu-title-bar">
+            <div class="menu-title">SETTINGS</div>
+          </div>
           <div class="setting-label">Canvas</div>
           <div class="setting-sub-label">Format</div>
           <div class="chips definition-chips" id="canvasFormatChips">
@@ -62,6 +65,7 @@
             <p class="more-text">Help &amp; FAQ: <a href="./help.html" target="_blank" rel="noopener">Open guide</a></p>
             <p class="more-text">Support Blizlab: <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener">ko-fi.com/blizky</a></p>
             <p class="more-text">Contact us: coming soon</p>
+            <p class="more-text more-version" id="settingsVersionText">Version</p>
           </div>
         </div>
       </div>
@@ -133,27 +137,46 @@
       <aside class="side-panel" id="sidePanel">
           <div class="card sidebar" id="sidebarCard">
             <div class="controls-group">
-              <div class="sidebar-section-title">IMAGE</div>
+              <div class="menu-title-bar sidebar-title-bar">
+                <div class="sidebar-section-title menu-title" id="projectSectionTitle">IMAGE</div>
+              </div>
 
-              <div class="actions-inline">
-                <label class="file-button">
+              <div class="sidebar-action-list image-actions-list">
+                <label class="sidebar-action-btn sidebar-option-btn file-button">
                   <input type="file" id="fileInput" accept="image/*" />
                   <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
-                  <span>Image</span>
+                  <span>Insert image</span>
                 </label>
-                <button class="file-button" id="pasteImageBtn" type="button" aria-label="Paste image from clipboard" title="Paste image from clipboard">
+                <button class="sidebar-action-btn sidebar-option-btn file-button" id="pasteImageBtn" type="button" aria-label="Paste image from clipboard" title="Paste image from clipboard">
                   <img src="./svg/paster_line.svg" alt="" width="16" height="16">
+                  <span>Paste from clipboard</span>
                 </button>
-                <button class="main" id="downloadEditorBtn" disabled>
-                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
-                  <span>Download</span>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnMergeVisibleLayers" type="button" title="Merge visible layers into one layer" disabled>
+                  <img src="./svg/layer_line.svg" alt="" width="16" height="16">
+                  <span>Merge visible layers</span>
                 </button>
               </div>
+              <input type="file" id="projectFileInput" accept=".blz,application/zip" hidden />
               <div class="file-name" id="fileNameText">No file selected.</div>
-              <div class="handoff-row">
-                <button class="secondary-btn" id="btnAddCompositionLayer" disabled>
-                  <span>Add composition as new layer</span>
-                  <img src="./svg/arrow_right_line.svg" alt="" width="14" height="14">
+              <div class="menu-title-bar sidebar-title-bar">
+                <div class="sidebar-section-title menu-title">EXPORT</div>
+              </div>
+              <div class="sidebar-action-list">
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnSaveProject" type="button" title="Save project">
+                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
+                  <span>Save project</span>
+                </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnOpenProject" type="button" title="Open project">
+                  <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
+                  <span>Open project</span>
+                </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="downloadEditorBtn" type="button" title="Save composition PNG" disabled>
+                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
+                  <span>Save composition PNG</span>
+                </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnDownloadLayersZip" type="button" title="Save layers ZIP" disabled>
+                  <img src="./svg/file_zip_line.svg" alt="" width="16" height="16">
+                  <span>Save layers ZIP</span>
                 </button>
               </div>
               <div class="sidebar-quick-actions" id="sidebarQuickActions" aria-label="Quick actions">
@@ -163,32 +186,38 @@
                 <button class="quick-action-btn" id="btnQuickPaste" type="button" title="Paste image" aria-label="Paste image">
                   <img src="./svg/paster_line.svg" alt="" width="16" height="16">
                 </button>
-                <button class="quick-action-btn" id="btnQuickDownload" type="button" title="Download" aria-label="Download" disabled>
+                <button class="quick-action-btn" id="btnQuickDownload" type="button" title="Save composition PNG" aria-label="Save composition PNG" disabled>
                   <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
                 </button>
-                <button class="quick-action-btn" id="btnQuickAddComposition" type="button" title="Add composition layer" aria-label="Add composition layer" disabled>
+                <button class="quick-action-btn" id="btnQuickMergeVisibleLayers" type="button" title="Merge visible layers" aria-label="Merge visible layers" disabled>
                   <img src="./svg/layer_line.svg" alt="" width="16" height="16">
                 </button>
               </div>
               <div class="export-inline-wrap" id="exportMenuWrap">
                 <div class="export-inline-actions">
-                  <button class="secondary-btn export-inline-btn export-primary-btn" id="btnImportLayersComposition" data-export-mode="edit" disabled>
+                  <button class="secondary-btn sidebar-option-btn export-inline-btn export-primary-btn" id="btnImportLayersComposition" data-export-mode="edit" disabled>
+                    <img src="./svg/upload_2_line.svg" alt="" width="14" height="14">
                     <span>Import Layers Composition</span>
-                    <img class="export-arrow export-arrow-left" src="./svg/arrow_right_line.svg" alt="" width="14" height="14">
                   </button>
-                  <button class="secondary-btn export-inline-btn export-primary-btn" id="sendToLayersBtn" data-export-mode="edit" disabled>
+                  <button class="secondary-btn sidebar-option-btn export-inline-btn export-primary-btn" id="sendToLayersBtn" data-export-mode="edit" disabled>
+                    <img src="./svg/layer_line.svg" alt="" width="14" height="14">
                     <span>Export to new Layer</span>
-                    <img class="export-arrow" src="./svg/arrow_right_line.svg" alt="" width="14" height="14">
                   </button>
-                  <button class="secondary-btn export-inline-btn" id="btnApplyCutout" data-export-mode="cutout" disabled>Retro</button>
-                  <button class="secondary-btn export-inline-btn" id="btnSendCutoutToLayers" data-export-mode="cutout" disabled>Layers</button>
+                  <button class="secondary-btn sidebar-option-btn export-inline-btn" id="btnApplyCutout" data-export-mode="cutout" disabled>
+                    <img src="./svg/scissors_line.svg" alt="" width="14" height="14">
+                    <span>Send to Retro</span>
+                  </button>
+                  <button class="secondary-btn sidebar-option-btn export-inline-btn" id="btnSendCutoutToLayers" data-export-mode="cutout" disabled>
+                    <img src="./svg/layer_line.svg" alt="" width="14" height="14">
+                    <span>Send to Layers</span>
+                  </button>
                 </div>
               </div>
             </div>
 
             <div id="editPanel">
               <div class="controls-group">
-                <div class="sidebar-section-title">STYLE</div>
+                <div class="sidebar-section-title menu-title">STYLE</div>
                 <div class="chips" id="styleChips">
                   <button class="chip-btn active" data-style="bw"><span class="style-dot bw"></span><span>B&amp;W</span></button>
                   <button class="chip-btn" data-style="sepia"><span class="style-dot sepia"></span><span>Sepia</span></button>
@@ -223,19 +252,31 @@
               </div>
 
               <div class="controls-group">
-                <div class="sidebar-section-title">ADJUSTMENTS</div>
+                <div class="sidebar-section-title menu-title">ADJUSTMENTS</div>
                 <div class="adjustment-actions">
-                  <button class="secondary-btn" id="fillBtn">Fill</button>
-                  <button class="secondary-btn" id="resetEditBtn" disabled>Reset</button>
+                  <button class="secondary-btn sidebar-option-btn" id="fillBtn">
+                    <img src="./svg/paint_brush_line.svg" alt="" width="14" height="14">
+                    <span>Fill</span>
+                  </button>
+                  <button class="secondary-btn sidebar-option-btn" id="resetEditBtn" disabled>
+                    <img src="./svg/history_anticlockwise_line.svg" alt="" width="14" height="14">
+                    <span>Reset</span>
+                  </button>
                 </div>
               </div>
             </div>
 
             <div id="cutoutPanel" hidden>
               <div class="controls-group">
-                <div class="sidebar-section-title">BACKGROUND</div>
-                <button class="primary-btn full-width-btn" id="btnRemove" disabled>Cutout</button>
-                <button class="secondary-btn full-width-btn chroma-btn" id="btnRemoveChroma" disabled>Remove chroma key</button>
+                <div class="sidebar-section-title menu-title">BACKGROUND</div>
+                <button class="primary-btn sidebar-option-btn full-width-btn" id="btnRemove" disabled>
+                  <img src="./svg/scissors_line.svg" alt="" width="14" height="14">
+                  <span>Cutout</span>
+                </button>
+                <button class="secondary-btn sidebar-option-btn full-width-btn chroma-btn" id="btnRemoveChroma" disabled>
+                  <img src="./svg/color_picker_line.svg" alt="" width="14" height="14">
+                  <span>Remove chroma key</span>
+                </button>
                 <div class="brush-label-row ai-strength-row">
                   <span>Border</span>
                   <span class="brush-value" id="aiStrengthValue">60</span>
@@ -244,7 +285,7 @@
               </div>
 
               <div class="controls-group">
-                <div class="sidebar-section-title">BRUSH</div>
+                <div class="sidebar-section-title menu-title">BRUSH</div>
                 <div class="brush-label-row">
                   <span>Brush size</span>
                   <span class="brush-value" id="brushValue">28</span>
@@ -252,26 +293,47 @@
                 <input id="brushSize" type="range" min="5" max="120" value="28" />
 
                 <div class="pill-toggle" role="tablist" aria-label="Brush mode">
-                  <button id="modeErase" class="active" data-mode="erase" role="tab" aria-selected="true">Erase</button>
-                  <button id="modeRestore" data-mode="restore" role="tab" aria-selected="false">Restore</button>
+                  <button id="modeErase" class="active" data-mode="erase" role="tab" aria-selected="true">
+                    <img src="./svg/eraser_line.svg" alt="" width="14" height="14">
+                    <span>Erase</span>
+                  </button>
+                  <button id="modeRestore" data-mode="restore" role="tab" aria-selected="false">
+                    <img src="./svg/recycle_line.svg" alt="" width="14" height="14">
+                    <span>Restore</span>
+                  </button>
                 </div>
 
                 <div class="pill-toggle view-mode-toggle" role="tablist" aria-label="View mode">
-                  <button id="viewModeBrush" class="active" data-view-mode="brush" role="tab" aria-selected="true">Brush</button>
-                  <button id="viewModeMove" data-view-mode="move" role="tab" aria-selected="false">Move</button>
+                  <button id="viewModeBrush" class="active" data-view-mode="brush" role="tab" aria-selected="true">
+                    <img src="./svg/paint_brush_line.svg" alt="" width="14" height="14">
+                    <span>Brush</span>
+                  </button>
+                  <button id="viewModeMove" data-view-mode="move" role="tab" aria-selected="false">
+                    <img src="./svg/hand_line.svg" alt="" width="14" height="14">
+                    <span>Move</span>
+                  </button>
                 </div>
 
                 <div class="undo-redo-row">
-                  <button class="secondary-btn" id="btnUndo" disabled>Undo</button>
-                  <button class="secondary-btn" id="btnRedo" disabled>Redo</button>
+                  <button class="secondary-btn sidebar-option-btn" id="btnUndo" disabled>
+                    <img src="./svg/left_line.svg" alt="" width="14" height="14">
+                    <span>Undo</span>
+                  </button>
+                  <button class="secondary-btn sidebar-option-btn" id="btnRedo" disabled>
+                    <img src="./svg/right_line.svg" alt="" width="14" height="14">
+                    <span>Redo</span>
+                  </button>
                 </div>
 
               </div>
 
               <div class="controls-group">
-                <div class="sidebar-section-title">ADJUSTMENTS</div>
+                <div class="sidebar-section-title menu-title">ADJUSTMENTS</div>
                 <div class="adjustment-actions">
-                  <button class="secondary-btn" id="btnResetCutout" disabled>Reset</button>
+                  <button class="secondary-btn sidebar-option-btn" id="btnResetCutout" disabled>
+                    <img src="./svg/history_anticlockwise_line.svg" alt="" width="14" height="14">
+                    <span>Reset</span>
+                  </button>
                   <div class="cutout-bg-switch cutout-bg-switch-inline" role="group" aria-label="Background preview">
                     <button class="cutout-bg-btn active" data-cutout-bg="checker" type="button" title="Checker background" aria-label="Checker background"></button>
                     <button class="cutout-bg-btn" data-cutout-bg="white" type="button" title="White background" aria-label="White background"></button>
@@ -283,16 +345,6 @@
             </div>
 
             <div id="layersPanel" hidden>
-              <div class="controls-group">
-                <div class="sidebar-section-title">EXPORT</div>
-                <div class="handoff-row">
-                  <button class="secondary-btn" id="btnDownloadLayersZip" disabled>
-                    <img src="./svg/file_zip_line.svg" alt="" width="14" height="14">
-                    <span>Download Layers ZIP</span>
-                  </button>
-                </div>
-              </div>
-
               <div class="controls-group">
                 <button class="parallax-toggle" id="btnParallaxToggle" type="button" aria-expanded="false" aria-controls="parallaxPanelBody">
                   <span>PARALLAX</span>
@@ -393,25 +445,25 @@
                 </div>
               </div>
             </div>
-            <aside class="layers-list-panel">
-              <div class="layers-panel-head">
-                <div class="layers-head-title">
-                  <div class="sidebar-section-title">LAYERS</div>
-                  <span class="layers-count" id="layersCountText" aria-live="polite">0/5</span>
-                </div>
-                <div class="layers-head-actions">
-                  <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">M+</button>
-                  <button class="layers-add-btn" id="btnLayersAdd" type="button" title="Add image layer" aria-label="Add image layer">+</button>
-                </div>
-              </div>
-              <div class="layers-list" id="layersList"></div>
-              <div class="layers-panel-foot">
-                <button class="layers-add-bottom-btn" id="btnLayersAddBottom" type="button" title="Add image as bottom layer" aria-label="Add image as bottom layer">+ Bottom</button>
-              </div>
-            </aside>
           </div>
         </div>
       </section>
+      <aside class="layers-list-panel layers-right-rail" id="layersRightRail">
+        <div class="layers-panel-head">
+          <div class="layers-head-title">
+            <div class="sidebar-section-title menu-title">LAYERS</div>
+            <span class="layers-count" id="layersCountText" aria-live="polite">0/5</span>
+          </div>
+          <div class="layers-head-actions">
+            <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">M+</button>
+            <button class="layers-add-btn" id="btnLayersAdd" type="button" title="Add image layer" aria-label="Add image layer">+</button>
+          </div>
+        </div>
+        <div class="layers-list" id="layersList"></div>
+        <div class="layers-panel-foot">
+          <button class="layers-add-bottom-btn" id="btnLayersAddBottom" type="button" title="Add image as bottom layer" aria-label="Add image as bottom layer">+ Bottom</button>
+        </div>
+      </aside>
     </div>
 
     <div class="model-bar-row">
@@ -441,15 +493,18 @@
     </div>
   </div>
 
-  <div class="mobile-blocker" aria-live="polite">
+  <div class="mobile-blocker" id="mobileBlocker" aria-live="polite">
     <div class="mobile-blocker-card" role="dialog" aria-modal="true" aria-labelledby="mobileBlockerTitle" aria-describedby="mobileBlockerDesc">
       <h2 id="mobileBlockerTitle">Desktop Recommended</h2>
       <p id="mobileBlockerDesc">This app is not optimized for phone screens. Use a desktop or laptop for the best experience.</p>
+      <div class="mobile-blocker-actions">
+        <button class="mobile-blocker-continue" id="btnMobileBlockerContinue" type="button">Continue</button>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-  <script type="module" src="imagestudio.js?v=20260220a"></script>
+  <script type="module" src="imagestudio.js?v=20260223f"></script>
 </body>
 </html>
