@@ -59,6 +59,42 @@ const BRIGHT_LIMIT = 30;
 const SAT_LIMIT = 30;
 const CONTRAST_LIMIT = 30;
 const BLUR_LIMIT = 30;
+const TEXT_SIZE_MIN = 12;
+const TEXT_SIZE_MAX = 480;
+const TEXT_LINE_HEIGHT = 1.16;
+const TEXT_LETTER_SPACING_MIN = -8;
+const TEXT_LETTER_SPACING_MAX = 24;
+const TEXT_LINE_SPACING_MIN = 80;
+const TEXT_LINE_SPACING_MAX = 220;
+const TEXT_AUTO_FIT_SAFE_RATIO = 0.94;
+const TEXT_AUTO_FIT_MIN_READABLE = 18;
+const TEXT_AUTO_FIT_HARD_MIN = 10;
+const TEXT_ALIGN_VALUES = ["left", "center", "right"];
+const TEXT_ALIGN_ICON_BY_VALUE = {
+  left: "./svg/align_left_line.svg",
+  center: "./svg/align_center_line.svg",
+  right: "./svg/align_right_line.svg"
+};
+const TEXT_DEFAULTS = {
+  content: "Add text",
+  fontFamily: "Arial",
+  size: 144,
+  color: "#ffcc33",
+  weight: 700,
+  letterSpacing: 0,
+  lineSpacing: Math.round(TEXT_LINE_HEIGHT * 100),
+  align: "center"
+};
+const TEXT_FONT_FAMILIES = [
+  "Arial",
+  "Helvetica",
+  "Trebuchet MS",
+  "Verdana",
+  "Georgia",
+  "Times New Roman",
+  "Courier New",
+  "Impact"
+];
 const MAX_LAYERS = 5;
 const MODEL_READY_KEY = "bgoneModelReady";
 const RETRO_DEFAULT_INTENSITY = 50;
@@ -69,6 +105,7 @@ function mix(a, b, t) {
 }
 
 function hasLayerProcessingAdjust(layer) {
+  if (layer?.kind === "text") return false;
   return (
     Math.abs(layer.wbTemp || 0) > 0.001 ||
     Math.abs(layer.wbTint || 0) > 0.001 ||
@@ -81,7 +118,274 @@ function hasLayerProcessingAdjust(layer) {
 }
 
 function getLayerRenderSource(layer) {
+  if (layer?.kind === "text") return null;
   return layer.processedCanvas || layer.image;
+}
+
+function isTextLayer(layer) {
+  return layer?.kind === "text";
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function normalizeTextContent(value) {
+  const raw = String(value ?? "").replace(/\r/g, "");
+  return raw.length > 640 ? raw.slice(0, 640) : raw;
+}
+
+function normalizeTextFontFamily(value) {
+  const raw = String(value || "").trim();
+  if (TEXT_FONT_FAMILIES.includes(raw)) return raw;
+  return TEXT_DEFAULTS.fontFamily;
+}
+
+function normalizeTextSize(value) {
+  return clamp(Math.round(Number(value) || TEXT_DEFAULTS.size), TEXT_SIZE_MIN, TEXT_SIZE_MAX);
+}
+
+function normalizeTextWeight(value) {
+  return clamp(Math.round(Number(value) || TEXT_DEFAULTS.weight), 100, 900);
+}
+
+function normalizeTextLetterSpacing(value) {
+  return clamp(
+    Math.round(Number(value) || TEXT_DEFAULTS.letterSpacing),
+    TEXT_LETTER_SPACING_MIN,
+    TEXT_LETTER_SPACING_MAX
+  );
+}
+
+function normalizeTextLineSpacing(value) {
+  return clamp(
+    Math.round(Number(value) || TEXT_DEFAULTS.lineSpacing),
+    TEXT_LINE_SPACING_MIN,
+    TEXT_LINE_SPACING_MAX
+  );
+}
+
+function normalizeTextAlign(value) {
+  const raw = String(value || "").toLowerCase();
+  if (TEXT_ALIGN_VALUES.includes(raw)) return raw;
+  return TEXT_DEFAULTS.align;
+}
+
+function nextTextAlign(value) {
+  const current = normalizeTextAlign(value);
+  const index = TEXT_ALIGN_VALUES.indexOf(current);
+  return TEXT_ALIGN_VALUES[(index + 1) % TEXT_ALIGN_VALUES.length];
+}
+
+function textAlignIcon(value) {
+  return TEXT_ALIGN_ICON_BY_VALUE[normalizeTextAlign(value)] || TEXT_ALIGN_ICON_BY_VALUE.center;
+}
+
+function fontFamilyToken(fontFamily) {
+  const family = normalizeTextFontFamily(fontFamily);
+  return family.includes(" ") ? `"${family}"` : family;
+}
+
+function textLinesForRender(content) {
+  const normalized = normalizeTextContent(content);
+  const lines = normalized.split("\n");
+  if (!lines.length) return [TEXT_DEFAULTS.content];
+  if (lines.every(line => !line.length)) return [" "];
+  return lines.map(line => line || " ");
+}
+
+function measureTextLine(targetCtx, line, letterSpacing = 0) {
+  const text = String(line ?? "");
+  const glyphs = Array.from(text);
+  const base = targetCtx.measureText(text).width;
+  if (glyphs.length <= 1) return base;
+  const spacing = Number(letterSpacing) || 0;
+  if (Math.abs(spacing) <= 0.0001) return base;
+  return base + spacing * (glyphs.length - 1);
+}
+
+function breakTokenByWidth(targetCtx, token, maxWidth, letterSpacing = 0) {
+  if (!token) return [""];
+  if (!(maxWidth > 0)) return [token];
+  const chars = Array.from(token);
+  const out = [];
+  let current = "";
+  for (const ch of chars) {
+    const candidate = `${current}${ch}`;
+    if (!current || measureTextLine(targetCtx, candidate, letterSpacing) <= maxWidth) {
+      current = candidate;
+    } else {
+      out.push(current);
+      current = ch;
+    }
+  }
+  if (current) out.push(current);
+  return out.length ? out : [token];
+}
+
+function wrapLineToWidth(targetCtx, line, maxWidth, letterSpacing = 0) {
+  if (!(maxWidth > 0)) return [line || " "];
+  if (!line.length) return [" "];
+  const tokens = line.split(/(\s+)/).filter(token => token.length > 0);
+  const wrapped = [];
+  let current = "";
+  for (const token of tokens) {
+    const whitespaceToken = /^\s+$/.test(token);
+    if (whitespaceToken) {
+      if (!current) continue;
+      const candidate = `${current}${token}`;
+      if (measureTextLine(targetCtx, candidate, letterSpacing) <= maxWidth) {
+        current = candidate;
+      } else {
+        wrapped.push(current.trimEnd());
+        current = "";
+      }
+      continue;
+    }
+
+    if (!current) {
+      if (measureTextLine(targetCtx, token, letterSpacing) <= maxWidth) {
+        current = token;
+      } else {
+        const parts = breakTokenByWidth(targetCtx, token, maxWidth, letterSpacing);
+        for (let i = 0; i < parts.length; i += 1) {
+          const part = parts[i];
+          if (i < parts.length - 1) {
+            wrapped.push(part);
+          } else {
+            current = part;
+          }
+        }
+      }
+      continue;
+    }
+
+    const candidate = `${current}${token}`;
+    if (measureTextLine(targetCtx, candidate, letterSpacing) <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+
+    wrapped.push(current.trimEnd());
+    if (measureTextLine(targetCtx, token, letterSpacing) <= maxWidth) {
+      current = token;
+    } else {
+      const parts = breakTokenByWidth(targetCtx, token, maxWidth, letterSpacing);
+      for (let i = 0; i < parts.length; i += 1) {
+        const part = parts[i];
+        if (i < parts.length - 1) {
+          wrapped.push(part);
+        } else {
+          current = part;
+        }
+      }
+    }
+  }
+  if (current) wrapped.push(current.trimEnd());
+  return wrapped.length ? wrapped : [" "];
+}
+
+function wrapTextLinesToWidth(targetCtx, lines, maxWidth, letterSpacing = 0) {
+  if (!(maxWidth > 0)) return lines.length ? lines : [" "];
+  const wrapped = [];
+  lines.forEach((line) => {
+    const split = wrapLineToWidth(targetCtx, line, maxWidth, letterSpacing);
+    split.forEach(part => wrapped.push(part || " "));
+  });
+  return wrapped.length ? wrapped : [" "];
+}
+
+function buildTextLayout(layer, targetCtx, scale = 1, options = {}) {
+  const sourceLines = Array.isArray(options.lines) && options.lines.length
+    ? options.lines
+    : (Array.isArray(layer?.textWrappedLines) && layer.textWrappedLines.length
+      ? layer.textWrappedLines
+      : textLinesForRender(layer?.textContent ?? TEXT_DEFAULTS.content));
+  const fontFamily = normalizeTextFontFamily(layer?.textFontFamily);
+  const fontSize = Math.max(1, normalizeTextSize(layer?.textSize) * Math.max(0.001, Number(scale) || 1));
+  const fontWeight = normalizeTextWeight(layer?.textWeight);
+  const letterSpacing = normalizeTextLetterSpacing(layer?.textLetterSpacing) * Math.max(0.001, Number(scale) || 1);
+  const lineSpacing = normalizeTextLineSpacing(layer?.textLineSpacing) / 100;
+  const font = `${fontWeight} ${fontSize}px ${fontFamilyToken(fontFamily)}`;
+  targetCtx.save();
+  targetCtx.font = font;
+  const lines = options.maxWidth > 0
+    ? wrapTextLinesToWidth(targetCtx, sourceLines, options.maxWidth, letterSpacing)
+    : sourceLines;
+  let maxWidth = 0;
+  lines.forEach((line) => {
+    maxWidth = Math.max(maxWidth, measureTextLine(targetCtx, line, letterSpacing));
+  });
+  targetCtx.restore();
+  const lineHeight = Math.max(1, fontSize * lineSpacing);
+  return {
+    lines,
+    font,
+    fontSize,
+    lineSpacing,
+    letterSpacing,
+    lineHeight,
+    width: Math.max(fontSize * 0.45, maxWidth),
+    height: Math.max(lineHeight, lines.length * lineHeight)
+  };
+}
+
+function drawSpacedTextLine(targetCtx, line, y, layout, align) {
+  const glyphs = Array.from(line || "");
+  const spacing = Number(layout.letterSpacing) || 0;
+  if (!glyphs.length) return;
+  const lineWidth = measureTextLine(targetCtx, line, spacing);
+  let x;
+  if (align === "left") {
+    x = -layout.width / 2;
+  } else if (align === "right") {
+    x = layout.width / 2 - lineWidth;
+  } else {
+    x = -lineWidth / 2;
+  }
+  glyphs.forEach((glyph) => {
+    targetCtx.fillText(glyph, x, y);
+    x += targetCtx.measureText(glyph).width + spacing;
+  });
+}
+
+function drawTextBlock(targetCtx, layer, layout, colorOverride = "") {
+  const align = normalizeTextAlign(layer?.textAlign);
+  const spacing = Number(layout.letterSpacing) || 0;
+  targetCtx.save();
+  targetCtx.font = layout.font;
+  targetCtx.textAlign = spacing ? "left" : align;
+  targetCtx.textBaseline = "middle";
+  targetCtx.fillStyle = colorOverride || normalizeHexColor(layer?.textColor, TEXT_DEFAULTS.color);
+  let y = -layout.height / 2 + layout.lineHeight / 2;
+  layout.lines.forEach((line) => {
+    if (spacing) {
+      drawSpacedTextLine(targetCtx, line, y, layout, align);
+    } else if (align === "left") {
+      targetCtx.fillText(line, -layout.width / 2, y);
+    } else if (align === "right") {
+      targetCtx.fillText(line, layout.width / 2, y);
+    } else {
+      targetCtx.fillText(line, 0, y);
+    }
+    y += layout.lineHeight;
+  });
+  targetCtx.restore();
+}
+
+function sameStringArray(a, b) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 function computeShadowMetrics(drawW, drawH) {
@@ -1083,6 +1387,20 @@ export function createLayersTool(opts) {
     return state.layers.reduce((count, layer) => count + (layer.visible ? 1 : 0), 0);
   }
 
+  function isPinnedTopTextLayer(layer) {
+    return isTextLayer(layer) && layer.textPinTop !== false;
+  }
+
+  function getPinnedTextTopInsertIndex() {
+    let insertIndex = -1;
+    for (let index = state.layers.length - 1; index >= 0; index -= 1) {
+      const layer = state.layers[index];
+      if (!isPinnedTopTextLayer(layer)) break;
+      insertIndex = index;
+    }
+    return insertIndex;
+  }
+
   function duplicateLayer(layerId) {
     const source = layerById(layerId);
     if (!source) return false;
@@ -1124,16 +1442,263 @@ export function createLayersTool(opts) {
     };
   }
 
+  function getTextLayerBaseSize(layer, targetCtx = ctx) {
+    const layout = buildTextLayout(layer, targetCtx, 1);
+    return {
+      width: layout.width,
+      height: layout.height,
+      layout
+    };
+  }
+
+  function getLayerBaseSize(layer, targetCtx = ctx) {
+    if (isTextLayer(layer)) return getTextLayerBaseSize(layer, targetCtx);
+    const source = getLayerRenderSource(layer);
+    return {
+      width: source?.width || 1,
+      height: source?.height || 1,
+      source
+    };
+  }
+
+  function getLayerDrawSize(layer, targetCtx = ctx, drawScale = layer?.scale || 1) {
+    if (isTextLayer(layer)) {
+      const layout = buildTextLayout(layer, targetCtx, drawScale);
+      return {
+        width: layout.width,
+        height: layout.height,
+        layout
+      };
+    }
+    const source = getLayerRenderSource(layer);
+    return {
+      width: (source?.width || 1) * drawScale,
+      height: (source?.height || 1) * drawScale,
+      source
+    };
+  }
+
+  function fitTextLayerToCanvas(layer, options = {}) {
+    if (!isTextLayer(layer)) return false;
+    const content = normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content);
+    const rawLines = textLinesForRender(content);
+    const maxWidth = Math.max(72, canvas.width * TEXT_AUTO_FIT_SAFE_RATIO);
+    const maxHeight = Math.max(72, canvas.height * TEXT_AUTO_FIT_SAFE_RATIO);
+    const baseTextSize = normalizeTextSize(layer.textSize);
+    const currentScale = Math.max(0.001, Number(layer.scale) || 1);
+    const requestedPx = Math.max(1, baseTextSize * currentScale);
+    const readableMinPx = Math.min(requestedPx, TEXT_AUTO_FIT_MIN_READABLE);
+    const fallbackMinPx = Math.min(requestedPx, TEXT_AUTO_FIT_HARD_MIN);
+    const angle = (layer.rotationDeg || 0) * Math.PI / 180;
+    const cos = Math.abs(Math.cos(angle));
+    const sin = Math.abs(Math.sin(angle));
+
+    function evaluate(sizePx) {
+      const clampedPx = Math.max(1, sizePx);
+      const scaleForLayout = clampedPx / Math.max(1, baseTextSize);
+      const layout = buildTextLayout(layer, ctx, scaleForLayout, {
+        lines: rawLines,
+        maxWidth
+      });
+      const bboxW = layout.width * cos + layout.height * sin;
+      const bboxH = layout.width * sin + layout.height * cos;
+      return {
+        layout,
+        scale: scaleForLayout,
+        sizePx: clampedPx,
+        fits: bboxW <= maxWidth && bboxH <= maxHeight
+      };
+    }
+
+    let best = evaluate(requestedPx);
+    if (!best.fits) {
+      let low = Math.max(1, readableMinPx);
+      let high = Math.max(low, requestedPx);
+      let bestFit = null;
+      for (let i = 0; i < 14; i += 1) {
+        const mid = (low + high) / 2;
+        const candidate = evaluate(mid);
+        if (candidate.fits) {
+          bestFit = candidate;
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+      if (!bestFit) {
+        low = Math.max(1, fallbackMinPx);
+        high = Math.max(low, readableMinPx);
+        for (let i = 0; i < 14; i += 1) {
+          const mid = (low + high) / 2;
+          const candidate = evaluate(mid);
+          if (candidate.fits) {
+            bestFit = candidate;
+            low = mid;
+          } else {
+            high = mid;
+          }
+        }
+      }
+      if (!bestFit) {
+        bestFit = evaluate(Math.max(1, fallbackMinPx));
+      }
+      best = bestFit;
+    }
+
+    const nextScale = clamp(best.scale, 0.04, 12);
+    const changed = (
+      Math.abs((layer.scale || 0) - nextScale) > 0.0001
+      || !sameStringArray(layer.textWrappedLines || [], best.layout.lines || [])
+    );
+    layer.scale = nextScale;
+    layer.baseScale = nextScale;
+    layer.textWrappedLines = best.layout.lines;
+    if (options.resetPosition) {
+      layer.x = 0;
+      layer.y = 0;
+    } else {
+      const bboxW = best.layout.width * cos + best.layout.height * sin;
+      const bboxH = best.layout.width * sin + best.layout.height * cos;
+      const maxOffsetX = Math.max(0, (canvas.width - bboxW) * 0.5);
+      const maxOffsetY = Math.max(0, (canvas.height - bboxH) * 0.5);
+      layer.x = clamp(Number(layer.x) || 0, -maxOffsetX, maxOffsetX);
+      layer.y = clamp(Number(layer.y) || 0, -maxOffsetY, maxOffsetY);
+    }
+    return changed;
+  }
+
+  function makeLayerThumbDataUrl(layer) {
+    if (isTextLayer(layer)) {
+      const thumb = document.createElement("canvas");
+      thumb.width = 96;
+      thumb.height = 72;
+      const tctx = thumb.getContext("2d");
+      tctx.fillStyle = "#ffffff";
+      tctx.fillRect(0, 0, thumb.width, thumb.height);
+      const previewLines = [textLinesForRender(layer.textContent)[0] || "Text"];
+      const layout = buildTextLayout({
+        ...layer,
+        textSize: 24,
+        textWrappedLines: null
+      }, tctx, 1, { lines: previewLines });
+      tctx.save();
+      tctx.translate(thumb.width / 2, thumb.height / 2);
+      drawTextBlock(tctx, {
+        ...layer,
+        textColor: layer.textColor || TEXT_DEFAULTS.color
+      }, layout);
+      tctx.restore();
+      return thumb.toDataURL("image/png");
+    }
+    return makeThumbDataUrl(layer.image);
+  }
+
+  function createImageLayer(image, name = "Layer", options = {}) {
+    const fillScale = Math.max(canvas.width / image.width, canvas.height / image.height);
+    layerSeed += 1;
+    return {
+      id: `layer-${layerSeed}`,
+      kind: "image",
+      name: truncateName(name),
+      image,
+      originalImage: image,
+      thumbDataUrl: makeThumbDataUrl(image),
+      processedCanvas: null,
+      wbTemp: 0,
+      wbTint: 0,
+      wbBright: 0,
+      wbSat: 0,
+      wbContrast: 0,
+      wbBlur: 0,
+      retroStyle: "none",
+      retroIntensity: RETRO_DEFAULT_INTENSITY,
+      retroGrain: RETRO_DEFAULT_GRAIN,
+      rotationDeg: 0,
+      processing: false,
+      tuningOpen: false,
+      visible: soloLayerId ? false : true,
+      shadowEnabled: false,
+      x: 0,
+      y: 0,
+      scale: fillScale,
+      baseScale: fillScale,
+      flipX: false,
+      flipY: false,
+      lowResolution: false,
+      ...options
+    };
+  }
+
+  function createTextLayer(options = {}) {
+    layerSeed += 1;
+    const textLayer = {
+      id: `layer-${layerSeed}`,
+      kind: "text",
+      name: truncateName(options.name || "Text"),
+      image: null,
+      originalImage: null,
+      thumbDataUrl: "",
+      processedCanvas: null,
+      wbTemp: 0,
+      wbTint: 0,
+      wbBright: 0,
+      wbSat: 0,
+      wbContrast: 0,
+      wbBlur: 0,
+      retroStyle: "none",
+      retroIntensity: RETRO_DEFAULT_INTENSITY,
+      retroGrain: RETRO_DEFAULT_GRAIN,
+      rotationDeg: 0,
+      processing: false,
+      tuningOpen: false,
+      visible: options.visible === false ? false : (soloLayerId ? false : true),
+      shadowEnabled: false,
+      x: Number.isFinite(Number(options.x)) ? Number(options.x) : 0,
+      y: Number.isFinite(Number(options.y)) ? Number(options.y) : 0,
+      scale: Number.isFinite(Number(options.scale)) && Number(options.scale) > 0.01 ? Number(options.scale) : 1,
+      baseScale: Number.isFinite(Number(options.baseScale)) && Number(options.baseScale) > 0.01
+        ? Number(options.baseScale)
+        : 1,
+      flipX: false,
+      flipY: false,
+      lowResolution: false,
+      textContent: normalizeTextContent(options.textContent ?? TEXT_DEFAULTS.content),
+      textFontFamily: normalizeTextFontFamily(options.textFontFamily ?? TEXT_DEFAULTS.fontFamily),
+      textSize: normalizeTextSize(options.textSize ?? TEXT_DEFAULTS.size),
+      textColor: normalizeHexColor(options.textColor, TEXT_DEFAULTS.color),
+      textWeight: normalizeTextWeight(options.textWeight ?? TEXT_DEFAULTS.weight),
+      textLetterSpacing: normalizeTextLetterSpacing(options.textLetterSpacing ?? TEXT_DEFAULTS.letterSpacing),
+      textLineSpacing: normalizeTextLineSpacing(options.textLineSpacing ?? TEXT_DEFAULTS.lineSpacing),
+      textAlign: normalizeTextAlign(options.textAlign ?? TEXT_DEFAULTS.align),
+      textPinTop: options.textPinTop !== false,
+      textWrappedLines: Array.isArray(options.textWrappedLines) ? options.textWrappedLines.slice() : null
+    };
+    textLayer.rotationDeg = clamp(Number(options.rotationDeg) || 0, -30, 30);
+    textLayer.flipX = !!options.flipX;
+    textLayer.flipY = !!options.flipY;
+    textLayer.shadowEnabled = !!options.shadowEnabled;
+    textLayer.thumbDataUrl = makeLayerThumbDataUrl(textLayer);
+    return textLayer;
+  }
+
   function updateOverlay() {
     if (!overlayEl) return;
     overlayEl.style.display = hasLayers() ? "none" : "grid";
   }
 
   function refreshWarnings(layer) {
+    if (isTextLayer(layer)) {
+      layer.lowResolution = false;
+      return;
+    }
     layer.lowResolution = layer.scale > 1.02;
   }
 
   function rebuildLayerProcessed(layer) {
+    if (isTextLayer(layer)) {
+      layer.processedCanvas = null;
+      return;
+    }
     const needsProcessing = hasLayerProcessingAdjust(layer);
     if (!needsProcessing) {
       layer.processedCanvas = null;
@@ -1403,6 +1968,11 @@ export function createLayersTool(opts) {
     });
     canvas.width = w;
     canvas.height = h;
+    state.layers.forEach((layer) => {
+      if (!isTextLayer(layer)) return;
+      fitTextLayerToCanvas(layer);
+      layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+    });
     const ratioValue = w / h;
     const designMaxWidth = LAYERS_VIEW_MAX_WIDTH[ratio] || LAYERS_VIEW_MAX_WIDTH.landscape43;
     const canvasAreaEl = canvasWrap?.closest?.(".canvas-area");
@@ -1437,11 +2007,86 @@ export function createLayersTool(opts) {
     if (openLayer) positionOpenTuningPanel(openLayer.id);
   }
 
+  function buildTextLayerRasterSource(layer, rasterScale = Number(layer?.scale) || 1) {
+    if (!isTextLayer(layer)) return null;
+    const safeScale = Math.max(0.001, Number(rasterScale) || 1);
+    const layout = buildTextLayout(layer, ctx, safeScale);
+    const raster = document.createElement("canvas");
+    raster.width = Math.max(1, Math.ceil(layout.width));
+    raster.height = Math.max(1, Math.ceil(layout.height));
+    const rctx = raster.getContext("2d");
+    rctx.imageSmoothingEnabled = true;
+    rctx.imageSmoothingQuality = "high";
+    rctx.translate(raster.width / 2, raster.height / 2);
+    drawTextBlock(rctx, layer, layout);
+    return {
+      source: raster,
+      scale: safeScale
+    };
+  }
+
   function render() {
     drawLayers(ctx, 0, false);
   }
 
-  function drawLayers(targetCtx, progress = 0, parallaxEnabled = false, motionType = "zoom", intensity = 1, lockTopLayer = false, includeBackground = true) {
+  function drawLayerToContext(targetCtx, layer, options = {}) {
+    const drawScale = Math.max(0.001, Number(options.drawScale) || Number(layer.scale) || 1);
+    const panX = Number(options.panX) || 0;
+    const panY = Number(options.panY) || 0;
+    const centerX = Number(options.centerX) || (canvas.width / 2);
+    const centerY = Number(options.centerY) || (canvas.height / 2);
+    const cx = centerX + (Number(layer.x) || 0) + panX;
+    const cy = centerY + (Number(layer.y) || 0) + panY;
+    const angle = (layer.rotationDeg || 0) * Math.PI / 180;
+    const textRaster = isTextLayer(layer) && options.textRaster?.source ? options.textRaster : null;
+    let draw;
+    if (textRaster) {
+      const rasterScale = Math.max(0.001, Number(textRaster.scale) || Number(layer.scale) || 1);
+      const drawFactor = drawScale / rasterScale;
+      draw = {
+        width: Math.max(1, textRaster.source.width * drawFactor),
+        height: Math.max(1, textRaster.source.height * drawFactor),
+        source: textRaster.source
+      };
+    } else {
+      draw = getLayerDrawSize(layer, targetCtx, drawScale);
+    }
+    const drawW = draw.width;
+    const drawH = draw.height;
+
+    if (layer.shadowEnabled) {
+      const shadow = computeShadowMetrics(drawW, drawH);
+      targetCtx.save();
+      targetCtx.translate(cx, cy + shadow.offsetY);
+      targetCtx.rotate(angle);
+      targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
+      targetCtx.globalAlpha = shadow.opacity;
+      if (isTextLayer(layer) && !draw.source) {
+        targetCtx.filter = `blur(${shadow.blur}px)`;
+        drawTextBlock(targetCtx, layer, draw.layout, "#000000");
+      } else if (draw.source) {
+        targetCtx.filter = `brightness(0) saturate(0) blur(${shadow.blur}px)`;
+        targetCtx.drawImage(draw.source, -drawW / 2, -drawH / 2, drawW, drawH);
+      }
+      targetCtx.filter = "none";
+      targetCtx.globalAlpha = 1;
+      targetCtx.restore();
+    }
+
+    targetCtx.save();
+    targetCtx.translate(cx, cy);
+    targetCtx.rotate(angle);
+    targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
+    if (isTextLayer(layer) && !draw.source) {
+      drawTextBlock(targetCtx, layer, draw.layout);
+    } else if (draw.source) {
+      targetCtx.drawImage(draw.source, -drawW / 2, -drawH / 2, drawW, drawH);
+    }
+    targetCtx.restore();
+    return { drawW, drawH };
+  }
+
+  function drawLayers(targetCtx, progress = 0, parallaxEnabled = false, motionType = "zoom", intensity = 1, lockTopLayer = false, includeBackground = true, textRasterMap = null) {
     targetCtx.clearRect(0, 0, canvas.width, canvas.height);
     if (includeBackground) {
       paintCanvasBackground(targetCtx);
@@ -1459,46 +2104,124 @@ export function createLayersTool(opts) {
     state.layers.forEach((layer, index) => {
       if (!layer.visible) return;
       const layerLocked = parallaxEnabled && lockTopLayer && index === topVisibleIndex;
-      const source = getLayerRenderSource(layer);
       const depth = (index + 1) / total;
       const strength = clamp(Number(intensity) || 1, 0.25, 1);
       const signed = progress * 2 - 1;
       const parallaxScale = !layerLocked && parallaxEnabled && motionType === "zoom"
         ? (1 + PARALLAX_MAX_SCALE * strength * depth * progress)
         : 1;
-      const drawW = source.width * layer.scale * parallaxScale;
-      const drawH = source.height * layer.scale * parallaxScale;
       const panX = !layerLocked && parallaxEnabled && motionType === "panx"
         ? -signed * canvas.width * PARALLAX_PAN_X * strength * depth
         : 0;
       const panY = !layerLocked && parallaxEnabled && motionType === "pany"
         ? signed * canvas.height * PARALLAX_PAN_Y * strength * depth
         : 0;
-      const cx = canvas.width / 2 + layer.x + panX;
-      const cy = canvas.height / 2 + layer.y + panY;
-      const angle = (layer.rotationDeg || 0) * Math.PI / 180;
-
-      if (layer.shadowEnabled) {
-        const shadow = computeShadowMetrics(drawW, drawH);
-        targetCtx.save();
-        targetCtx.translate(cx, cy + shadow.offsetY);
-        targetCtx.rotate(angle);
-        targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-        targetCtx.globalAlpha = shadow.opacity;
-        targetCtx.filter = `brightness(0) saturate(0) blur(${shadow.blur}px)`;
-        targetCtx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
-        targetCtx.filter = "none";
-        targetCtx.globalAlpha = 1;
-        targetCtx.restore();
-      }
-
-      targetCtx.save();
-      targetCtx.translate(cx, cy);
-      targetCtx.rotate(angle);
-      targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-      targetCtx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
-      targetCtx.restore();
+      const textRaster = textRasterMap instanceof Map ? textRasterMap.get(layer.id) : null;
+      drawLayerToContext(targetCtx, layer, {
+        drawScale: (Number(layer.scale) || 1) * parallaxScale,
+        panX,
+        panY,
+        textRaster
+      });
     });
+  }
+
+  function buildImageTuningMarkup(layer) {
+    return `
+      <div class="layer-wb">
+        <div class="layer-retro-row">
+          <button class="layer-retro-btn ${layer.retroStyle === "bw" ? "active" : ""}" type="button" data-style="bw" title="B&W preset">B&amp;W</button>
+          <button class="layer-retro-btn ${layer.retroStyle === "sepia" ? "active" : ""}" type="button" data-style="sepia" title="Sepia preset">Sepia</button>
+          <button class="layer-retro-btn ${layer.retroStyle === "postal" ? "active" : ""}" type="button" data-style="postal" title="Postcard preset">Card</button>
+        </div>
+        <label class="layer-wb-row">
+          <span>Rotate</span>
+          <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Bright</span>
+          <input class="layer-wb-slider" data-kind="bright" type="range" min="-30" max="30" value="${Math.round(layer.wbBright || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Contrast</span>
+          <input class="layer-wb-slider" data-kind="contrast" type="range" min="-30" max="30" value="${Math.round(layer.wbContrast || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Saturation</span>
+          <input class="layer-wb-slider" data-kind="sat" type="range" min="-30" max="30" value="${Math.round(layer.wbSat || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Temp</span>
+          <input class="layer-wb-slider" data-kind="temp" type="range" min="-25" max="25" value="${Math.round(layer.wbTemp || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Tint</span>
+          <input class="layer-wb-slider" data-kind="tint" type="range" min="-25" max="25" value="${Math.round(layer.wbTint || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Blur</span>
+          <input class="layer-wb-slider" data-kind="blur" type="range" min="0" max="${BLUR_LIMIT}" value="${Math.round(layer.wbBlur || 0)}">
+        </label>
+      </div>
+    `;
+  }
+
+  function buildTextTuningMarkup(layer) {
+    const textSize = normalizeTextSize(layer.textSize);
+    const textLetterSpacing = normalizeTextLetterSpacing(layer.textLetterSpacing);
+    const textLineSpacing = normalizeTextLineSpacing(layer.textLineSpacing);
+    const textColor = normalizeHexColor(layer.textColor, TEXT_DEFAULTS.color);
+    const textColorHex = textColor.toUpperCase();
+    const rotateValue = Math.round(layer.rotationDeg || 0);
+    const options = TEXT_FONT_FAMILIES.map((family) => {
+      const selected = normalizeTextFontFamily(layer.textFontFamily) === family ? " selected" : "";
+      return `<option value="${escapeHtml(family)}"${selected}>${escapeHtml(family)}</option>`;
+    }).join("");
+    return `
+      <div class="layer-text-controls">
+        <label class="layer-text-row">
+          <span>Font</span>
+          <select class="layer-text-select" data-text-kind="font">${options}</select>
+        </label>
+        <label class="layer-text-row layer-text-row-size">
+          <span>Size</span>
+          <input class="layer-wb-slider layer-text-size-slider" data-text-kind="size" type="range" min="${TEXT_SIZE_MIN}" max="${TEXT_SIZE_MAX}" value="${textSize}">
+          <span class="layer-text-size-value">${textSize}px</span>
+        </label>
+        <label class="layer-text-row layer-text-row-spacing">
+          <span>Letter</span>
+          <input class="layer-wb-slider" data-text-kind="letterSpacing" type="range" min="${TEXT_LETTER_SPACING_MIN}" max="${TEXT_LETTER_SPACING_MAX}" value="${textLetterSpacing}">
+          <span class="layer-text-letter-value">${textLetterSpacing}px</span>
+        </label>
+        <label class="layer-text-row layer-text-row-spacing">
+          <span>Line</span>
+          <input class="layer-wb-slider" data-text-kind="lineSpacing" type="range" min="${TEXT_LINE_SPACING_MIN}" max="${TEXT_LINE_SPACING_MAX}" value="${textLineSpacing}">
+          <span class="layer-text-line-value">${textLineSpacing}%</span>
+        </label>
+        <label class="layer-text-row">
+          <span>Color</span>
+          <div class="layer-text-color-controls">
+            <div class="layer-text-color-presets">
+              <button class="layer-text-color-preset is-white" type="button" data-text-color-preset="#ffffff" title="White" aria-label="Set white text"></button>
+              <button class="layer-text-color-preset is-black" type="button" data-text-color-preset="#000000" title="Black" aria-label="Set black text"></button>
+              <button class="layer-text-color-preset is-blue" type="button" data-text-color-preset="#0099cc" title="Blue" aria-label="Set blue text"></button>
+              <button class="layer-text-color-preset is-yellow" type="button" data-text-color-preset="#ffcc33" title="Yellow" aria-label="Set yellow text"></button>
+              <button class="layer-text-color-preset is-red" type="button" data-text-color-preset="#ff0000" title="Red" aria-label="Set red text"></button>
+              <button class="layer-text-color-preset is-green" type="button" data-text-color-preset="#00aa44" title="Green" aria-label="Set green text"></button>
+            </div>
+            <div class="layer-text-color-manual">
+              <input class="layer-text-color" data-text-kind="color" type="color" value="${textColor}">
+              <input class="layer-text-hex" data-text-kind="colorHex" type="text" value="${textColorHex}" maxlength="12" spellcheck="false" autocomplete="off" placeholder="#FFCC33" title="HEX color value">
+            </div>
+          </div>
+        </label>
+        <label class="layer-text-row layer-text-row-angle">
+          <span>Rotate</span>
+          <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
+          <span class="layer-text-angle-value">${rotateValue}&deg;</span>
+        </label>
+      </div>
+    `;
   }
 
   function refreshList() {
@@ -1511,18 +2234,39 @@ export function createLayersTool(opts) {
     const moveForwardTitle = useHorizontalMoveArrows ? "Move right" : "Move down";
     const entries = [...state.layers].reverse();
     entries.forEach(layer => {
+      const textLayer = isTextLayer(layer);
       const el = document.createElement("div");
-      el.className = `layer-item${layer.id === state.activeLayerId ? " active" : ""}`;
+      el.className = `layer-item${layer.id === state.activeLayerId ? " active" : ""}${textLayer ? " is-text" : ""}`;
       el.dataset.layerId = layer.id;
       const warn = layer.lowResolution
         ? '<span class="warn" title="Low resolution image at current size">⚠</span>'
         : "";
+      const statusLabel = layer.processing
+        ? "Processing..."
+        : (layer.visible ? (textLayer ? "Text" : "Visible") : "Hidden");
+      const textAlignValue = normalizeTextAlign(layer.textAlign);
+      const textAlignTitle = `Text align: ${textAlignValue} (click to cycle)`;
+      const middleToolMarkup = textLayer
+        ? `<button class="layer-tool-btn textalign" type="button" title="${textAlignTitle}"><img src="${textAlignIcon(textAlignValue)}" alt=""></button>`
+        : '<button class="layer-tool-btn cutout" type="button" title="Background tools"><img src="./svg/scissors_line.svg" alt=""></button>';
+      const adjustTitle = textLayer ? "Text options" : "Adjust layer";
+      const resetTitle = textLayer ? "Reset text layer" : "Reset image";
+      const tuningMarkup = textLayer ? buildTextTuningMarkup(layer) : buildImageTuningMarkup(layer);
+      const topMarkup = textLayer
+        ? `
+          <div class="layer-text-inline-wrap">
+            <textarea class="layer-text-inline-input" data-text-kind="content" rows="2" spellcheck="false">${escapeHtml(layer.textContent ?? TEXT_DEFAULTS.content)}</textarea>
+          </div>
+        `
+        : `
+          <img class="layer-thumb" src="${layer.thumbDataUrl}" alt="">
+          <div class="layer-meta">
+            <div class="layer-name">${escapeHtml(layer.name)}</div>
+            <div class="layer-hint">${warn}<span>${statusLabel}</span></div>
+          </div>
+        `;
       el.innerHTML = `
-        <img class="layer-thumb" src="${layer.thumbDataUrl}" alt="">
-        <div class="layer-meta">
-          <div class="layer-name">${layer.name}</div>
-          <div class="layer-hint">${warn}<span>${layer.processing ? "Processing..." : (layer.visible ? "Visible" : "Hidden")}</span></div>
-        </div>
+        ${topMarkup}
         <div class="layer-actions">
           <button class="layer-btn up" type="button" title="${moveBackTitle}" aria-label="${moveBackTitle}">${moveBackLabel}</button>
           <button class="layer-btn down" type="button" title="${moveForwardTitle}" aria-label="${moveForwardTitle}">${moveForwardLabel}</button>
@@ -1535,49 +2279,15 @@ export function createLayersTool(opts) {
           <button class="layer-tool-btn flipx" type="button" title="Flip horizontally"><img src="./svg/flip_vertical_line.svg" alt=""></button>
           <button class="layer-tool-btn flipy" type="button" title="Flip vertically"><img src="./svg/flip_horizontal_line.svg" alt=""></button>
           <button class="layer-tool-btn shadow ${layer.shadowEnabled ? "active" : ""}" type="button" title="Toggle shadow"><img src="./svg/background_line.svg" alt=""></button>
-          <button class="layer-tool-btn cutout" type="button" title="Background tools"><img src="./svg/scissors_line.svg" alt=""></button>
-          <button class="layer-tool-btn adjust ${layer.tuningOpen ? "active" : ""}" type="button" title="Adjust layer"><img src="./svg/settings_6_line.svg" alt=""></button>
-          <button class="layer-tool-btn reset" type="button" title="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""></button>
+          ${middleToolMarkup}
+          <button class="layer-tool-btn adjust ${layer.tuningOpen ? "active" : ""}" type="button" title="${adjustTitle}"><img src="./svg/settings_6_line.svg" alt=""></button>
+          <button class="layer-tool-btn reset" type="button" title="${resetTitle}"><img src="./svg/history_anticlockwise_line.svg" alt=""></button>
           <button class="layer-tool-btn delete" type="button" title="Delete layer"><img src="./svg/delete_fill.svg" alt=""></button>
           <div class="layer-more"${layer.tuningOpen ? "" : " hidden"}>
             <div class="menu-title-bar layer-more-title-bar">
-              <div class="sidebar-section-title menu-title">Tuning</div>
+              <div class="sidebar-section-title menu-title">${textLayer ? "Text" : "Tuning"}</div>
             </div>
-            <div class="layer-wb">
-            <div class="layer-retro-row">
-              <button class="layer-retro-btn ${layer.retroStyle === "bw" ? "active" : ""}" type="button" data-style="bw" title="B&W preset">B&amp;W</button>
-              <button class="layer-retro-btn ${layer.retroStyle === "sepia" ? "active" : ""}" type="button" data-style="sepia" title="Sepia preset">Sepia</button>
-              <button class="layer-retro-btn ${layer.retroStyle === "postal" ? "active" : ""}" type="button" data-style="postal" title="Postcard preset">Card</button>
-            </div>
-            <label class="layer-wb-row">
-              <span>Rotate</span>
-              <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Bright</span>
-              <input class="layer-wb-slider" data-kind="bright" type="range" min="-30" max="30" value="${Math.round(layer.wbBright || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Contrast</span>
-              <input class="layer-wb-slider" data-kind="contrast" type="range" min="-30" max="30" value="${Math.round(layer.wbContrast || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Saturation</span>
-              <input class="layer-wb-slider" data-kind="sat" type="range" min="-30" max="30" value="${Math.round(layer.wbSat || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Temp</span>
-              <input class="layer-wb-slider" data-kind="temp" type="range" min="-25" max="25" value="${Math.round(layer.wbTemp || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Tint</span>
-              <input class="layer-wb-slider" data-kind="tint" type="range" min="-25" max="25" value="${Math.round(layer.wbTint || 0)}">
-            </label>
-            <label class="layer-wb-row">
-              <span>Blur</span>
-              <input class="layer-wb-slider" data-kind="blur" type="range" min="0" max="${BLUR_LIMIT}" value="${Math.round(layer.wbBlur || 0)}">
-            </label>
-            </div>
+            ${tuningMarkup}
           </div>
         </div>
       `;
@@ -1664,47 +2374,47 @@ export function createLayersTool(opts) {
       return false;
     }
     const insertAt = options?.at === "bottom" ? "bottom" : "top";
-    const fillScale = Math.max(canvas.width / image.width, canvas.height / image.height);
-    layerSeed += 1;
-    const layer = {
-      id: `layer-${layerSeed}`,
-      name: truncateName(name),
-      image,
-      originalImage: image,
-      thumbDataUrl: makeThumbDataUrl(image),
-      processedCanvas: null,
-      wbTemp: 0,
-      wbTint: 0,
-      wbBright: 0,
-      wbSat: 0,
-      wbContrast: 0,
-      wbBlur: 0,
-      retroStyle: "none",
-      retroIntensity: RETRO_DEFAULT_INTENSITY,
-      retroGrain: RETRO_DEFAULT_GRAIN,
-      rotationDeg: 0,
-      processing: false,
-      tuningOpen: false,
-      visible: soloLayerId ? false : true,
-      shadowEnabled: false,
-      x: 0,
-      y: 0,
-      scale: fillScale,
-      baseScale: fillScale,
-      flipX: false,
-      flipY: false,
-      lowResolution: false
-    };
+    const layer = createImageLayer(image, name);
+    refreshWarnings(layer);
+    if (insertAt === "bottom") {
+      state.layers.unshift(layer);
+    } else {
+      const pinnedTextStart = getPinnedTextTopInsertIndex();
+      if (pinnedTextStart >= 0) {
+        state.layers.splice(pinnedTextStart, 0, layer);
+      } else {
+        state.layers.push(layer);
+      }
+    }
+    state.activeLayerId = layer.id;
+    refreshList();
+    render();
+    onStatus?.(`Layer added: ${layer.name}`);
+    return true;
+  }
+
+  function addTextLayer(options = {}) {
+    if (!canAddLayer()) {
+      onStatus?.(`Layer limit reached (${MAX_LAYERS}). Delete one to add another.`);
+      return false;
+    }
+    const insertAt = options?.at === "bottom" ? "bottom" : "top";
+    const layer = createTextLayer(options);
     refreshWarnings(layer);
     if (insertAt === "bottom") {
       state.layers.unshift(layer);
     } else {
       state.layers.push(layer);
     }
+    fitTextLayerToCanvas(layer, { resetPosition: true });
+    layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
     state.activeLayerId = layer.id;
+    state.layers.forEach((entry) => {
+      entry.tuningOpen = entry.id === layer.id;
+    });
     refreshList();
     render();
-    onStatus?.(`Layer added: ${layer.name}`);
+    onStatus?.(`Text layer added: ${layer.name}`);
     return true;
   }
 
@@ -1736,6 +2446,7 @@ export function createLayersTool(opts) {
     layerSeed += 1;
     const mergedLayer = {
       id: `layer-${layerSeed}`,
+      kind: "image",
       name: truncateName(name || "Merged"),
       image: mergedImage,
       originalImage: mergedImage,
@@ -1832,12 +2543,30 @@ export function createLayersTool(opts) {
   function fillSelectedLayer() {
     const layer = activeLayer();
     if (!layer) return false;
-    const source = getLayerRenderSource(layer);
+    if (isTextLayer(layer)) {
+      const baseSize = getTextLayerBaseSize(layer, ctx);
+      const angle = (layer.rotationDeg || 0) * Math.PI / 180;
+      const cos = Math.abs(Math.cos(angle));
+      const sin = Math.abs(Math.sin(angle));
+      const bboxW = Math.max(1, baseSize.width * cos + baseSize.height * sin);
+      const bboxH = Math.max(1, baseSize.width * sin + baseSize.height * cos);
+      // Text fill should stay fully visible while using the largest possible scale.
+      const fitScale = Math.min(canvas.width / bboxW, canvas.height / bboxH);
+      const inset = 0.985;
+      layer.scale = Math.max(0.04, fitScale * inset);
+      layer.x = 0;
+      layer.y = 0;
+      refreshWarnings(layer);
+      refreshList();
+      render();
+      return true;
+    }
+    const baseSize = getLayerBaseSize(layer, ctx);
     const angle = (layer.rotationDeg || 0) * Math.PI / 180;
     const cos = Math.abs(Math.cos(angle));
     const sin = Math.abs(Math.sin(angle));
-    const coverScaleX = (canvas.width * cos + canvas.height * sin) / Math.max(1, source.width);
-    const coverScaleY = (canvas.width * sin + canvas.height * cos) / Math.max(1, source.height);
+    const coverScaleX = (canvas.width * cos + canvas.height * sin) / Math.max(1, baseSize.width);
+    const coverScaleY = (canvas.width * sin + canvas.height * cos) / Math.max(1, baseSize.height);
     const overscan = 1.01;
     const fill = Math.max(coverScaleX, coverScaleY) * overscan;
     layer.scale = fill;
@@ -1852,6 +2581,31 @@ export function createLayersTool(opts) {
   function resetSelectedLayer() {
     const layer = activeLayer();
     if (!layer) return false;
+    if (isTextLayer(layer)) {
+      layer.textContent = TEXT_DEFAULTS.content;
+      layer.textFontFamily = TEXT_DEFAULTS.fontFamily;
+      layer.textSize = TEXT_DEFAULTS.size;
+      layer.textColor = TEXT_DEFAULTS.color;
+      layer.textWeight = TEXT_DEFAULTS.weight;
+      layer.textLetterSpacing = TEXT_DEFAULTS.letterSpacing;
+      layer.textLineSpacing = TEXT_DEFAULTS.lineSpacing;
+      layer.textAlign = TEXT_DEFAULTS.align;
+      layer.rotationDeg = 0;
+      layer.flipX = false;
+      layer.flipY = false;
+      layer.shadowEnabled = false;
+      layer.baseScale = 1;
+      layer.scale = 1;
+      layer.x = 0;
+      layer.y = 0;
+      layer.textWrappedLines = null;
+      fitTextLayerToCanvas(layer, { resetPosition: true });
+      layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+      refreshWarnings(layer);
+      refreshList();
+      render();
+      return true;
+    }
     const original = layer.originalImage || layer.image;
     layer.image = original;
     layer.thumbDataUrl = makeThumbDataUrl(original);
@@ -1889,7 +2643,7 @@ export function createLayersTool(opts) {
     if (!layer) return null;
     return {
       name: layer.name,
-      image: layer.image
+      image: layer.image || null
     };
   }
 
@@ -1911,7 +2665,33 @@ export function createLayersTool(opts) {
       const serial = String(index + 1).padStart(2, "0");
       const currentPath = `assets/layers/${serial}-current.png`;
       const originalPath = `assets/layers/${serial}-original.png`;
+      if (isTextLayer(layer)) {
+        layerEntries.push({
+          kind: "text",
+          name: layer.name,
+          visible: !!layer.visible,
+          x: Number(layer.x) || 0,
+          y: Number(layer.y) || 0,
+          scale: Number(layer.scale) || 1,
+          baseScale: Number(layer.baseScale) || 1,
+          rotationDeg: Number(layer.rotationDeg) || 0,
+          flipX: !!layer.flipX,
+          flipY: !!layer.flipY,
+          shadowEnabled: !!layer.shadowEnabled,
+          textContent: normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content),
+          textFontFamily: normalizeTextFontFamily(layer.textFontFamily ?? TEXT_DEFAULTS.fontFamily),
+          textSize: normalizeTextSize(layer.textSize ?? TEXT_DEFAULTS.size),
+          textColor: normalizeHexColor(layer.textColor, TEXT_DEFAULTS.color),
+          textWeight: normalizeTextWeight(layer.textWeight ?? TEXT_DEFAULTS.weight),
+          textLetterSpacing: normalizeTextLetterSpacing(layer.textLetterSpacing ?? TEXT_DEFAULTS.letterSpacing),
+          textLineSpacing: normalizeTextLineSpacing(layer.textLineSpacing ?? TEXT_DEFAULTS.lineSpacing),
+          textAlign: normalizeTextAlign(layer.textAlign ?? TEXT_DEFAULTS.align),
+          textPinTop: layer.textPinTop !== false
+        });
+        continue;
+      }
       layerEntries.push({
+        kind: "image",
         name: layer.name,
         visible: !!layer.visible,
         x: Number(layer.x) || 0,
@@ -1972,18 +2752,54 @@ export function createLayersTool(opts) {
     layerSeed = 0;
     const incomingLayers = Array.isArray(projectState.layers) ? projectState.layers : [];
     incomingLayers.forEach((entry, index) => {
+      if (entry?.kind === "text") {
+        const layer = createTextLayer({
+          name: entry.name || `Text ${index + 1}`,
+          textContent: entry.textContent ?? TEXT_DEFAULTS.content,
+          textFontFamily: entry.textFontFamily ?? TEXT_DEFAULTS.fontFamily,
+          textSize: entry.textSize ?? TEXT_DEFAULTS.size,
+          textColor: entry.textColor || TEXT_DEFAULTS.color,
+          textWeight: entry.textWeight ?? TEXT_DEFAULTS.weight,
+          textLetterSpacing: entry.textLetterSpacing ?? TEXT_DEFAULTS.letterSpacing,
+          textLineSpacing: entry.textLineSpacing ?? TEXT_DEFAULTS.lineSpacing,
+          textAlign: entry.textAlign ?? TEXT_DEFAULTS.align,
+          textPinTop: entry.textPinTop !== false,
+          x: Number.isFinite(Number(entry.x)) ? Number(entry.x) : 0,
+          y: Number.isFinite(Number(entry.y)) ? Number(entry.y) : 0,
+          scale: Number.isFinite(Number(entry.scale)) && Number(entry.scale) > 0.01 ? Number(entry.scale) : 1,
+          baseScale: Number.isFinite(Number(entry.baseScale)) && Number(entry.baseScale) > 0.01 ? Number(entry.baseScale) : 1,
+          rotationDeg: clamp(Number(entry.rotationDeg) || 0, -30, 30),
+          visible: entry.visible !== false,
+          shadowEnabled: !!entry.shadowEnabled,
+          flipX: !!entry.flipX,
+          flipY: !!entry.flipY
+        });
+        layer.x = Number.isFinite(Number(entry.x)) ? Number(entry.x) : 0;
+        layer.y = Number.isFinite(Number(entry.y)) ? Number(entry.y) : 0;
+        layer.scale = Number.isFinite(Number(entry.scale)) && Number(entry.scale) > 0.01 ? Number(entry.scale) : 1;
+        layer.baseScale = Number.isFinite(Number(entry.baseScale)) && Number(entry.baseScale) > 0.01 ? Number(entry.baseScale) : 1;
+        layer.rotationDeg = clamp(Number(entry.rotationDeg) || 0, -30, 30);
+        layer.visible = entry.visible !== false;
+        layer.shadowEnabled = !!entry.shadowEnabled;
+        layer.flipX = !!entry.flipX;
+        layer.flipY = !!entry.flipY;
+        layer.textLetterSpacing = normalizeTextLetterSpacing(entry.textLetterSpacing ?? TEXT_DEFAULTS.letterSpacing);
+        layer.textLineSpacing = normalizeTextLineSpacing(entry.textLineSpacing ?? TEXT_DEFAULTS.lineSpacing);
+        layer.textAlign = normalizeTextAlign(entry.textAlign ?? TEXT_DEFAULTS.align);
+        layer.textPinTop = entry.textPinTop !== false;
+        fitTextLayerToCanvas(layer);
+        layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+        refreshWarnings(layer);
+        state.layers.push(layer);
+        return;
+      }
+
       if (!entry?.currentImage) return;
       const currentImage = entry.currentImage;
       const originalImage = entry.originalImage || currentImage;
       const defaultFill = Math.max(canvas.width / currentImage.width, canvas.height / currentImage.height);
-      layerSeed += 1;
-      const layer = {
-        id: `layer-${layerSeed}`,
-        name: truncateName(entry.name || `Layer ${index + 1}`),
-        image: currentImage,
+      const layer = createImageLayer(currentImage, entry.name || `Layer ${index + 1}`, {
         originalImage,
-        thumbDataUrl: makeThumbDataUrl(currentImage),
-        processedCanvas: null,
         wbTemp: clamp(Number(entry.wbTemp) || 0, -WB_LIMIT, WB_LIMIT),
         wbTint: clamp(Number(entry.wbTint) || 0, -TINT_LIMIT, TINT_LIMIT),
         wbBright: clamp(Number(entry.wbBright) || 0, -BRIGHT_LIMIT, BRIGHT_LIMIT),
@@ -1994,8 +2810,6 @@ export function createLayersTool(opts) {
         retroIntensity: clamp(Number(entry.retroIntensity) || RETRO_DEFAULT_INTENSITY, 0, 100),
         retroGrain: clamp(Number(entry.retroGrain) || RETRO_DEFAULT_GRAIN, 0, 100),
         rotationDeg: clamp(Number(entry.rotationDeg) || 0, -30, 30),
-        processing: false,
-        tuningOpen: false,
         visible: entry.visible !== false,
         shadowEnabled: !!entry.shadowEnabled,
         x: Number.isFinite(Number(entry.x)) ? Number(entry.x) : 0,
@@ -2003,9 +2817,8 @@ export function createLayersTool(opts) {
         scale: Number.isFinite(Number(entry.scale)) && Number(entry.scale) > 0.01 ? Number(entry.scale) : defaultFill,
         baseScale: Number.isFinite(Number(entry.baseScale)) && Number(entry.baseScale) > 0.01 ? Number(entry.baseScale) : defaultFill,
         flipX: !!entry.flipX,
-        flipY: !!entry.flipY,
-        lowResolution: false
-      };
+        flipY: !!entry.flipY
+      });
       rebuildLayerProcessed(layer);
       refreshWarnings(layer);
       state.layers.push(layer);
@@ -2035,33 +2848,11 @@ export function createLayersTool(opts) {
       const lctx = layerCanvas.getContext("2d");
       lctx.imageSmoothingEnabled = true;
       lctx.imageSmoothingQuality = "high";
-      const source = getLayerRenderSource(layer);
-      const drawW = source.width * layer.scale;
-      const drawH = source.height * layer.scale;
-      const cx = layerCanvas.width / 2 + layer.x;
-      const cy = layerCanvas.height / 2 + layer.y;
-      const angle = (layer.rotationDeg || 0) * Math.PI / 180;
-
-      if (layer.shadowEnabled) {
-        const shadow = computeShadowMetrics(drawW, drawH);
-        lctx.save();
-        lctx.translate(cx, cy + shadow.offsetY);
-        lctx.rotate(angle);
-        lctx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-        lctx.globalAlpha = shadow.opacity;
-        lctx.filter = `brightness(0) saturate(0) blur(${shadow.blur}px)`;
-        lctx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
-        lctx.filter = "none";
-        lctx.globalAlpha = 1;
-        lctx.restore();
-      }
-
-      lctx.save();
-      lctx.translate(cx, cy);
-      lctx.rotate(angle);
-      lctx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-      lctx.drawImage(source, -drawW / 2, -drawH / 2, drawW, drawH);
-      lctx.restore();
+      drawLayerToContext(lctx, layer, {
+        centerX: layerCanvas.width / 2,
+        centerY: layerCanvas.height / 2,
+        drawScale: Number(layer.scale) || 1
+      });
       const blob = await canvasToBlob(layerCanvas, "image/png");
       const arr = await blob.arrayBuffer();
       const serial = String(index + 1).padStart(2, "0");
@@ -2097,6 +2888,12 @@ export function createLayersTool(opts) {
     frameCtx.imageSmoothingEnabled = true;
     frameCtx.imageSmoothingQuality = "high";
     const watermarkImage = await loadParallaxWatermark();
+    const parallaxTextRasters = new Map();
+    state.layers.forEach((layer) => {
+      if (!layer.visible || !isTextLayer(layer)) return;
+      const raster = buildTextLayerRasterSource(layer, Number(layer.scale) || 1);
+      if (raster?.source) parallaxTextRasters.set(layer.id, raster);
+    });
 
     const gif = new GifCtor({
       workers: 2,
@@ -2114,7 +2911,7 @@ export function createLayersTool(opts) {
         : t;
       frameCtx.save();
       frameCtx.scale(qualityConfig.scale, qualityConfig.scale);
-      drawLayers(frameCtx, progress, true, motionType, intensity, lockTopLayer);
+      drawLayers(frameCtx, progress, true, motionType, intensity, lockTopLayer, true, parallaxTextRasters);
       frameCtx.restore();
       if (watermarkImage) {
         const markW = clamp(Math.round(frameCanvas.width * 0.13), 54, 128);
@@ -2155,9 +2952,9 @@ export function createLayersTool(opts) {
     for (let index = state.layers.length - 1; index >= 0; index -= 1) {
       const layer = state.layers[index];
       if (!layer.visible) continue;
-      const source = getLayerRenderSource(layer);
-      const drawW = source.width * layer.scale;
-      const drawH = source.height * layer.scale;
+      const draw = getLayerDrawSize(layer, ctx, Number(layer.scale) || 1);
+      const drawW = draw.width;
+      const drawH = draw.height;
       const left = canvas.width / 2 + layer.x - drawW / 2;
       const top = canvas.height / 2 + layer.y - drawH / 2;
       const right = left + drawW;
@@ -2237,7 +3034,28 @@ export function createLayersTool(opts) {
     const layer = layerById(layerId);
     if (!layer) return;
 
+    if (event.target.closest(".layer-text-inline-wrap")) {
+      return;
+    }
+
+    if (event.target.closest(".layer-text-color-preset")) {
+      const preset = event.target.closest(".layer-text-color-preset");
+      if (!isTextLayer(layer)) return;
+      const color = normalizeHexColor(preset.dataset.textColorPreset, TEXT_DEFAULTS.color);
+      layer.textColor = color;
+      layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+      const thumbEl = item.querySelector(".layer-thumb");
+      if (thumbEl) thumbEl.src = layer.thumbDataUrl;
+      const colorInput = item.querySelector(".layer-text-color");
+      if (colorInput) colorInput.value = color;
+      const colorHexInput = item.querySelector(".layer-text-hex");
+      if (colorHexInput) colorHexInput.value = color.toUpperCase();
+      render();
+      return;
+    }
+
     if (event.target.closest(".layer-retro-btn")) {
+      if (isTextLayer(layer)) return;
       const button = event.target.closest(".layer-retro-btn");
       const nextStyle = button.dataset.style || "none";
       state.activeLayerId = layerId;
@@ -2277,6 +3095,10 @@ export function createLayersTool(opts) {
         layer.flipY = !layer.flipY;
       } else if (button.classList.contains("shadow")) {
         layer.shadowEnabled = !layer.shadowEnabled;
+      } else if (button.classList.contains("textalign")) {
+        if (!isTextLayer(layer)) return;
+        layer.textAlign = nextTextAlign(layer.textAlign);
+        layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
       } else if (button.classList.contains("adjust")) {
         const next = !layer.tuningOpen;
         state.layers.forEach(entry => {
@@ -2286,6 +3108,10 @@ export function createLayersTool(opts) {
         render();
         return;
       } else if (button.classList.contains("cutout")) {
+        if (isTextLayer(layer)) {
+          onStatus?.("Background tools are not available for text layers.");
+          return;
+        }
         openLayerBrushEditor(layer).catch((error) => {
           console.error(error);
           onStatus?.("Could not open layer brush editor.");
@@ -2300,14 +3126,21 @@ export function createLayersTool(opts) {
     if (event.target.closest(".layer-btn")) {
       const button = event.target.closest(".layer-btn");
       const index = state.layers.findIndex(entry => entry.id === layerId);
+      let reordered = false;
       if (button.classList.contains("up") && index < state.layers.length - 1) {
         const swap = state.layers[index + 1];
+        if (isTextLayer(layer)) layer.textPinTop = false;
+        if (isTextLayer(swap)) swap.textPinTop = false;
         state.layers[index + 1] = layer;
         state.layers[index] = swap;
+        reordered = true;
       } else if (button.classList.contains("down") && index > 0) {
         const swap = state.layers[index - 1];
+        if (isTextLayer(layer)) layer.textPinTop = false;
+        if (isTextLayer(swap)) swap.textPinTop = false;
         state.layers[index - 1] = layer;
         state.layers[index] = swap;
+        reordered = true;
       } else if (button.classList.contains("hide")) {
         if (soloLayerId) clearSolo(true);
         layer.visible = !layer.visible;
@@ -2317,6 +3150,9 @@ export function createLayersTool(opts) {
         closeAllTuningPanels({ refresh: false });
         duplicateLayer(layerId);
         return;
+      }
+      if (reordered && isTextLayer(layer)) {
+        layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
       }
       refreshList();
       render();
@@ -2330,7 +3166,93 @@ export function createLayersTool(opts) {
     selectLayer(layerId);
   });
 
+  function handleTextControlInput(event) {
+    const control = event.target.closest("[data-text-kind]");
+    if (!control) return false;
+    const item = event.target.closest(".layer-item");
+    if (!item) return true;
+    const layer = layerById(item.dataset.layerId);
+    if (!layer || !isTextLayer(layer)) return true;
+
+    const kind = control.dataset.textKind;
+    let needsFit = false;
+    if (kind === "content") {
+      layer.textContent = normalizeTextContent(control.value);
+      needsFit = true;
+    } else if (kind === "font") {
+      layer.textFontFamily = normalizeTextFontFamily(control.value);
+      needsFit = true;
+    } else if (kind === "size") {
+      layer.textSize = normalizeTextSize(control.value);
+      needsFit = true;
+    } else if (kind === "letterSpacing") {
+      layer.textLetterSpacing = normalizeTextLetterSpacing(control.value);
+      needsFit = true;
+    } else if (kind === "lineSpacing") {
+      layer.textLineSpacing = normalizeTextLineSpacing(control.value);
+      needsFit = true;
+    } else if (kind === "color") {
+      layer.textColor = normalizeHexColor(control.value, TEXT_DEFAULTS.color);
+    } else if (kind === "colorHex") {
+      const rawHex = String(control.value ?? "");
+      const trimmed = rawHex.trim();
+      const fullHex = /^#?[0-9a-f]{6}$/i.test(trimmed) || /^#?[0-9a-f]{3}$/i.test(trimmed);
+      if (!trimmed.length) {
+        if (event.type === "change") {
+          control.value = normalizeHexColor(layer.textColor, TEXT_DEFAULTS.color).toUpperCase();
+        }
+        return true;
+      }
+      if (!fullHex) {
+        if (event.type === "change") {
+          control.value = normalizeHexColor(layer.textColor, TEXT_DEFAULTS.color).toUpperCase();
+        }
+        return true;
+      }
+      layer.textColor = normalizeHexColor(trimmed, TEXT_DEFAULTS.color);
+      if (event.type === "change") {
+        control.value = layer.textColor.toUpperCase();
+      }
+    } else {
+      return true;
+    }
+    if (needsFit) {
+      fitTextLayerToCanvas(layer);
+      const shouldRewriteContent = kind !== "content" || event.type === "change";
+      if (shouldRewriteContent) {
+        const wrappedText = normalizeTextContent(
+          (layer.textWrappedLines || textLinesForRender(layer.textContent))
+            .map(line => (line === " " ? "" : line))
+            .join("\n")
+        );
+        layer.textContent = wrappedText;
+        const contentInputs = item.querySelectorAll('[data-text-kind="content"]');
+        contentInputs.forEach((inputEl) => {
+          if (inputEl.value !== wrappedText) inputEl.value = wrappedText;
+        });
+      }
+    }
+    layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+    const thumbEl = item.querySelector(".layer-thumb");
+    if (thumbEl) thumbEl.src = layer.thumbDataUrl;
+    const colorInput = item.querySelector(".layer-text-color");
+    if (colorInput && colorInput.value !== layer.textColor) colorInput.value = layer.textColor;
+    const colorHexInput = item.querySelector(".layer-text-hex");
+    const colorHexValue = normalizeHexColor(layer.textColor, TEXT_DEFAULTS.color).toUpperCase();
+    if (colorHexInput && colorHexInput.value !== colorHexValue) colorHexInput.value = colorHexValue;
+    const sizeValueEl = item.querySelector(".layer-text-size-value");
+    if (sizeValueEl) sizeValueEl.textContent = `${Math.round(layer.textSize)}px`;
+    const letterValueEl = item.querySelector(".layer-text-letter-value");
+    if (letterValueEl) letterValueEl.textContent = `${Math.round(layer.textLetterSpacing || 0)}px`;
+    const lineValueEl = item.querySelector(".layer-text-line-value");
+    if (lineValueEl) lineValueEl.textContent = `${Math.round(layer.textLineSpacing || TEXT_DEFAULTS.lineSpacing)}%`;
+    refreshWarnings(layer);
+    render();
+    return true;
+  }
+
   listEl.addEventListener("input", event => {
+    if (handleTextControlInput(event)) return;
     const slider = event.target.closest(".layer-wb-slider");
     if (!slider) return;
     const item = event.target.closest(".layer-item");
@@ -2339,27 +3261,57 @@ export function createLayersTool(opts) {
     if (!layer) return;
 
     if (slider.dataset.kind === "temp") {
+      if (isTextLayer(layer)) return;
       layer.wbTemp = clamp(Number(slider.value) || 0, -WB_LIMIT, WB_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "tint") {
+      if (isTextLayer(layer)) return;
       layer.wbTint = clamp(Number(slider.value) || 0, -TINT_LIMIT, TINT_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "bright") {
+      if (isTextLayer(layer)) return;
       layer.wbBright = clamp(Number(slider.value) || 0, -BRIGHT_LIMIT, BRIGHT_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "sat") {
+      if (isTextLayer(layer)) return;
       layer.wbSat = clamp(Number(slider.value) || 0, -SAT_LIMIT, SAT_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "contrast") {
+      if (isTextLayer(layer)) return;
       layer.wbContrast = clamp(Number(slider.value) || 0, -CONTRAST_LIMIT, CONTRAST_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "blur") {
+      if (isTextLayer(layer)) return;
       layer.wbBlur = clamp(Number(slider.value) || 0, 0, BLUR_LIMIT);
       rebuildLayerProcessed(layer);
     } else if (slider.dataset.kind === "rotate") {
       layer.rotationDeg = clamp(Number(slider.value) || 0, -30, 30);
+      if (isTextLayer(layer)) {
+        fitTextLayerToCanvas(layer);
+        const angleEl = item.querySelector(".layer-text-angle-value");
+        if (angleEl) angleEl.textContent = `${Math.round(layer.rotationDeg || 0)}°`;
+        layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+        const thumbEl = item.querySelector(".layer-thumb");
+        if (thumbEl) thumbEl.src = layer.thumbDataUrl;
+      }
     }
     render();
+  });
+
+  listEl.addEventListener("change", (event) => {
+    handleTextControlInput(event);
+  });
+
+  listEl.addEventListener("focusin", (event) => {
+    const hexInput = event.target.closest(".layer-text-hex");
+    if (!hexInput) return;
+    requestAnimationFrame(() => {
+      try {
+        hexInput.select();
+      } catch (_error) {
+        // Ignore selection errors for non-focusable states.
+      }
+    });
   });
 
   document.addEventListener("click", event => {
@@ -2390,6 +3342,7 @@ export function createLayersTool(opts) {
 
   return {
     addLayerFromImage,
+    addTextLayer,
     clearAllLayers,
     exportPngBlob,
     exportLayersZipBlob,

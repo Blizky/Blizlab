@@ -1,6 +1,6 @@
 import { createEditor } from "./modules/editor.js?v=20260221d";
 import { createCutoutTool } from "./modules/cutout.js?v=20260221d";
-import { createLayersTool } from "./modules/layers.js?v=20260223m";
+import { createLayersTool } from "./modules/layers.js?v=20260223o";
 import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
 import { APP_VERSION } from "./modules/version.js";
 
@@ -109,6 +109,7 @@ const layersBgHexInput = document.getElementById("layersBgHexInput");
 const btnLayersBgTransparent = document.getElementById("btnLayersBgTransparent");
 const btnLayersBgApply = document.getElementById("btnLayersBgApply");
 const btnLayersAdd = document.getElementById("btnLayersAdd");
+const btnLayersAddText = document.getElementById("btnLayersAddText");
 const btnLayersAddBottom = document.getElementById("btnLayersAddBottom");
 const layersCountText = document.getElementById("layersCountText");
 const btnMergeVisibleLayers = document.getElementById("btnMergeVisibleLayers");
@@ -1216,6 +1217,7 @@ function syncLayersActionButtons() {
   if (parallaxMotionType) parallaxMotionType.disabled = !canParallax;
   if (parallaxLockTop) parallaxLockTop.disabled = !canParallax;
   if (btnLayersAdd) btnLayersAdd.disabled = !canAddLayer;
+  if (btnLayersAddText) btnLayersAddText.disabled = !canAddLayer;
   if (btnLayersAddBottom) btnLayersAddBottom.disabled = !canAddLayer;
   if (btnLayersHideAll) {
     btnLayersHideAll.disabled = !hasLayers;
@@ -1767,6 +1769,23 @@ btnLayersAdd?.addEventListener("click", () => {
   fileInput.click();
 });
 
+btnLayersAddText?.addEventListener("click", () => {
+  setMode("layers");
+  if (!layers?.getCanAddLayer?.()) {
+    const max = layers?.getMaxLayers?.() || 5;
+    setStatus(`Layer limit reached (${max}). Delete one to add another.`);
+    showLayerLimitPopup();
+    return;
+  }
+  const added = layers.addTextLayer?.({
+    name: "Text",
+    textContent: "Add text"
+  });
+  if (added) {
+    setStatus("Text layer added. Use the tuning icon for font, size, and color.");
+  }
+});
+
 btnLayersAddBottom?.addEventListener("click", () => {
   setMode("layers");
   pendingLayersInsertAt = "bottom";
@@ -1889,9 +1908,11 @@ async function saveProjectToBlz() {
         ratio: layersState.ratio,
         canvasDefinition: layersState.canvasDefinition,
         background: layersState.background || null,
+        canvasBackground: layersState.background || null,
         activeLayerIndex: layersState.activeLayerIndex,
         layers: layersState.layers
-      }
+      },
+      layersBackground: layersState.background || null
     };
 
     zip.file("manifest.json", JSON.stringify(manifest, null, 2));
@@ -1907,6 +1928,16 @@ async function saveProjectToBlz() {
     console.error(err);
     setStatus("Could not save project.");
   }
+}
+
+function isTextLayerManifestEntry(layer) {
+  if (!layer || typeof layer !== "object") return false;
+  if (layer.kind === "text" || layer.type === "text") return true;
+  if (typeof layer.textContent === "string") return true;
+  if (typeof layer.textFontFamily === "string" && layer.textFontFamily.length) return true;
+  if (typeof layer.textColor === "string" && layer.textColor.length) return true;
+  if (Number.isFinite(Number(layer.textSize))) return true;
+  return false;
 }
 
 async function openProjectFromBlz(file) {
@@ -1965,26 +1996,52 @@ async function openProjectFromBlz(file) {
     const cutoutPath = manifest.source?.cutoutImage || "";
     cutoutImage = await loadImageFromZipAsset(zip, cutoutPath);
 
-    const layersManifest = manifest.layers || {};
-    const layerDefs = Array.isArray(layersManifest.layers) ? layersManifest.layers : [];
+    const layersManifestRaw = manifest.layers || manifest.layersState || {};
+    const layersManifest = Array.isArray(layersManifestRaw) ? {} : layersManifestRaw;
+    const layerDefs = Array.isArray(layersManifestRaw)
+      ? layersManifestRaw
+      : (
+        Array.isArray(layersManifest.layers)
+          ? layersManifest.layers
+          : (Array.isArray(manifest.layerEntries) ? manifest.layerEntries : [])
+      );
     const hydratedLayers = [];
     for (const layer of layerDefs) {
-      const currentImage = await loadImageFromZipAsset(zip, layer.currentImage);
+      if (isTextLayerManifestEntry(layer)) {
+        hydratedLayers.push({
+          ...layer,
+          kind: "text"
+        });
+        continue;
+      }
+      const currentImagePath = String(layer?.currentImage || layer?.image || layer?.imagePath || "");
+      if (!currentImagePath) continue;
+      const currentImage = await loadImageFromZipAsset(zip, currentImagePath);
       if (!currentImage) continue;
-      const originalImage = await loadImageFromZipAsset(zip, layer.originalImage);
+      const originalImagePath = String(layer?.originalImage || layer?.sourceImage || currentImagePath);
+      const originalImage = await loadImageFromZipAsset(zip, originalImagePath);
       hydratedLayers.push({
         ...layer,
+        kind: "image",
         currentImage,
         originalImage: originalImage || currentImage
       });
     }
+    const layersBackground = (
+      layersManifest.background
+      || layersManifest.canvasBackground
+      || manifest.layersBackground
+      || manifest.canvasBackground
+      || null
+    );
     layers.importProjectState({
-      ratio: layersManifest.ratio,
-      canvasDefinition: layersManifest.canvasDefinition,
-      background: layersManifest.background || null,
+      ratio: layersManifest.ratio || layersManifest.canvasRatio,
+      canvasDefinition: layersManifest.canvasDefinition || layersManifest.definition,
+      background: layersBackground,
       activeLayerIndex: layersManifest.activeLayerIndex,
       layers: hydratedLayers
     });
+    syncLayersBackgroundMenuInputs();
 
     editor.applyProjectState?.(manifest.editor || {});
     cutout.applyProjectState?.(manifest.cutout || {});
