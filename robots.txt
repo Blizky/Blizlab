@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /svg/index.html
+
+Sitemap: https://blizlab.com/sitemap.xml

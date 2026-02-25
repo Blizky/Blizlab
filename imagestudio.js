@@ -1,6 +1,6 @@
 import { createEditor } from "./modules/editor.js?v=20260221d";
 import { createCutoutTool } from "./modules/cutout.js?v=20260221d";
-import { createLayersTool } from "./modules/layers.js?v=20260223o";
+import { createLayersTool } from "./modules/layers.js?v=20260223s";
 import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
 import { APP_VERSION } from "./modules/version.js";
 
@@ -10,12 +10,14 @@ const statusPill = document.getElementById("statusPill");
 const fileInput = document.getElementById("fileInput");
 const projectFileInput = document.getElementById("projectFileInput");
 const pasteImageBtn = document.getElementById("pasteImageBtn");
+const btnNewProject = document.getElementById("btnNewProject");
 const fileNameText = document.getElementById("fileNameText");
 const projectSectionTitle = document.getElementById("projectSectionTitle");
 const btnSaveProject = document.getElementById("btnSaveProject");
 const btnOpenProject = document.getElementById("btnOpenProject");
 const exportMenuWrap = document.getElementById("exportMenuWrap");
 const downloadEditorBtn = document.getElementById("downloadEditorBtn");
+const downloadEditorJpgBtn = document.getElementById("downloadEditorJpgBtn");
 const sidePanel = document.getElementById("sidePanel");
 const sidebarCollapseBtn = document.getElementById("sidebarCollapseBtn");
 const btnQuickUpload = document.getElementById("btnQuickUpload");
@@ -28,11 +30,14 @@ const canvasOrientationButtons = Array.from(document.querySelectorAll("#canvasOr
 const definitionButtons = Array.from(document.querySelectorAll("#definitionChips .chip-btn"));
 const upscaleLowResToggle = document.getElementById("upscaleLowResToggle");
 const downscaleImportsToggle = document.getElementById("downscaleImportsToggle");
+const restoreLastProjectToggle = document.getElementById("restoreLastProjectToggle");
+const jpgQualitySelect = document.getElementById("jpgQualitySelect");
 const aboutPanel = document.getElementById("appAboutPanel");
 const aboutToggleBtn = document.getElementById("aboutToggleBtn");
 const aboutStartBtn = document.getElementById("aboutStartBtn");
 const moreToggleBtn = document.getElementById("moreToggleBtn");
 const moreMenu = document.getElementById("moreMenu");
+const btnMoreMenuClose = document.getElementById("btnMoreMenuClose");
 const settingsVersionText = document.getElementById("settingsVersionText");
 const logoBoltBtn = document.getElementById("logoBoltBtn");
 const logoSparks = document.getElementById("logoSparks");
@@ -104,10 +109,12 @@ const layersOverlayMsg = document.getElementById("layersOverlayMsg");
 const btnLayersHideAll = document.getElementById("btnLayersHideAll");
 const btnLayersBackgroundMenu = document.getElementById("btnLayersBackgroundMenu");
 const layersBackgroundMenu = document.getElementById("layersBackgroundMenu");
+const layersBgColorPresets = Array.from(document.querySelectorAll("[data-bg-color-preset]"));
 const layersBgColorInput = document.getElementById("layersBgColorInput");
 const layersBgHexInput = document.getElementById("layersBgHexInput");
 const btnLayersBgTransparent = document.getElementById("btnLayersBgTransparent");
 const btnLayersBgApply = document.getElementById("btnLayersBgApply");
+const btnLayersBgClose = document.getElementById("btnLayersBgClose");
 const btnLayersAdd = document.getElementById("btnLayersAdd");
 const btnLayersAddText = document.getElementById("btnLayersAddText");
 const btnLayersAddBottom = document.getElementById("btnLayersAddBottom");
@@ -131,6 +138,17 @@ const parallaxPreviewOverlay = document.getElementById("parallaxPreviewOverlay")
 const parallaxPreviewImage = document.getElementById("parallaxPreviewImage");
 const btnSaveParallaxGif = document.getElementById("btnSaveParallaxGif");
 const btnCloseParallaxPreview = document.getElementById("btnCloseParallaxPreview");
+const confirmOverlay = document.getElementById("confirmOverlay");
+const confirmDialogTitle = document.getElementById("confirmDialogTitle");
+const confirmDialogMessage = document.getElementById("confirmDialogMessage");
+const confirmDialogOptions = document.getElementById("confirmDialogOptions");
+const confirmDontShowAgainToggle = document.getElementById("confirmDontShowAgainToggle");
+const confirmDontShowAgainLabel = document.getElementById("confirmDontShowAgainLabel");
+const btnConfirmCancel = document.getElementById("btnConfirmCancel");
+const btnConfirmAccept = document.getElementById("btnConfirmAccept");
+const supportOverlay = document.getElementById("supportOverlay");
+const btnSupportClose = document.getElementById("btnSupportClose");
+const btnSupportDismissForever = document.getElementById("btnSupportDismissForever");
 
 let currentMode = "layers";
 let sourceFileName = "";
@@ -140,12 +158,15 @@ let layers = null;
 let isParallaxExporting = false;
 let cutoutHasContext = false;
 let cutoutBgMode = "checker";
-const PARALLAX_EXPORT_LABEL = "Create Parallax Animation";
+const PARALLAX_EXPORT_LABEL = "Create GIF animation";
 const CANVAS_DEFINITION_KEY = "retrocutCanvasDefinition";
 const UPSCALE_LOW_RES_KEY = "retrocutUpscaleLowRes";
 const DOWNSCALE_IMPORTS_KEY = "retrocutDownscaleImports";
+const RESTORE_LAST_PROJECT_KEY = "blizlabRestoreLastProject";
 const ABOUT_SEEN_KEY = "retrocutAboutSeen";
 const MOBILE_BLOCKER_DISMISSED_KEY = "retrocutMobileBlockerDismissed";
+const MOBILE_BLOCKER_QUERY = "(max-width: 900px) and (pointer: coarse)";
+const SEARCH_BOT_UA_RE = /googlebot|adsbot-google|bingbot|slurp|duckduckbot|baiduspider|yandexbot|applebot|facebookexternalhit|twitterbot|linkedinbot|discordbot/i;
 const CANVAS_DEFINITION_SET = new Set(["sd", "hd", "4k"]);
 const PROJECT_SCHEMA_VERSION = 1;
 const PROJECT_FILE_EXT = ".blz";
@@ -156,6 +177,22 @@ const PROJECT_OPEN_READY_MSG = "blizlab-open-project-ready";
 const PROJECT_OPEN_PAYLOAD_MSG = "blizlab-open-project-payload";
 const PROJECT_OPEN_ACK_MSG = "blizlab-open-project-ack";
 const PROJECT_OPEN_HANDOFF_TIMEOUT_MS = 15000;
+const MERGE_LAYERS_CONFIRM_HIDE_KEY = "blizlabHideMergeLayersConfirm";
+const JPG_QUALITY_KEY = "blizlabJpgQuality";
+const JPG_QUALITY_SET = new Set(["high", "medium", "low"]);
+const JPG_QUALITY_VALUES = {
+  high: 0.9,
+  medium: 0.8,
+  low: 0.6
+};
+const SUPPORT_PROMPT_SAVE_COUNT_KEY = "blizlabSupportPromptSaveCount";
+const SUPPORT_PROMPT_SUPPRESSED_KEY = "blizlabSupportPromptSuppressed";
+const SUPPORT_PROMPT_TRIGGER_INTERVAL = 10;
+const AUTOSAVE_DB_NAME = "blizlabAutosave";
+const AUTOSAVE_DB_VERSION = 1;
+const AUTOSAVE_STORE_NAME = "projects";
+const AUTOSAVE_RECORD_KEY = "lastProject";
+const AUTOSAVE_DEBOUNCE_MS = 1400;
 const CANVAS_DEFINITION_SCALES = {
   sd: 0.5,
   hd: 1,
@@ -192,8 +229,10 @@ let lockedRetroOrientation = null;
 let canvasDefinition = "sd";
 let canvasFormat = "43";
 let canvasOrientation = "horizontal";
-let upscaleLowResEnabled = false;
+let upscaleLowResEnabled = true;
 let downscaleImportsEnabled = true;
+let restoreLastProjectEnabled = true;
+let jpgQualityPreset = "medium";
 let pendingLayersInsertAt = "top";
 let currentProjectName = "";
 let heroSceneIndex = 0;
@@ -203,6 +242,13 @@ let incomingProjectOpenRequestId = readIncomingProjectOpenRequestId();
 let layersBackgroundMenuOpen = false;
 let sidebarManualCollapsed = false;
 let sidebarAutoCollapseActive = false;
+let confirmDialogResolve = null;
+let confirmDialogFocusReturnEl = null;
+let confirmDialogDontShowAgain = false;
+let autoSaveTimer = 0;
+let autoSaveInFlight = false;
+let autoSaveQueued = false;
+let autoSaveDbPromise = null;
 const sidebarAutoCollapseMedia = window.matchMedia?.(SIDEBAR_AUTO_COLLAPSE_QUERY) || null;
 
 function setStatus(text) {
@@ -238,6 +284,21 @@ function formatProjectTitle(name = "") {
   if (!trimmed) return PROJECT_TITLE_FALLBACK;
   if (trimmed.length <= PROJECT_TITLE_MAX) return trimmed;
   return `${trimmed.slice(0, PROJECT_TITLE_MAX - 1)}…`;
+}
+
+async function convertBlobToJpegBlob(sourceBlob, quality = JPG_QUALITY_VALUES.medium) {
+  const image = await loadImageFromBlob(sourceBlob);
+  const width = Math.max(1, Math.round(image.naturalWidth || image.width || 1));
+  const height = Math.max(1, Math.round(image.naturalHeight || image.height || 1));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not create JPEG export canvas.");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(image, 0, 0, width, height);
+  return canvasToBlob(canvas, "image/jpeg", quality);
 }
 
 function updateProjectSectionTitle() {
@@ -293,8 +354,19 @@ function dismissMobileBlocker({ persist = true } = {}) {
   }
 }
 
+function shouldShowMobileBlocker() {
+  const isSmallTouchViewport = window.matchMedia?.(MOBILE_BLOCKER_QUERY)?.matches;
+  if (!isSmallTouchViewport) return false;
+  const userAgent = navigator.userAgent || "";
+  return !SEARCH_BOT_UA_RE.test(userAgent);
+}
+
 function initMobileBlocker() {
   if (!mobileBlocker) return;
+  if (!shouldShowMobileBlocker()) {
+    dismissMobileBlocker({ persist: false });
+    return;
+  }
   const dismissed = (() => {
     try {
       return sessionStorage.getItem(MOBILE_BLOCKER_DISMISSED_KEY) === "1";
@@ -302,7 +374,12 @@ function initMobileBlocker() {
       return false;
     }
   })();
-  if (dismissed) dismissMobileBlocker({ persist: false });
+  if (dismissed) {
+    dismissMobileBlocker({ persist: false });
+    return;
+  }
+  mobileBlocker.hidden = false;
+  mobileBlocker.setAttribute("aria-hidden", "false");
 }
 
 async function imageLikeToPngBlob(imageLike) {
@@ -516,6 +593,285 @@ function readDownscaleImportsSetting() {
   return true;
 }
 
+function readRestoreLastProjectSetting() {
+  const stored = localStorage.getItem(RESTORE_LAST_PROJECT_KEY);
+  if (stored === "0") return false;
+  return true;
+}
+
+function applyRestoreLastProjectSetting(enabled, { persist = true } = {}) {
+  restoreLastProjectEnabled = !!enabled;
+  if (restoreLastProjectToggle) {
+    restoreLastProjectToggle.checked = restoreLastProjectEnabled;
+  }
+  if (persist) {
+    localStorage.setItem(RESTORE_LAST_PROJECT_KEY, restoreLastProjectEnabled ? "1" : "0");
+  }
+}
+
+function getAutoSaveDb() {
+  if (autoSaveDbPromise) return autoSaveDbPromise;
+  if (!("indexedDB" in globalThis)) return Promise.resolve(null);
+  autoSaveDbPromise = new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(AUTOSAVE_DB_NAME, AUTOSAVE_DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(AUTOSAVE_STORE_NAME)) {
+          db.createObjectStore(AUTOSAVE_STORE_NAME);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => {
+        console.error(request.error);
+        resolve(null);
+      };
+    } catch (error) {
+      console.error(error);
+      resolve(null);
+    }
+  });
+  return autoSaveDbPromise;
+}
+
+async function readLastAutoSavedProject() {
+  const db = await getAutoSaveDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(AUTOSAVE_STORE_NAME, "readonly");
+      const store = tx.objectStore(AUTOSAVE_STORE_NAME);
+      const request = store.get(AUTOSAVE_RECORD_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => {
+        console.error(request.error);
+        resolve(null);
+      };
+      tx.onerror = () => resolve(null);
+    } catch (error) {
+      console.error(error);
+      resolve(null);
+    }
+  });
+}
+
+async function writeLastAutoSavedProject(record) {
+  const db = await getAutoSaveDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(AUTOSAVE_STORE_NAME, "readwrite");
+      const store = tx.objectStore(AUTOSAVE_STORE_NAME);
+      store.put(record, AUTOSAVE_RECORD_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => {
+        console.error(tx.error);
+        resolve(false);
+      };
+    } catch (error) {
+      console.error(error);
+      resolve(false);
+    }
+  });
+}
+
+async function clearLastAutoSavedProject() {
+  const db = await getAutoSaveDb();
+  if (!db) return false;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(AUTOSAVE_STORE_NAME, "readwrite");
+      const store = tx.objectStore(AUTOSAVE_STORE_NAME);
+      store.delete(AUTOSAVE_RECORD_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => {
+        console.error(tx.error);
+        resolve(false);
+      };
+    } catch (error) {
+      console.error(error);
+      resolve(false);
+    }
+  });
+}
+
+async function buildProjectArchiveBlob(projectName = "") {
+  const ZipCtor = globalThis.JSZip;
+  if (!ZipCtor) throw new Error("ZIP library not loaded.");
+  const hasLayers = !!layers?.getHasLayers?.();
+  if (!hasLayers) throw new Error("Add at least one layer to save project.");
+
+  const safeProjectName = sanitizeProjectName(
+    projectName || currentProjectName || sourceFileName || "blizlab-project"
+  );
+  const zip = new ZipCtor();
+  const layersState = await layers.exportProjectState();
+
+  for (const asset of layersState.assets) {
+    zip.file(asset.path, asset.blob);
+  }
+
+  let sourceImagePath = null;
+  let cutoutImagePath = null;
+  if (sourceImage) {
+    sourceImagePath = "assets/source/source-image.png";
+    const sourceBlob = await imageLikeToPngBlob(sourceImage);
+    if (sourceBlob) zip.file(sourceImagePath, sourceBlob);
+  }
+  if (cutoutImage) {
+    cutoutImagePath = "assets/source/cutout-image.png";
+    const cutoutBlob = await imageLikeToPngBlob(cutoutImage);
+    if (cutoutBlob) zip.file(cutoutImagePath, cutoutBlob);
+  }
+
+  const manifest = {
+    schemaVersion: PROJECT_SCHEMA_VERSION,
+    app: "blizlab-retrocut",
+    savedAt: new Date().toISOString(),
+    projectName: safeProjectName,
+    settings: getCurrentProjectSettings(),
+    source: {
+      fileName: sourceFileName || "",
+      sourceImage: sourceImagePath,
+      cutoutImage: cutoutImagePath
+    },
+    editor: editor.getProjectState?.() || {},
+    cutout: cutout.getProjectState?.() || {},
+    layers: {
+      ratio: layersState.ratio,
+      canvasDefinition: layersState.canvasDefinition,
+      background: layersState.background || null,
+      canvasBackground: layersState.background || null,
+      activeLayerIndex: layersState.activeLayerIndex,
+      layers: layersState.layers
+    },
+    layersBackground: layersState.background || null
+  };
+
+  zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+  const blob = await zip.generateAsync({
+    type: "blob",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 }
+  });
+
+  return {
+    blob,
+    projectName: safeProjectName
+  };
+}
+
+async function persistLastProjectAutoSave() {
+  if (!restoreLastProjectEnabled) return;
+  if (!layers?.getHasLayers?.()) return;
+  if (autoSaveInFlight) {
+    autoSaveQueued = true;
+    return;
+  }
+  autoSaveInFlight = true;
+  try {
+    const projectName = sanitizeProjectName(currentProjectName || sourceFileName || "blizlab-project");
+    const snapshot = await buildProjectArchiveBlob(projectName);
+    await writeLastAutoSavedProject({
+      projectName: snapshot.projectName,
+      blob: snapshot.blob,
+      savedAt: Date.now()
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    autoSaveInFlight = false;
+    if (autoSaveQueued) {
+      autoSaveQueued = false;
+      scheduleProjectAutoSave();
+    }
+  }
+}
+
+function scheduleProjectAutoSave({ immediate = false } = {}) {
+  if (!restoreLastProjectEnabled) return;
+  if (!layers?.getHasLayers?.()) return;
+  if (autoSaveTimer) {
+    window.clearTimeout(autoSaveTimer);
+    autoSaveTimer = 0;
+  }
+  if (immediate) {
+    persistLastProjectAutoSave();
+    return;
+  }
+  autoSaveTimer = window.setTimeout(() => {
+    autoSaveTimer = 0;
+    persistLastProjectAutoSave();
+  }, AUTOSAVE_DEBOUNCE_MS);
+}
+
+function clearSourceWorkspaceState() {
+  sourceImage = null;
+  sourceFileName = "";
+  cutoutImage = null;
+  fileNameText.textContent = "No file selected.";
+  editor.clearImage?.();
+  cutout.clearImage?.();
+  cutout.setReferenceBackground(null);
+  setCutoutContextAvailability(false);
+  setCutoutPreviewBackground("checker");
+  setButtonsForImageLoaded(false);
+}
+
+async function startNewProject() {
+  const hasWork = !!sourceImage || !!cutoutImage || !!layers?.getHasLayers?.();
+  if (hasWork) {
+    const confirmed = await showConfirmDialog({
+      title: "New Project",
+      message: "Start a new project? Current unsaved changes will be cleared.",
+      acceptLabel: "New Project",
+      cancelLabel: "Cancel"
+    });
+    if (!confirmed) return;
+  }
+  layers?.clearAllLayers?.();
+  syncLayersBackgroundMenuInputs();
+  setCurrentProjectName("");
+  setRetroOrientationLock(null);
+  clearSourceWorkspaceState();
+  setMode("layers");
+  await clearLastAutoSavedProject();
+  setStatus("New project started.");
+}
+
+async function restoreLastAutoSavedProjectIfEnabled() {
+  if (!restoreLastProjectEnabled) return false;
+  if (incomingProjectOpenRequestId) return false;
+  const snapshot = await readLastAutoSavedProject();
+  if (!snapshot?.blob) return false;
+  const filename = buildProjectDownloadName(snapshot.projectName || "blizlab-project");
+  const autoSavedFile = new File([snapshot.blob], filename, { type: "application/zip" });
+  const restored = await openProjectFromBlz(autoSavedFile);
+  if (restored) {
+    setStatus(`Restored last project: ${sanitizeProjectName(snapshot.projectName || "blizlab-project")}.`);
+  }
+  return restored;
+}
+
+function readJpgQualityPreset() {
+  const stored = localStorage.getItem(JPG_QUALITY_KEY);
+  return JPG_QUALITY_SET.has(stored) ? stored : "medium";
+}
+
+function getJpgQualityValue(preset = jpgQualityPreset) {
+  return JPG_QUALITY_VALUES[preset] || JPG_QUALITY_VALUES.medium;
+}
+
+function applyJpgQualityPreset(nextPreset, { persist = true } = {}) {
+  jpgQualityPreset = JPG_QUALITY_SET.has(nextPreset) ? nextPreset : "medium";
+  if (jpgQualitySelect) {
+    jpgQualitySelect.value = jpgQualityPreset;
+  }
+  if (persist) {
+    localStorage.setItem(JPG_QUALITY_KEY, jpgQualityPreset);
+  }
+}
+
 function syncDefinitionUI() {
   definitionButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.definition === canvasDefinition);
@@ -530,6 +886,7 @@ function applyCanvasDefinition(nextDefinition, { persist = true } = {}) {
   syncDefinitionUI();
   editor.setCanvasDefinition(canvasDefinition);
   layers?.setCanvasDefinition?.(canvasDefinition);
+  scheduleProjectAutoSave();
 }
 
 function setSidebarCollapsed(collapsed) {
@@ -769,6 +1126,18 @@ function initLayersBackgroundMenu() {
     applyLayersSolidBackground(nextColor);
   });
 
+  if (layersBgColorPresets.length > 0) {
+    layersBgColorPresets.forEach((preset) => {
+      preset.addEventListener("click", () => {
+        const nextColor = normalizeHexColor(preset.dataset.bgColorPreset, "");
+        if (!nextColor) return;
+        if (layersBgColorInput) layersBgColorInput.value = nextColor;
+        if (layersBgHexInput) layersBgHexInput.value = nextColor.toUpperCase();
+        applyLayersSolidBackground(nextColor);
+      });
+    });
+  }
+
   btnLayersBgApply?.addEventListener("click", () => {
     const nextColor = layersBgHexInput?.value || layersBgColorInput?.value || "";
     applyLayersSolidBackground(nextColor);
@@ -776,6 +1145,12 @@ function initLayersBackgroundMenu() {
 
   btnLayersBgTransparent?.addEventListener("click", () => {
     clearLayersBackground();
+  });
+
+  btnLayersBgClose?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setLayersBackgroundMenuOpen(false);
   });
 
   document.addEventListener("pointerdown", (event) => {
@@ -906,6 +1281,7 @@ function editorPresetFromCanvasSelection(format, orientation) {
   if (format === "11") return "square11";
   if (format === "45") return orientation === "vertical" ? "portrait45" : "landscape54";
   if (format === "169") return orientation === "vertical" ? "portrait916" : "landscape169";
+  if (format === "219") return orientation === "vertical" ? "portrait921" : "landscape219";
   return orientation === "vertical" ? "portrait34" : "landscape43";
 }
 
@@ -915,6 +1291,8 @@ function canvasSelectionFromEditorPreset(preset) {
   if (preset === "portrait45") return { format: "45", orientation: "vertical" };
   if (preset === "landscape169") return { format: "169", orientation: "horizontal" };
   if (preset === "portrait916") return { format: "169", orientation: "vertical" };
+  if (preset === "landscape219") return { format: "219", orientation: "horizontal" };
+  if (preset === "portrait921") return { format: "219", orientation: "vertical" };
   if (preset === "portrait34") return { format: "43", orientation: "vertical" };
   return { format: "43", orientation: "horizontal" };
 }
@@ -951,6 +1329,7 @@ function applyCanvasAspectFromSettings() {
   editor.setOrientation(editorPreset);
   layers?.setRatio?.(layersRatioFromEditorPreset(editorPreset));
   syncCanvasSettingsUI();
+  scheduleProjectAutoSave();
 }
 
 function setCanvasAspectPreset(editorPreset) {
@@ -977,6 +1356,7 @@ function getCurrentProjectSettings() {
     lockedRetroOrientation,
     upscaleLowResEnabled,
     downscaleImportsEnabled,
+    jpgQualityPreset,
     cutoutBgMode,
     currentMode
   };
@@ -988,7 +1368,7 @@ function applyProjectSettings(settings = {}) {
     : canvasDefinition;
   applyCanvasDefinition(nextCanvasDefinition);
 
-  const nextFormat = ["11", "43", "45", "169"].includes(settings.canvasFormat)
+  const nextFormat = ["11", "43", "45", "169", "219"].includes(settings.canvasFormat)
     ? settings.canvasFormat
     : canvasFormat;
   const nextOrientation = ["horizontal", "vertical"].includes(settings.canvasOrientation)
@@ -1005,6 +1385,11 @@ function applyProjectSettings(settings = {}) {
   downscaleImportsEnabled = settings.downscaleImportsEnabled !== false;
   if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEnabled;
   localStorage.setItem(DOWNSCALE_IMPORTS_KEY, downscaleImportsEnabled ? "1" : "0");
+
+  const nextJpgQualityPreset = JPG_QUALITY_SET.has(settings.jpgQualityPreset)
+    ? settings.jpgQualityPreset
+    : jpgQualityPreset;
+  applyJpgQualityPreset(nextJpgQualityPreset);
 
   setRetroOrientationLock(settings.lockedRetroOrientation || null);
   cutoutBgMode = ["checker", "white", "black", "context"].includes(settings.cutoutBgMode)
@@ -1097,6 +1482,7 @@ function setMode(mode) {
   }
   syncDownloadButton();
   syncLayersActionButtons();
+  scheduleProjectAutoSave();
 }
 
 const editor = createEditor({
@@ -1170,18 +1556,19 @@ layers = createLayersTool({
     if (!layers) return;
     syncDownloadButton();
     syncLayersActionButtons();
+    scheduleProjectAutoSave();
   }
 });
 
 initLayersBackgroundMenu();
 
 function syncDownloadButton() {
-  if (currentMode === "layers") {
-    downloadEditorBtn.disabled = !layers.getHasLayers();
-  } else {
-    downloadEditorBtn.disabled = !editor.getHasImage();
-  }
-  if (btnQuickDownload) btnQuickDownload.disabled = downloadEditorBtn.disabled;
+  const disabled = currentMode === "layers"
+    ? !layers.getHasLayers()
+    : !editor.getHasImage();
+  downloadEditorBtn.disabled = disabled;
+  if (downloadEditorJpgBtn) downloadEditorJpgBtn.disabled = disabled;
+  if (btnQuickDownload) btnQuickDownload.disabled = disabled;
 }
 
 function syncLayersActionButtons() {
@@ -1190,7 +1577,7 @@ function syncLayersActionButtons() {
   const allHidden = hasLayers && !!layers.allLayersHidden?.();
   const layerCount = layers.getLayerCount();
   const visibleLayerCount = layers.getVisibleLayerCount?.() || 0;
-  const maxLayers = layers.getMaxLayers?.() || 5;
+  const maxLayers = layers.getMaxLayers?.() || 10;
   const canParallax = layerCount >= 2;
   const canMergeVisible = visibleLayerCount >= 2;
   const canAddLayer = layers.getCanAddLayer();
@@ -1202,6 +1589,12 @@ function syncLayersActionButtons() {
       : "Need at least 2 visible layers";
   }
   if (btnImportLayersComposition) btnImportLayersComposition.disabled = !hasLayers;
+  if (btnSaveProject) {
+    btnSaveProject.disabled = !hasLayers;
+    btnSaveProject.title = hasLayers
+      ? "Save project"
+      : "Add at least one layer to save project";
+  }
   btnDownloadLayersZip.disabled = !hasLayers;
   if (btnExportParallaxGif) {
     btnExportParallaxGif.disabled = isParallaxExporting || !canParallax;
@@ -1221,10 +1614,20 @@ function syncLayersActionButtons() {
   if (btnLayersAddBottom) btnLayersAddBottom.disabled = !canAddLayer;
   if (btnLayersHideAll) {
     btnLayersHideAll.disabled = !hasLayers;
-    btnLayersHideAll.textContent = allHidden ? "M-" : "M+";
     btnLayersHideAll.title = allHidden ? "Show all layers" : "Hide all layers";
     btnLayersHideAll.setAttribute("aria-label", allHidden ? "Show all layers" : "Hide all layers");
     btnLayersHideAll.classList.toggle("is-active", allHidden);
+    let hideAllIcon = btnLayersHideAll.querySelector("img");
+    if (!hideAllIcon) {
+      hideAllIcon = document.createElement("img");
+      hideAllIcon.alt = "";
+      hideAllIcon.width = 16;
+      hideAllIcon.height = 16;
+      hideAllIcon.setAttribute("aria-hidden", "true");
+      btnLayersHideAll.textContent = "";
+      btnLayersHideAll.appendChild(hideAllIcon);
+    }
+    hideAllIcon.src = allHidden ? "./svg/eye_close_fill.svg" : "./svg/eye_fill.svg";
   }
   if (btnLayersBackgroundMenu) {
     btnLayersBackgroundMenu.disabled = false;
@@ -1242,8 +1645,111 @@ function syncLayersActionButtons() {
 }
 
 function showLayerLimitPopup() {
-  const max = layers?.getMaxLayers?.() || 5;
+  const max = layers?.getMaxLayers?.() || 10;
   window.alert(`Maximum layers reached (${max}). Delete a layer before adding more.`);
+}
+
+function closeSupportPrompt() {
+  if (!supportOverlay || supportOverlay.hidden) return;
+  supportOverlay.hidden = true;
+}
+
+function openSupportPrompt() {
+  if (!supportOverlay) return;
+  supportOverlay.hidden = false;
+  requestAnimationFrame(() => {
+    btnSupportClose?.focus({ preventScroll: true });
+  });
+}
+
+function readSaveActionCount() {
+  const parsed = Number.parseInt(localStorage.getItem(SUPPORT_PROMPT_SAVE_COUNT_KEY) || "0", 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return parsed;
+}
+
+function isSupportPromptSuppressed() {
+  try {
+    return localStorage.getItem(SUPPORT_PROMPT_SUPPRESSED_KEY) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function setSupportPromptSuppressed(value) {
+  try {
+    if (value) {
+      localStorage.setItem(SUPPORT_PROMPT_SUPPRESSED_KEY, "1");
+    } else {
+      localStorage.removeItem(SUPPORT_PROMPT_SUPPRESSED_KEY);
+    }
+  } catch (_) {
+    // Ignore storage failures (private mode / blocked storage).
+  }
+}
+
+function markSaveActionAndMaybeShowSupportPrompt() {
+  if (isSupportPromptSuppressed()) return;
+  try {
+    const nextCount = readSaveActionCount() + 1;
+    localStorage.setItem(SUPPORT_PROMPT_SAVE_COUNT_KEY, String(nextCount));
+    if (nextCount > 0 && nextCount % SUPPORT_PROMPT_TRIGGER_INTERVAL === 0) {
+      openSupportPrompt();
+    }
+  } catch (_) {
+    // Ignore storage failures (private mode / blocked storage).
+  }
+}
+
+function closeConfirmDialog(confirmed = false) {
+  if (!confirmOverlay || confirmOverlay.hidden) return;
+  confirmDialogDontShowAgain = !!confirmDontShowAgainToggle?.checked;
+  confirmOverlay.hidden = true;
+  const resolve = confirmDialogResolve;
+  confirmDialogResolve = null;
+  if (resolve) resolve(confirmed);
+  const focusTarget = confirmDialogFocusReturnEl;
+  confirmDialogFocusReturnEl = null;
+  if (focusTarget && typeof focusTarget.focus === "function") {
+    focusTarget.focus({ preventScroll: true });
+  }
+}
+
+function showConfirmDialog({
+  title = "Confirm action",
+  message = "",
+  acceptLabel = "OK",
+  cancelLabel = "Cancel",
+  showDontAskAgain = false,
+  dontAskAgainLabel = "Don't show this again"
+} = {}) {
+  const fallbackMessage = [title, message].filter(Boolean).join("\n\n") || "Are you sure?";
+  if (!confirmOverlay || !confirmDialogMessage || !btnConfirmCancel || !btnConfirmAccept) {
+    return Promise.resolve(window.confirm(fallbackMessage));
+  }
+  if (confirmDialogResolve) {
+    const previousResolve = confirmDialogResolve;
+    confirmDialogResolve = null;
+    previousResolve(false);
+  }
+  if (confirmDialogTitle) confirmDialogTitle.textContent = title;
+  confirmDialogMessage.textContent = message;
+  btnConfirmAccept.textContent = acceptLabel;
+  btnConfirmCancel.textContent = cancelLabel;
+  confirmDialogDontShowAgain = false;
+  if (confirmDontShowAgainToggle) confirmDontShowAgainToggle.checked = false;
+  if (confirmDialogOptions) confirmDialogOptions.hidden = !showDontAskAgain;
+  if (confirmDontShowAgainLabel && showDontAskAgain) {
+    confirmDontShowAgainLabel.textContent = dontAskAgainLabel || "Don't show this again";
+  }
+  confirmDialogFocusReturnEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  confirmOverlay.hidden = false;
+  requestAnimationFrame(() => {
+    btnConfirmAccept.focus({ preventScroll: true });
+  });
+  return new Promise((resolve) => {
+    confirmDialogResolve = resolve;
+  });
 }
 
 function setParallaxActionLabel(text) {
@@ -1348,7 +1854,7 @@ async function loadNewFile(file) {
 async function addFileAsLayer(file, insertAt = "top") {
   if (!file) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 5;
+    const max = layers.getMaxLayers?.() || 10;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1551,6 +2057,12 @@ moreMenu?.addEventListener("click", (event) => {
   event.stopPropagation();
 });
 
+btnMoreMenuClose?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setMoreMenuOpen(false);
+});
+
 document.addEventListener("click", () => {
   setMoreMenuOpen(false);
 });
@@ -1585,14 +2097,50 @@ canvasOrientationButtons.forEach((button) => {
   });
 });
 
+styleButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    scheduleProjectAutoSave();
+  });
+});
+
+intensitySlider?.addEventListener("input", () => {
+  scheduleProjectAutoSave();
+});
+
+roundnessSlider?.addEventListener("input", () => {
+  scheduleProjectAutoSave();
+});
+
+noiseSlider?.addEventListener("input", () => {
+  scheduleProjectAutoSave();
+});
+
+fillBtn?.addEventListener("click", () => {
+  scheduleProjectAutoSave();
+});
+
 upscaleLowResToggle?.addEventListener("change", () => {
   upscaleLowResEnabled = !!upscaleLowResToggle.checked;
   localStorage.setItem(UPSCALE_LOW_RES_KEY, upscaleLowResEnabled ? "1" : "0");
+  scheduleProjectAutoSave();
 });
 
 downscaleImportsToggle?.addEventListener("change", () => {
   downscaleImportsEnabled = !!downscaleImportsToggle.checked;
   localStorage.setItem(DOWNSCALE_IMPORTS_KEY, downscaleImportsEnabled ? "1" : "0");
+  scheduleProjectAutoSave();
+});
+
+restoreLastProjectToggle?.addEventListener("change", () => {
+  applyRestoreLastProjectSetting(!!restoreLastProjectToggle.checked);
+  if (restoreLastProjectEnabled) {
+    scheduleProjectAutoSave();
+  }
+});
+
+jpgQualitySelect?.addEventListener("change", () => {
+  applyJpgQualityPreset(jpgQualitySelect.value || "medium");
+  scheduleProjectAutoSave();
 });
 
 sidebarCollapseBtn?.addEventListener("click", () => {
@@ -1689,6 +2237,13 @@ btnSaveProject?.addEventListener("click", () => {
   saveProjectToBlz();
 });
 
+btnNewProject?.addEventListener("click", () => {
+  startNewProject().catch((error) => {
+    console.error(error);
+    setStatus("Could not start a new project.");
+  });
+});
+
 btnOpenProject?.addEventListener("click", () => {
   projectFileInput?.click();
 });
@@ -1726,7 +2281,7 @@ btnApplyCutout.addEventListener("click", async () => {
 sendToLayersBtn.addEventListener("click", async () => {
   if (!editor.getHasImage()) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 5;
+    const max = layers.getMaxLayers?.() || 10;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1746,7 +2301,7 @@ sendToLayersBtn.addEventListener("click", async () => {
 btnSendCutoutToLayers.addEventListener("click", async () => {
   if (!sourceImage) return;
   if (!layers.getCanAddLayer()) {
-    const max = layers.getMaxLayers?.() || 5;
+    const max = layers.getMaxLayers?.() || 10;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1772,7 +2327,7 @@ btnLayersAdd?.addEventListener("click", () => {
 btnLayersAddText?.addEventListener("click", () => {
   setMode("layers");
   if (!layers?.getCanAddLayer?.()) {
-    const max = layers?.getMaxLayers?.() || 5;
+    const max = layers?.getMaxLayers?.() || 10;
     setStatus(`Layer limit reached (${max}). Delete one to add another.`);
     showLayerLimitPopup();
     return;
@@ -1808,9 +2363,21 @@ btnMergeVisibleLayers?.addEventListener("click", async () => {
     setStatus("Need at least 2 visible layers to merge.");
     return;
   }
-  const confirmed = window.confirm(
-    `Merge ${visibleLayerCount} visible layers into one layer? The original visible layers will be removed.`
-  );
+  const skipMergeWarning = localStorage.getItem(MERGE_LAYERS_CONFIRM_HIDE_KEY) === "1";
+  let confirmed = true;
+  if (!skipMergeWarning) {
+    confirmed = await showConfirmDialog({
+      title: "Merge Layers",
+      message: `Merging ${visibleLayerCount} layers will replace current layers for a single one. Text will not be editable.`,
+      acceptLabel: "Merge",
+      cancelLabel: "Cancel",
+      showDontAskAgain: true,
+      dontAskAgainLabel: "Don't show this again"
+    });
+    if (confirmed && confirmDialogDontShowAgain) {
+      localStorage.setItem(MERGE_LAYERS_CONFIRM_HIDE_KEY, "1");
+    }
+  }
   if (!confirmed) return;
   try {
     setStatus("Merging visible layers...");
@@ -1849,16 +2416,8 @@ async function importLayersCompositionToRetro() {
 }
 
 async function saveProjectToBlz() {
-  const ZipCtor = globalThis.JSZip;
-  if (!ZipCtor) {
-    setStatus("ZIP library not loaded.");
-    return;
-  }
-
-  const hasSource = !!sourceImage || !!editor.getHasImage?.();
-  const hasLayers = !!layers.getHasLayers?.();
-  if (!hasSource && !hasLayers) {
-    setStatus("Nothing to save yet. Add at least one image or layer.");
+  if (!layers?.getHasLayers?.()) {
+    setStatus("Add at least one layer to save project.");
     return;
   }
 
@@ -1871,59 +2430,12 @@ async function saveProjectToBlz() {
 
   try {
     setStatus("Packing project…");
-    const zip = new ZipCtor();
-    const layersState = await layers.exportProjectState();
-
-    for (const asset of layersState.assets) {
-      zip.file(asset.path, asset.blob);
-    }
-
-    let sourceImagePath = null;
-    let cutoutImagePath = null;
-    if (sourceImage) {
-      sourceImagePath = "assets/source/source-image.png";
-      const sourceBlob = await imageLikeToPngBlob(sourceImage);
-      if (sourceBlob) zip.file(sourceImagePath, sourceBlob);
-    }
-    if (cutoutImage) {
-      cutoutImagePath = "assets/source/cutout-image.png";
-      const cutoutBlob = await imageLikeToPngBlob(cutoutImage);
-      if (cutoutBlob) zip.file(cutoutImagePath, cutoutBlob);
-    }
-
-    const manifest = {
-      schemaVersion: PROJECT_SCHEMA_VERSION,
-      app: "blizlab-retrocut",
-      savedAt: new Date().toISOString(),
-      projectName,
-      settings: getCurrentProjectSettings(),
-      source: {
-        fileName: sourceFileName || "",
-        sourceImage: sourceImagePath,
-        cutoutImage: cutoutImagePath
-      },
-      editor: editor.getProjectState?.() || {},
-      cutout: cutout.getProjectState?.() || {},
-      layers: {
-        ratio: layersState.ratio,
-        canvasDefinition: layersState.canvasDefinition,
-        background: layersState.background || null,
-        canvasBackground: layersState.background || null,
-        activeLayerIndex: layersState.activeLayerIndex,
-        layers: layersState.layers
-      },
-      layersBackground: layersState.background || null
-    };
-
-    zip.file("manifest.json", JSON.stringify(manifest, null, 2));
-    const outBlob = await zip.generateAsync({
-      type: "blob",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 }
-    });
-    downloadBlob(outBlob, buildProjectDownloadName(projectName));
-    setCurrentProjectName(projectName);
-    setStatus(`Project saved: ${buildProjectDownloadName(projectName)}.`);
+    const archive = await buildProjectArchiveBlob(projectName);
+    downloadBlob(archive.blob, buildProjectDownloadName(archive.projectName));
+    setCurrentProjectName(archive.projectName);
+    setStatus(`Project saved: ${buildProjectDownloadName(archive.projectName)}.`);
+    scheduleProjectAutoSave({ immediate: true });
+    markSaveActionAndMaybeShowSupportPrompt();
   } catch (err) {
     console.error(err);
     setStatus("Could not save project.");
@@ -1981,16 +2493,7 @@ async function openProjectFromBlz(file) {
       setCutoutPreviewBackground(cutoutBgMode);
       setButtonsForImageLoaded(true);
     } else {
-      sourceImage = null;
-      sourceFileName = "";
-      cutoutImage = null;
-      fileNameText.textContent = "No file selected.";
-      editor.clearImage?.();
-      cutout.clearImage?.();
-      cutout.setReferenceBackground(null);
-      setCutoutContextAvailability(false);
-      setCutoutPreviewBackground("checker");
-      setButtonsForImageLoaded(false);
+      clearSourceWorkspaceState();
     }
 
     const cutoutPath = manifest.source?.cutoutImage || "";
@@ -2058,6 +2561,7 @@ async function openProjectFromBlz(file) {
     setCurrentProjectName(projectName);
     syncDownloadButton();
     syncLayersActionButtons();
+    scheduleProjectAutoSave();
     setStatus(`Project loaded: ${projectName}.`);
     return true;
   } catch (err) {
@@ -2076,6 +2580,7 @@ btnDownloadLayersZip.addEventListener("click", async () => {
     const zipBlob = await layers.exportLayersZipBlob();
     downloadBlob(zipBlob, "blizlab-layers.zip");
     setStatus("Downloaded layers ZIP (01_blizlab_layer.png format, fixed canvas size).");
+    markSaveActionAndMaybeShowSupportPrompt();
   } catch (err) {
     console.error(err);
     setStatus(err?.message || "Could not export layers ZIP.");
@@ -2148,6 +2653,7 @@ btnExportParallaxGif?.addEventListener("click", async () => {
 btnSaveParallaxGif?.addEventListener("click", () => {
   if (!parallaxPreviewBlob) return;
   downloadBlob(parallaxPreviewBlob, "retrocut-parallax.gif");
+  markSaveActionAndMaybeShowSupportPrompt();
 });
 
 btnCloseParallaxPreview?.addEventListener("click", () => {
@@ -2158,12 +2664,43 @@ btnMobileBlockerContinue?.addEventListener("click", () => {
   dismissMobileBlocker();
 });
 
+btnConfirmCancel?.addEventListener("click", () => {
+  closeConfirmDialog(false);
+});
+
+btnConfirmAccept?.addEventListener("click", () => {
+  closeConfirmDialog(true);
+});
+
+btnSupportClose?.addEventListener("click", () => {
+  closeSupportPrompt();
+});
+
+btnSupportDismissForever?.addEventListener("click", () => {
+  setSupportPromptSuppressed(true);
+  closeSupportPrompt();
+});
+
+confirmOverlay?.addEventListener("click", (event) => {
+  if (event.target === confirmOverlay) closeConfirmDialog(false);
+});
+
+supportOverlay?.addEventListener("click", (event) => {
+  if (event.target === supportOverlay) closeSupportPrompt();
+});
+
 parallaxPreviewOverlay?.addEventListener("click", (event) => {
   if (event.target === parallaxPreviewOverlay) closeParallaxPreview();
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setMoreMenuOpen(false);
+  if (event.key === "Escape" && confirmOverlay && !confirmOverlay.hidden) {
+    closeConfirmDialog(false);
+  }
+  if (event.key === "Escape" && supportOverlay && !supportOverlay.hidden) {
+    closeSupportPrompt();
+  }
   if (event.key === "Escape" && layersBackgroundMenuOpen) {
     setLayersBackgroundMenuOpen(false);
   }
@@ -2172,40 +2709,66 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-downloadEditorBtn.addEventListener("click", async () => {
-  if (currentMode === "layers") {
-    if (!layers.getHasLayers()) return;
-    try {
-      setStatus("Preparing layered export…");
-      const blob = await layers.exportPngBlob();
-      downloadBlob(blob, "retrocut-layers.png");
-      setStatus("Downloaded layered PNG.");
-    } catch (err) {
-      console.error(err);
-      setStatus("Could not export layers.");
-    }
-    return;
-  }
+window.addEventListener("pagehide", () => {
+  scheduleProjectAutoSave({ immediate: true });
+});
 
-  if (!editor.getHasImage()) return;
+async function exportCurrentCompositionPngBlob() {
+  if (currentMode === "layers") {
+    if (!layers.getHasLayers()) return null;
+    return layers.exportPngBlob();
+  }
+  if (!editor.getHasImage()) return null;
+  return editor.exportInnerPngBlob();
+}
+
+function getCurrentCompositionExportName() {
+  if (currentMode === "layers") return "blizlab-layers";
+  const base = (sourceFileName || "blizlab").replace(/\.[^.]+$/, "");
+  return `${base}-blizlab`;
+}
+
+downloadEditorBtn.addEventListener("click", async () => {
+  const inLayersMode = currentMode === "layers";
   try {
-    setStatus("Preparing export…");
-    const blob = await editor.exportInnerPngBlob();
-    const base = (sourceFileName || "retrocut").replace(/\.[^.]+$/, "");
-    downloadBlob(blob, `${base}-retrocut.png`);
-    setStatus("Downloaded PNG.");
+    setStatus(inLayersMode ? "Preparing layered export…" : "Preparing export…");
+    const blob = await exportCurrentCompositionPngBlob();
+    if (!blob) return;
+    downloadBlob(blob, `${getCurrentCompositionExportName()}.png`);
+    setStatus(inLayersMode ? "Downloaded layered PNG." : "Downloaded PNG.");
+    markSaveActionAndMaybeShowSupportPrompt();
   } catch (err) {
     console.error(err);
-    setStatus("Could not export PNG.");
+    setStatus(inLayersMode ? "Could not export layers." : "Could not export PNG.");
+  }
+});
+
+downloadEditorJpgBtn?.addEventListener("click", async () => {
+  const inLayersMode = currentMode === "layers";
+  try {
+    setStatus(inLayersMode ? "Preparing layered JPG export…" : "Preparing JPG export…");
+    const pngBlob = await exportCurrentCompositionPngBlob();
+    if (!pngBlob) return;
+    const jpgBlob = await convertBlobToJpegBlob(pngBlob, getJpgQualityValue());
+    downloadBlob(jpgBlob, `${getCurrentCompositionExportName()}.jpg`);
+    setStatus(inLayersMode ? "Downloaded layered JPG." : "Downloaded JPG.");
+    markSaveActionAndMaybeShowSupportPrompt();
+  } catch (err) {
+    console.error(err);
+    setStatus("Could not export JPG.");
   }
 });
 
 // Init
 canvasDefinition = readCanvasDefinition();
-upscaleLowResEnabled = localStorage.getItem(UPSCALE_LOW_RES_KEY) === "1";
+upscaleLowResEnabled = localStorage.getItem(UPSCALE_LOW_RES_KEY) !== "0";
 downscaleImportsEnabled = readDownscaleImportsSetting();
+restoreLastProjectEnabled = readRestoreLastProjectSetting();
+jpgQualityPreset = readJpgQualityPreset();
 if (upscaleLowResToggle) upscaleLowResToggle.checked = upscaleLowResEnabled;
 if (downscaleImportsToggle) downscaleImportsToggle.checked = downscaleImportsEnabled;
+applyRestoreLastProjectSetting(restoreLastProjectEnabled, { persist: false });
+applyJpgQualityPreset(jpgQualityPreset, { persist: false });
 applyCanvasDefinition(canvasDefinition, { persist: false });
 applyCanvasAspectFromSettings();
 syncCanvasSettingsUI();
@@ -2230,3 +2793,6 @@ initMobileBlocker();
 setMode("layers");
 updateProjectSectionTitle();
 announceProjectOpenReadyIfNeeded();
+restoreLastAutoSavedProjectIfEnabled().catch((error) => {
+  console.error(error);
+});

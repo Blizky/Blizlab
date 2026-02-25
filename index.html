@@ -2,17 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>RetroCut – Offline editor + background removal by Blizlab</title>
+  <title>Blizlab - Multiplane image editor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Blizlab RetroCut is a browser-based image editor for layering, background removal, chroma key cleanup, and GIF export. After first load, core editing works offline in your browser." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="theme-color" content="#0099cc" />
+  <link rel="canonical" href="https://blizlab.com/" />
+  <link rel="alternate" hreflang="en" href="https://blizlab.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Blizlab" />
+  <meta property="og:title" content="RetroCut – Offline editor + background removal by Blizlab" />
+  <meta property="og:description" content="Layer images, remove backgrounds, clean chroma key edges, and export PNG/JPG/GIF in your browser." />
+  <meta property="og:url" content="https://blizlab.com/" />
+  <meta property="og:image" content="https://blizlab.com/assets/images/hero-scene-02.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="RetroCut – Offline editor + background removal by Blizlab" />
+  <meta name="twitter:description" content="Layer images, remove backgrounds, clean chroma key edges, and export PNG/JPG/GIF in your browser." />
+  <meta name="twitter:image" content="https://blizlab.com/assets/images/hero-scene-02.jpg" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Blizlab RetroCut",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web",
+      "url": "https://blizlab.com/",
+      "description": "Browser-based image editor with layers, background removal, chroma key cleanup, and GIF export.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Blizlab",
+        "url": "https://blizlab.com/"
+      }
+    }
+  </script>
 
   <link rel="icon" type="image/svg+xml" href="./assets/svg/fabicon.svg">
-  <link rel="stylesheet" href="retrocut.css?v=20260223x">
+  <link rel="stylesheet" href="retrocut.css?v=20260224b">
 </head>
 
 <body>
   <header class="app-topbar">
     <h1 class="app-title">
-      <img src="./assets/svg/blizlab_logo_flat.svg" alt="Blizlab" width="220" height="50">
+      <img src="./assets/svg/blizlab_logo_flat.svg" alt="Blizlab RetroCut image editor" width="220" height="50">
       <button class="logo-bolt-hit" id="logoBoltBtn" type="button" aria-label="Blizlab bolt effect" title="Blizlab bolt"></button>
       <span class="logo-sparks" id="logoSparks" aria-hidden="true"></span>
     </h1>
@@ -29,6 +65,9 @@
         <div class="topbar-dropdown more-menu" id="moreMenu" hidden>
           <div class="menu-title-bar">
             <div class="menu-title">SETTINGS</div>
+            <button class="menu-title-close" id="btnMoreMenuClose" type="button" title="Close settings" aria-label="Close settings">
+              <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+            </button>
           </div>
           <div class="setting-label">Canvas</div>
           <div class="setting-sub-label">Format</div>
@@ -37,6 +76,7 @@
             <button class="chip-btn active" data-canvas-format="43" type="button"><span>4:3</span></button>
             <button class="chip-btn" data-canvas-format="45" type="button"><span>4:5</span></button>
             <button class="chip-btn" data-canvas-format="169" type="button"><span>16:9</span></button>
+            <button class="chip-btn" data-canvas-format="219" type="button"><span>21:9</span></button>
           </div>
           <div class="setting-sub-label">Orientation</div>
           <div class="chips definition-chips" id="canvasOrientationChips">
@@ -44,13 +84,14 @@
             <button class="chip-btn" data-canvas-orientation="vertical" type="button"><span>Vertical</span></button>
           </div>
 
-          <div class="setting-label">Canvas definition</div>
+          <div class="setting-sub-label">Canvas definition</div>
           <div class="chips definition-chips" id="definitionChips">
             <button class="chip-btn active" data-definition="sd" type="button"><span>SD</span></button>
             <button class="chip-btn" data-definition="hd" type="button"><span>HD</span></button>
             <button class="chip-btn" data-definition="4k" type="button"><span>4K</span></button>
           </div>
-          <div class="setting-note">Downscale workspace and exports to selected definition.</div>
+          <div class="setting-note">Scales workspace and exports to selected definition.</div>
+          <div class="setting-sub-label">Resolution</div>
           <label class="setting-toggle" for="upscaleLowResToggle">
             <input type="checkbox" id="upscaleLowResToggle">
             <span>Upscale low-res images</span>
@@ -59,13 +100,24 @@
             <input type="checkbox" id="downscaleImportsToggle" checked>
             <span>Downscale imported images</span>
           </label>
-          <div class="setting-note">Default ON. Normalizes imports for smoother editing and consistent layer ZIP sizes.</div>
-          <div class="setting-note">Simple stretch upscale only. Pixelation can happen.</div>
+          <div class="setting-note">Normalizes imports for smoother editing and consistent layer sizes.</div>
+          <label class="setting-toggle setting-toggle-divider-top" for="restoreLastProjectToggle">
+            <input type="checkbox" id="restoreLastProjectToggle" checked>
+            <span>Restore last project on startup</span>
+          </label>
+          <div class="setting-inline-row">
+            <label class="setting-label" for="jpgQualitySelect">JPG quality</label>
+            <select id="jpgQualitySelect" class="setting-select" aria-label="JPG quality">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
           <div class="more-links">
             <p class="more-text">Help &amp; FAQ: <a href="./help.html" target="_blank" rel="noopener">Open guide</a></p>
-            <p class="more-text">Support Blizlab: <a href="https://ko-fi.com/blizky" target="_blank" rel="noopener">ko-fi.com/blizky</a></p>
-            <p class="more-text">Contact us: coming soon</p>
-            <p class="more-text more-version" id="settingsVersionText">Version 0.1.0-beta.3</p>
+            <p class="more-text">Support Blizlab: <img class="support-link-icon" src="./assets/svg/ko-fi.svg" alt="" width="14" height="14" aria-hidden="true"><a href="https://ko-fi.com/blizky" target="_blank" rel="noopener">ko-fi.com/blizky</a></p>
+            <p class="more-text">Send feedback to <strong>alex@blizlab.com</strong></p>
+            <p class="more-text more-credit"><strong>Made by Alex with &#10084;&#65039;</strong></p>
           </div>
         </div>
       </div>
@@ -142,6 +194,10 @@
               </div>
 
               <div class="sidebar-action-list image-actions-list">
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnNewProject" type="button" title="Start a new project">
+                  <img src="./svg/pic_ai_line.svg" alt="" width="16" height="16">
+                  <span>New project</span>
+                </button>
                 <label class="sidebar-action-btn sidebar-option-btn file-button">
                   <input type="file" id="fileInput" accept="image/*" />
                   <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
@@ -155,6 +211,10 @@
                   <img src="./svg/layer_line.svg" alt="" width="16" height="16">
                   <span>Merge visible layers</span>
                 </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnOpenProject" type="button" title="Open project">
+                  <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
+                  <span>Open project</span>
+                </button>
               </div>
               <input type="file" id="projectFileInput" accept=".blz,application/zip" hidden />
               <div class="file-name" id="fileNameText">No file selected.</div>
@@ -162,25 +222,25 @@
                 <div class="sidebar-section-title menu-title">EXPORT</div>
               </div>
               <div class="sidebar-action-list">
-                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnSaveProject" type="button" title="Save project">
-                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
-                  <span>Save project</span>
-                </button>
-                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnOpenProject" type="button" title="Open project">
-                  <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
-                  <span>Open project</span>
-                </button>
                 <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="downloadEditorBtn" type="button" title="Save composition PNG" disabled>
                   <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
                   <span>Save composition PNG</span>
+                </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="downloadEditorJpgBtn" type="button" title="Save composition JPG" disabled>
+                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
+                  <span>Save composition JPG</span>
                 </button>
                 <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnDownloadLayersZip" type="button" title="Save layers ZIP" disabled>
                   <img src="./svg/file_zip_line.svg" alt="" width="16" height="16">
                   <span>Save layers ZIP</span>
                 </button>
+                <button class="sidebar-action-btn sidebar-option-btn secondary-btn" id="btnSaveProject" type="button" title="Save project" disabled>
+                  <img src="./svg/download_2_line.svg" alt="" width="16" height="16">
+                  <span>Save project</span>
+                </button>
               </div>
               <div class="sidebar-quick-actions" id="sidebarQuickActions" aria-label="Quick actions">
-                <button class="quick-action-btn" id="btnQuickUpload" type="button" title="Upload image" aria-label="Upload image">
+                <button class="quick-action-btn" id="btnQuickUpload" type="button" title="Insert image" aria-label="Insert image">
                   <img src="./svg/upload_2_line.svg" alt="" width="16" height="16">
                 </button>
                 <button class="quick-action-btn" id="btnQuickPaste" type="button" title="Paste image" aria-label="Paste image">
@@ -346,10 +406,15 @@
 
             <div id="layersPanel" hidden>
               <div class="controls-group">
-                <button class="parallax-toggle" id="btnParallaxToggle" type="button" aria-expanded="false" aria-controls="parallaxPanelBody">
-                  <span>PARALLAX</span>
-                  <img src="./svg/arrow_to_down_line.svg" alt="" width="14" height="14">
-                </button>
+                <div class="menu-title-bar sidebar-title-bar parallax-title-bar">
+                  <button class="parallax-toggle" id="btnParallaxToggle" type="button" aria-expanded="false" aria-controls="parallaxPanelBody">
+                    <span class="parallax-toggle-label">
+                      <img class="parallax-toggle-icon" src="./svg/film_line.svg" alt="" width="14" height="14">
+                      <span>PARALLAX</span>
+                    </span>
+                    <img class="parallax-toggle-chevron" src="./svg/arrow_to_down_line.svg" alt="" width="14" height="14">
+                  </button>
+                </div>
                 <div class="parallax-panel" id="parallaxPanelBody" hidden>
                   <div class="parallax-controls">
                     <label class="slider-group" for="parallaxDuration">
@@ -405,7 +470,7 @@
                   <div class="handoff-row">
                     <button class="secondary-btn" id="btnExportParallaxGif" disabled>
                       <img src="./svg/film_line.svg" alt="" width="14" height="14">
-                      <span id="parallaxActionLabel">Create Parallax Animation</span>
+                      <span id="parallaxActionLabel">Create GIF animation</span>
                     </button>
                   </div>
                 </div>
@@ -440,8 +505,8 @@
               <canvas id="layersCanvas"></canvas>
               <div class="layers-empty-state" id="layersOverlayMsg">
                 <div class="layers-empty-content">
-                  <img class="layers-empty-icon" src="./svg/pic_ai_line_yellow.svg" alt="" width="38" height="38">
-                  <p>Drag or upload your own images.</p>
+                  <img class="layers-empty-icon" src="./assets/svg/blizlab-bolt.svg" alt="" width="38" height="38">
+                  <p>Drop or insert image to start</p>
                 </div>
               </div>
             </div>
@@ -452,35 +517,47 @@
         <div class="layers-panel-head">
           <div class="layers-head-title">
             <div class="sidebar-section-title menu-title">LAYERS</div>
-            <span class="layers-count" id="layersCountText" aria-live="polite">0/5</span>
+            <span class="layers-count" id="layersCountText" aria-live="polite">0/6</span>
           </div>
           <div class="layers-head-actions">
-            <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">M+</button>
+            <button class="layers-head-btn" id="btnLayersHideAll" type="button" title="Hide all layers" aria-label="Hide all layers">
+              <img src="./svg/eye_fill.svg" alt="" width="16" height="16" aria-hidden="true">
+            </button>
             <button class="layers-menu-btn" id="btnLayersBackgroundMenu" type="button" title="Canvas background options" aria-label="Canvas background options" aria-haspopup="true" aria-expanded="false">
               <span class="layers-menu-icon" aria-hidden="true"></span>
             </button>
             <button class="layers-add-btn" id="btnLayersAddText" type="button" title="Add text layer" aria-label="Add text layer">
               <img src="./svg/text_area_line.svg" alt="" width="16" height="16">
             </button>
-            <button class="layers-add-btn" id="btnLayersAdd" type="button" title="Add image layer" aria-label="Add image layer">+</button>
+            <button class="layers-add-btn" id="btnLayersAdd" type="button" title="Add image layer" aria-label="Add image layer">
+              <img src="./svg/plus_fill.svg" alt="" width="16" height="16" aria-hidden="true">
+            </button>
           </div>
           <div class="layers-head-menu" id="layersBackgroundMenu" role="menu" aria-label="Canvas background options" hidden>
             <div class="menu-title-bar layers-head-menu-title-bar">
               <div class="sidebar-section-title menu-title">Canvas background</div>
+              <button class="menu-title-close" id="btnLayersBgClose" type="button" title="Close canvas background options" aria-label="Close canvas background options">
+                <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+              </button>
             </div>
-            <label class="layers-bg-row">
-              <span>Solid color</span>
-              <input id="layersBgColorInput" type="color" value="#ffffff" aria-label="Solid background color">
-            </label>
-            <label class="layers-bg-row layers-bg-row-hex">
-              <span>Hex</span>
-              <input id="layersBgHexInput" type="text" value="#ffffff" maxlength="7" spellcheck="false" inputmode="text" aria-label="Background color hex value">
-            </label>
+            <div class="layer-text-color-controls layers-bg-color-controls">
+              <div class="layer-text-color-presets">
+                <button class="layer-text-color-preset is-white layers-bg-color-preset" type="button" data-bg-color-preset="#ffffff" title="White" aria-label="Set white background"></button>
+                <button class="layer-text-color-preset is-black layers-bg-color-preset" type="button" data-bg-color-preset="#000000" title="Black" aria-label="Set black background"></button>
+                <button class="layer-text-color-preset is-blue layers-bg-color-preset" type="button" data-bg-color-preset="#0099cc" title="Blue" aria-label="Set blue background"></button>
+                <button class="layer-text-color-preset is-yellow layers-bg-color-preset" type="button" data-bg-color-preset="#ffcc33" title="Yellow" aria-label="Set yellow background"></button>
+                <button class="layer-text-color-preset is-red layers-bg-color-preset" type="button" data-bg-color-preset="#ff0000" title="Red" aria-label="Set red background"></button>
+                <button class="layer-text-color-preset is-green layers-bg-color-preset" type="button" data-bg-color-preset="#00aa44" title="Green" aria-label="Set green background"></button>
+              </div>
+              <div class="layer-text-color-manual">
+                <input class="layer-text-color" id="layersBgColorInput" type="color" value="#ffffff" aria-label="Solid background color">
+                <input class="layer-text-hex" id="layersBgHexInput" type="text" value="#ffffff" maxlength="7" spellcheck="false" inputmode="text" aria-label="Background color hex value">
+              </div>
+            </div>
             <div class="layers-bg-actions">
               <button class="secondary-btn layers-bg-action-btn" id="btnLayersBgTransparent" type="button">Transparent</button>
               <button class="secondary-btn layers-bg-action-btn" id="btnLayersBgApply" type="button">Apply color</button>
             </div>
-            <div class="layers-bg-menu-note">More options can be added here later (gradient, pattern, etc.).</div>
           </div>
         </div>
         <div class="layers-list" id="layersList"></div>
@@ -517,7 +594,50 @@
     </div>
   </div>
 
-  <div class="mobile-blocker" id="mobileBlocker" aria-live="polite">
+  <div class="confirm-overlay" id="confirmOverlay" hidden>
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogMessage">
+      <div class="menu-title-bar confirm-title-bar">
+        <div class="menu-title" id="confirmDialogTitle">Confirm action</div>
+      </div>
+      <div class="confirm-body">
+        <p id="confirmDialogMessage">Are you sure?</p>
+      </div>
+      <div class="confirm-actions">
+        <div class="confirm-options" id="confirmDialogOptions" hidden>
+          <label class="confirm-checkbox-row" for="confirmDontShowAgainToggle">
+            <input id="confirmDontShowAgainToggle" type="checkbox">
+            <span id="confirmDontShowAgainLabel">Don't show this again</span>
+          </label>
+        </div>
+        <div class="confirm-actions-right">
+          <button class="secondary-btn" id="btnConfirmCancel" type="button">Cancel</button>
+          <button class="secondary-btn confirm-accept-btn" id="btnConfirmAccept" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="supportOverlay" hidden>
+    <div class="confirm-modal support-modal" role="dialog" aria-modal="true" aria-labelledby="supportDialogTitle" aria-describedby="supportDialogMessage">
+      <div class="menu-title-bar confirm-title-bar">
+        <div class="menu-title" id="supportDialogTitle">Support Blizlab</div>
+      </div>
+      <div class="confirm-body support-body">
+        <p id="supportDialogMessage">Thank you for using Blizlab. This is a passion project, and I'm actively working on new and improved features. Your support means a lot.</p>
+        <p class="support-link-row">
+          Support Blizlab on <img class="support-link-icon" src="./assets/svg/ko-fi.svg" alt="" width="14" height="14" aria-hidden="true"><a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">https://ko-fi.com/blizky</a>.
+        </p>
+      </div>
+      <div class="confirm-actions">
+        <div class="confirm-actions-right">
+          <button class="secondary-btn" id="btnSupportClose" type="button">Not now</button>
+          <button class="secondary-btn confirm-accept-btn" id="btnSupportDismissForever" type="button">I supported</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-blocker" id="mobileBlocker" aria-live="polite" aria-hidden="true" hidden>
     <div class="mobile-blocker-card" role="dialog" aria-modal="true" aria-labelledby="mobileBlockerTitle" aria-describedby="mobileBlockerDesc">
       <h2 id="mobileBlockerTitle">Desktop Recommended</h2>
       <p id="mobileBlockerDesc">This app is not optimized for phone screens. Use a desktop or laptop for the best experience.</p>
@@ -529,6 +649,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-  <script type="module" src="imagestudio.js?v=20260223o"></script>
+  <script type="module" src="imagestudio.js?v=20260224c"></script>
 </body>
 </html>

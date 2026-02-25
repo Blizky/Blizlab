@@ -8,19 +8,23 @@ const DOC_PRESETS = {
   square: { w: 1080, h: 1080 },
   landscape43: { w: 1440, h: 1080 },
   landscape169: { w: 1920, h: 1080 },
+  landscape219: { w: 2240, h: 960 },
   landscape54: { w: 1350, h: 1080 },
   portrait34: { w: 1080, h: 1440 },
   portrait45: { w: 1080, h: 1350 },
-  portrait916: { w: 1080, h: 1920 }
+  portrait916: { w: 1080, h: 1920 },
+  portrait921: { w: 960, h: 2240 }
 };
 const LAYERS_VIEW_MAX_WIDTH = {
   square: 760,
   landscape43: 980,
   landscape169: 980,
+  landscape219: 980,
   landscape54: 920,
   portrait34: 620,
   portrait45: 600,
-  portrait916: 430
+  portrait916: 430,
+  portrait921: 380
 };
 const CANVAS_DEFINITION_SCALES = {
   sd: 0.5,
@@ -59,13 +63,15 @@ const BRIGHT_LIMIT = 30;
 const SAT_LIMIT = 30;
 const CONTRAST_LIMIT = 30;
 const BLUR_LIMIT = 30;
+const OPACITY_MIN = 0;
+const OPACITY_MAX = 100;
 const TEXT_SIZE_MIN = 12;
 const TEXT_SIZE_MAX = 480;
-const TEXT_LINE_HEIGHT = 1.16;
-const TEXT_LETTER_SPACING_MIN = -8;
+const TEXT_LINE_HEIGHT = 1;
+const TEXT_LETTER_SPACING_MIN = -24;
 const TEXT_LETTER_SPACING_MAX = 24;
-const TEXT_LINE_SPACING_MIN = 80;
-const TEXT_LINE_SPACING_MAX = 220;
+const TEXT_LINE_SPACING_MIN = 50;
+const TEXT_LINE_SPACING_MAX = 150;
 const TEXT_AUTO_FIT_SAFE_RATIO = 0.94;
 const TEXT_AUTO_FIT_MIN_READABLE = 18;
 const TEXT_AUTO_FIT_HARD_MIN = 10;
@@ -95,7 +101,7 @@ const TEXT_FONT_FAMILIES = [
   "Courier New",
   "Impact"
 ];
-const MAX_LAYERS = 5;
+const MAX_LAYERS = 6;
 const MODEL_READY_KEY = "bgoneModelReady";
 const RETRO_DEFAULT_INTENSITY = 50;
 const RETRO_DEFAULT_GRAIN = 15;
@@ -174,6 +180,12 @@ function normalizeTextAlign(value) {
   const raw = String(value || "").toLowerCase();
   if (TEXT_ALIGN_VALUES.includes(raw)) return raw;
   return TEXT_DEFAULTS.align;
+}
+
+function normalizeLayerOpacity(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return OPACITY_MAX;
+  return clamp(Math.round(numeric), OPACITY_MIN, OPACITY_MAX);
 }
 
 function nextTextAlign(value) {
@@ -414,6 +426,7 @@ async function imageLikeToPngBlob(imageLike) {
 const PARALLAX_MAX_SCALE = 0.16;
 const PARALLAX_PAN_X = 0.085;
 const PARALLAX_PAN_Y = 0.07;
+const PARALLAX_TRIM_MARGIN_RATIO = 0.12;
 
 const PARALLAX_QUALITY_PRESETS = {
   100: { scale: 1.0, quality: 7 },
@@ -423,7 +436,7 @@ const PARALLAX_QUALITY_PRESETS = {
 
 const PARALLAX_WATERMARK_SRC = "./assets/images/blizlab_logo_white.png";
 let parallaxWatermarkPromise = null;
-const LAYERS_HORIZONTAL_UI_QUERY = "(max-width: 1120px)";
+const LAYERS_HORIZONTAL_UI_QUERY = "(max-width: 900px)";
 
 function loadParallaxWatermark() {
   if (parallaxWatermarkPromise) return parallaxWatermarkPromise;
@@ -627,6 +640,7 @@ export function createLayersTool(opts) {
           <div class="layer-bg-actions layer-bg-actions-center">
             <button type="button" class="secondary-btn" data-bg-cutout title="Cutout" aria-label="Cutout"><img src="./svg/eraser_ai_line.svg" alt=""><span class="btn-label">Cutout</span></button>
             <button type="button" class="secondary-btn" data-bg-chroma title="Color" aria-label="Color"><img src="./svg/color_picker_line.svg" alt=""><span class="btn-label">Color</span></button>
+            <button type="button" class="secondary-btn" data-bg-invert title="Invert mask" aria-label="Invert mask"><img src="./svg/subtract_fill.svg" alt=""><span class="btn-label">Invert mask</span></button>
             <button type="button" class="secondary-btn" data-bg-reset title="Reset image" aria-label="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">Reset image</span></button>
           </div>
           <div class="layer-bg-actions layer-bg-actions-right">
@@ -648,10 +662,11 @@ export function createLayersTool(opts) {
     const editorBgButtons = Array.from(overlay.querySelectorAll("[data-editor-bg]"));
     const btnCutout = overlay.querySelector("[data-bg-cutout]");
     const btnChroma = overlay.querySelector("[data-bg-chroma]");
+    const btnInvert = overlay.querySelector("[data-bg-invert]");
     const btnReset = overlay.querySelector("[data-bg-reset]");
     const btnCancel = overlay.querySelector("[data-bg-cancel]");
     const btnApply = overlay.querySelector("[data-bg-apply]");
-    [btnCutout, btnChroma, btnReset].forEach(btn => {
+    [btnCutout, btnChroma, btnInvert, btnReset].forEach(btn => {
       if (!btn) return;
       btn.dataset.labelHtml = btn.innerHTML;
     });
@@ -676,6 +691,7 @@ export function createLayersTool(opts) {
       editorBgButtons,
       btnCutout,
       btnChroma,
+      btnInvert,
       btnReset,
       btnCancel,
       btnApply,
@@ -715,6 +731,17 @@ export function createLayersTool(opts) {
 
     function isMoveActive() {
       return bgEditor.editMode === "move";
+    }
+
+    function activateBrushModeFromControl() {
+      if (!isMoveActive()) return;
+      bgEditor.editMode = "brush";
+      bgEditor.panning = false;
+      bgEditor.painting = false;
+      bgEditor.pointerId = null;
+      bgEditor.lastPoint = null;
+      if (brushPreviewEl) brushPreviewEl.style.display = "none";
+      updateModeButtons();
     }
 
     function updateModeButtons() {
@@ -964,6 +991,7 @@ export function createLayersTool(opts) {
 
     brushModeButtons.forEach(btn => {
       btn.addEventListener("click", () => {
+        activateBrushModeFromControl();
         bgEditor.brushMode = btn.dataset.bgBrushMode === "restore" ? "restore" : "erase";
         updateModeButtons();
         if (brushPreviewEl) brushPreviewEl.classList.toggle("restore", bgEditor.brushMode === "restore");
@@ -979,7 +1007,12 @@ export function createLayersTool(opts) {
       });
     });
 
+    brushSizeEl.addEventListener("pointerdown", () => {
+      activateBrushModeFromControl();
+    }, { passive: true });
+
     brushSizeEl.addEventListener("input", () => {
+      activateBrushModeFromControl();
       bgEditor.brushSize = Number(brushSizeEl.value || 50);
       if (brushSizeValueEl) brushSizeValueEl.textContent = String(Math.round(bgEditor.brushSize));
     });
@@ -1131,6 +1164,20 @@ export function createLayersTool(opts) {
       editor.maskCtx.restore();
     }
 
+    function invertMask() {
+      const invertedMask = document.createElement("canvas");
+      invertedMask.width = editor.maskCanvas.width;
+      invertedMask.height = editor.maskCanvas.height;
+      const invertedCtx = invertedMask.getContext("2d");
+      invertedCtx.fillStyle = "#fff";
+      invertedCtx.fillRect(0, 0, invertedMask.width, invertedMask.height);
+      invertedCtx.globalCompositeOperation = "destination-out";
+      invertedCtx.drawImage(editor.maskCanvas, 0, 0);
+      invertedCtx.globalCompositeOperation = "source-over";
+      editor.maskCtx.clearRect(0, 0, editor.maskCanvas.width, editor.maskCanvas.height);
+      editor.maskCtx.drawImage(invertedMask, 0, 0);
+    }
+
     function setBusyButton(button, label, busy) {
       if (!button) return;
       if (busy) {
@@ -1146,6 +1193,7 @@ export function createLayersTool(opts) {
       const disabled = !!flag;
       editor.btnCutout.disabled = disabled;
       editor.btnChroma.disabled = disabled;
+      editor.btnInvert.disabled = disabled;
       editor.btnReset.disabled = disabled;
       editor.btnCancel.disabled = disabled;
       editor.btnApply.disabled = disabled;
@@ -1161,6 +1209,7 @@ export function createLayersTool(opts) {
     function setColorBusy(flag) {
       const disabled = !!flag;
       editor.btnChroma.disabled = disabled;
+      editor.btnInvert.disabled = disabled;
       setBusyButton(editor.btnChroma, disabled ? "Working..." : "Color", disabled);
     }
 
@@ -1272,6 +1321,18 @@ export function createLayersTool(opts) {
       }
       editor.updateModeButtons();
     };
+    editor.btnInvert.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      editor.colorPickMode = false;
+      editor.colorPickBusy = false;
+      editor.btnChroma.classList.remove("is-active");
+      editor.canvasWrapEl.classList.remove("is-color-pick");
+      invertMask();
+      editor.updateModeButtons();
+      renderFromSource();
+      onStatus?.("Mask inverted.");
+    };
     editor.btnReset.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1312,6 +1373,7 @@ export function createLayersTool(opts) {
     editor.btnReset.onpointerdown = event => event.stopPropagation();
     editor.btnCutout.onpointerdown = event => event.stopPropagation();
     editor.btnChroma.onpointerdown = event => event.stopPropagation();
+    editor.btnInvert.onpointerdown = event => event.stopPropagation();
     editor.btnApply.onpointerdown = event => event.stopPropagation();
     editor.btnCancel.onpointerdown = event => event.stopPropagation();
     editor.overlay.onclick = null;
@@ -1480,8 +1542,28 @@ export function createLayersTool(opts) {
 
   function fitTextLayerToCanvas(layer, options = {}) {
     if (!isTextLayer(layer)) return false;
-    const content = normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content);
-    const rawLines = textLinesForRender(content);
+    let content = normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content);
+    let rawLines = textLinesForRender(content);
+    if (
+      layer.textLegacyAutoWrapCleanup !== false
+      && Array.isArray(layer.textWrappedLines)
+      && layer.textWrappedLines.length
+      && rawLines.length > 1
+      && sameStringArray(rawLines, layer.textWrappedLines)
+    ) {
+      const collapsed = normalizeTextContent(
+        rawLines
+          .map(line => String(line || "").trim())
+          .filter(Boolean)
+          .join(" ")
+      );
+      if (collapsed) {
+        content = collapsed;
+        layer.textContent = collapsed;
+        rawLines = textLinesForRender(content);
+      }
+      layer.textLegacyAutoWrapCleanup = false;
+    }
     const maxWidth = Math.max(72, canvas.width * TEXT_AUTO_FIT_SAFE_RATIO);
     const maxHeight = Math.max(72, canvas.height * TEXT_AUTO_FIT_SAFE_RATIO);
     const baseTextSize = normalizeTextSize(layer.textSize);
@@ -1596,7 +1678,7 @@ export function createLayersTool(opts) {
   function createImageLayer(image, name = "Layer", options = {}) {
     const fillScale = Math.max(canvas.width / image.width, canvas.height / image.height);
     layerSeed += 1;
-    return {
+    const layer = {
       id: `layer-${layerSeed}`,
       kind: "image",
       name: truncateName(name),
@@ -1618,6 +1700,7 @@ export function createLayersTool(opts) {
       tuningOpen: false,
       visible: soloLayerId ? false : true,
       shadowEnabled: false,
+      opacity: OPACITY_MAX,
       x: 0,
       y: 0,
       scale: fillScale,
@@ -1627,6 +1710,8 @@ export function createLayersTool(opts) {
       lowResolution: false,
       ...options
     };
+    layer.opacity = normalizeLayerOpacity(layer.opacity);
+    return layer;
   }
 
   function createTextLayer(options = {}) {
@@ -1653,6 +1738,7 @@ export function createLayersTool(opts) {
       tuningOpen: false,
       visible: options.visible === false ? false : (soloLayerId ? false : true),
       shadowEnabled: false,
+      opacity: normalizeLayerOpacity(options.opacity),
       x: Number.isFinite(Number(options.x)) ? Number(options.x) : 0,
       y: Number.isFinite(Number(options.y)) ? Number(options.y) : 0,
       scale: Number.isFinite(Number(options.scale)) && Number(options.scale) > 0.01 ? Number(options.scale) : 1,
@@ -1671,7 +1757,8 @@ export function createLayersTool(opts) {
       textLineSpacing: normalizeTextLineSpacing(options.textLineSpacing ?? TEXT_DEFAULTS.lineSpacing),
       textAlign: normalizeTextAlign(options.textAlign ?? TEXT_DEFAULTS.align),
       textPinTop: options.textPinTop !== false,
-      textWrappedLines: Array.isArray(options.textWrappedLines) ? options.textWrappedLines.slice() : null
+      textWrappedLines: Array.isArray(options.textWrappedLines) ? options.textWrappedLines.slice() : null,
+      textLegacyAutoWrapCleanup: options.textLegacyAutoWrapCleanup !== false
     };
     textLayer.rotationDeg = clamp(Number(options.rotationDeg) || 0, -30, 30);
     textLayer.flipX = !!options.flipX;
@@ -1995,6 +2082,13 @@ export function createLayersTool(opts) {
     const heightLimitedWidth = Math.floor(viewportHeightBudget * ratioValue);
     const widthCap = inLayersLayout ? widthBudget : Math.min(designMaxWidth, widthBudget);
     const nextMaxWidth = Math.max(220, Math.min(widthCap, heightLimitedWidth));
+    const layersWrapEl = canvasWrap?.parentElement?.id === "layersWrap"
+      ? canvasWrap.parentElement
+      : null;
+    if (layersWrapEl) {
+      layersWrapEl.style.width = `${nextMaxWidth}px`;
+      layersWrapEl.style.maxWidth = "100%";
+    }
     canvasWrap.style.width = `${nextMaxWidth}px`;
     canvasWrap.style.maxWidth = "100%";
     canvasWrap.style.aspectRatio = `${w} / ${h}`;
@@ -2053,6 +2147,8 @@ export function createLayersTool(opts) {
     }
     const drawW = draw.width;
     const drawH = draw.height;
+    const layerOpacity = normalizeLayerOpacity(layer.opacity) / 100;
+    if (layerOpacity <= 0) return { drawW, drawH };
 
     if (layer.shadowEnabled) {
       const shadow = computeShadowMetrics(drawW, drawH);
@@ -2060,7 +2156,7 @@ export function createLayersTool(opts) {
       targetCtx.translate(cx, cy + shadow.offsetY);
       targetCtx.rotate(angle);
       targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
-      targetCtx.globalAlpha = shadow.opacity;
+      targetCtx.globalAlpha = shadow.opacity * layerOpacity;
       if (isTextLayer(layer) && !draw.source) {
         targetCtx.filter = `blur(${shadow.blur}px)`;
         drawTextBlock(targetCtx, layer, draw.layout, "#000000");
@@ -2077,6 +2173,7 @@ export function createLayersTool(opts) {
     targetCtx.translate(cx, cy);
     targetCtx.rotate(angle);
     targetCtx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
+    targetCtx.globalAlpha = layerOpacity;
     if (isTextLayer(layer) && !draw.source) {
       drawTextBlock(targetCtx, layer, draw.layout);
     } else if (draw.source) {
@@ -2086,7 +2183,56 @@ export function createLayersTool(opts) {
     return { drawW, drawH };
   }
 
-  function drawLayers(targetCtx, progress = 0, parallaxEnabled = false, motionType = "zoom", intensity = 1, lockTopLayer = false, includeBackground = true, textRasterMap = null) {
+  function buildParallaxLayerTrimRaster(layer, options = {}) {
+    const textRaster = options.textRaster?.source ? options.textRaster : null;
+    const marginRatio = clamp(Number(options.marginRatio) || PARALLAX_TRIM_MARGIN_RATIO, 0, 0.4);
+    const trimW = Math.max(2, Math.round(canvas.width * (1 + marginRatio * 2)));
+    const trimH = Math.max(2, Math.round(canvas.height * (1 + marginRatio * 2)));
+    const trimCanvas = document.createElement("canvas");
+    trimCanvas.width = trimW;
+    trimCanvas.height = trimH;
+    const trimCtx = trimCanvas.getContext("2d");
+    trimCtx.imageSmoothingEnabled = true;
+    trimCtx.imageSmoothingQuality = "high";
+    drawLayerToContext(trimCtx, layer, {
+      centerX: trimW / 2,
+      centerY: trimH / 2,
+      drawScale: Number(layer.scale) || 1,
+      textRaster
+    });
+    return { source: trimCanvas };
+  }
+
+  function drawParallaxRasterToContext(targetCtx, raster, options = {}) {
+    const source = raster?.source;
+    if (!source) return;
+    const drawScale = Math.max(0.001, Number(options.drawScale) || 1);
+    const panX = Number(options.panX) || 0;
+    const panY = Number(options.panY) || 0;
+    const centerX = Number(options.centerX) || (canvas.width / 2);
+    const centerY = Number(options.centerY) || (canvas.height / 2);
+    const drawW = Math.max(1, source.width * drawScale);
+    const drawH = Math.max(1, source.height * drawScale);
+    targetCtx.drawImage(
+      source,
+      centerX + panX - drawW / 2,
+      centerY + panY - drawH / 2,
+      drawW,
+      drawH
+    );
+  }
+
+  function drawLayers(
+    targetCtx,
+    progress = 0,
+    parallaxEnabled = false,
+    motionType = "zoom",
+    intensity = 1,
+    lockTopLayer = false,
+    includeBackground = true,
+    textRasterMap = null,
+    parallaxLayerRasterMap = null
+  ) {
     targetCtx.clearRect(0, 0, canvas.width, canvas.height);
     if (includeBackground) {
       paintCanvasBackground(targetCtx);
@@ -2117,6 +2263,17 @@ export function createLayersTool(opts) {
         ? signed * canvas.height * PARALLAX_PAN_Y * strength * depth
         : 0;
       const textRaster = textRasterMap instanceof Map ? textRasterMap.get(layer.id) : null;
+      const parallaxRaster = parallaxEnabled && parallaxLayerRasterMap instanceof Map
+        ? parallaxLayerRasterMap.get(layer.id)
+        : null;
+      if (parallaxRaster?.source) {
+        drawParallaxRasterToContext(targetCtx, parallaxRaster, {
+          drawScale: parallaxScale,
+          panX,
+          panY
+        });
+        return;
+      }
       drawLayerToContext(targetCtx, layer, {
         drawScale: (Number(layer.scale) || 1) * parallaxScale,
         panX,
@@ -2135,10 +2292,6 @@ export function createLayersTool(opts) {
           <button class="layer-retro-btn ${layer.retroStyle === "postal" ? "active" : ""}" type="button" data-style="postal" title="Postcard preset">Card</button>
         </div>
         <label class="layer-wb-row">
-          <span>Rotate</span>
-          <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
-        </label>
-        <label class="layer-wb-row">
           <span>Bright</span>
           <input class="layer-wb-slider" data-kind="bright" type="range" min="-30" max="30" value="${Math.round(layer.wbBright || 0)}">
         </label>
@@ -2154,9 +2307,17 @@ export function createLayersTool(opts) {
           <span>Temp</span>
           <input class="layer-wb-slider" data-kind="temp" type="range" min="-25" max="25" value="${Math.round(layer.wbTemp || 0)}">
         </label>
-        <label class="layer-wb-row">
+        <label class="layer-wb-row layer-wb-row-divider">
           <span>Tint</span>
           <input class="layer-wb-slider" data-kind="tint" type="range" min="-25" max="25" value="${Math.round(layer.wbTint || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Rotate</span>
+          <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
+        </label>
+        <label class="layer-wb-row">
+          <span>Opacity</span>
+          <input class="layer-wb-slider" data-kind="opacity" type="range" min="${OPACITY_MIN}" max="${OPACITY_MAX}" value="${normalizeLayerOpacity(layer.opacity)}">
         </label>
         <label class="layer-wb-row">
           <span>Blur</span>
@@ -2215,10 +2376,14 @@ export function createLayersTool(opts) {
             </div>
           </div>
         </label>
-        <label class="layer-text-row layer-text-row-angle">
+        <label class="layer-text-row layer-text-row-angle layer-text-row-divider-top">
           <span>Rotate</span>
           <input class="layer-wb-slider" data-kind="rotate" type="range" min="-30" max="30" value="${Math.round(layer.rotationDeg || 0)}">
           <span class="layer-text-angle-value">${rotateValue}&deg;</span>
+        </label>
+        <label class="layer-text-row">
+          <span>Opacity</span>
+          <input class="layer-wb-slider" data-kind="opacity" type="range" min="${OPACITY_MIN}" max="${OPACITY_MAX}" value="${normalizeLayerOpacity(layer.opacity)}">
         </label>
       </div>
     `;
@@ -2227,68 +2392,73 @@ export function createLayersTool(opts) {
   function refreshList() {
     if (!listEl) return;
     listEl.innerHTML = "";
-    const useHorizontalMoveArrows = !!window.matchMedia?.(LAYERS_HORIZONTAL_UI_QUERY).matches;
-    const moveBackLabel = useHorizontalMoveArrows ? "←" : "↑";
-    const moveForwardLabel = useHorizontalMoveArrows ? "→" : "↓";
+    const useHorizontalMoveArrows = (() => {
+      const computed = window.getComputedStyle?.(listEl);
+      const direction = String(computed?.flexDirection || "").toLowerCase();
+      if (direction.startsWith("row")) return true;
+      if (direction.startsWith("column")) return false;
+      return !!window.matchMedia?.(LAYERS_HORIZONTAL_UI_QUERY).matches;
+    })();
     const moveBackTitle = useHorizontalMoveArrows ? "Move left" : "Move up";
     const moveForwardTitle = useHorizontalMoveArrows ? "Move right" : "Move down";
+    const moveBackIcon = useHorizontalMoveArrows ? "./svg/left_line.svg" : "./svg/up_line.svg";
+    const moveForwardIcon = useHorizontalMoveArrows ? "./svg/right_line.svg" : "./svg/down_line.svg";
     const entries = [...state.layers].reverse();
     entries.forEach(layer => {
       const textLayer = isTextLayer(layer);
       const el = document.createElement("div");
       el.className = `layer-item${layer.id === state.activeLayerId ? " active" : ""}${textLayer ? " is-text" : ""}`;
       el.dataset.layerId = layer.id;
-      const warn = layer.lowResolution
-        ? '<span class="warn" title="Low resolution image at current size">⚠</span>'
-        : "";
+      const hasLowResolutionWarning = !!layer.lowResolution;
       const statusLabel = layer.processing
         ? "Processing..."
         : (layer.visible ? (textLayer ? "Text" : "Visible") : "Hidden");
+      const visibilityTitle = layer.visible ? "Hide layer" : "Show layer";
+      const visibilityIcon = layer.visible ? "./svg/eye_line.svg" : "./svg/eye_close_line.svg";
       const textAlignValue = normalizeTextAlign(layer.textAlign);
       const textAlignTitle = `Text align: ${textAlignValue} (click to cycle)`;
       const middleToolMarkup = textLayer
-        ? `<button class="layer-tool-btn textalign" type="button" title="${textAlignTitle}"><img src="${textAlignIcon(textAlignValue)}" alt=""></button>`
-        : '<button class="layer-tool-btn cutout" type="button" title="Background tools"><img src="./svg/scissors_line.svg" alt=""></button>';
+        ? `<button class="layer-tool-btn layer-grid-btn bottom-half textalign" type="button" title="${textAlignTitle}" aria-label="${textAlignTitle}"><img src="${textAlignIcon(textAlignValue)}" alt=""></button>`
+        : '<button class="layer-tool-btn layer-grid-btn bottom-half cutout" type="button" title="Background tools" aria-label="Background tools"><img src="./svg/scissors_line.svg" alt=""></button>';
       const adjustTitle = textLayer ? "Text options" : "Adjust layer";
       const resetTitle = textLayer ? "Reset text layer" : "Reset image";
       const tuningMarkup = textLayer ? buildTextTuningMarkup(layer) : buildImageTuningMarkup(layer);
       const topMarkup = textLayer
         ? `
-          <div class="layer-text-inline-wrap">
+          <div class="layer-preview-tile layer-text-inline-wrap" title="${statusLabel}">
             <textarea class="layer-text-inline-input" data-text-kind="content" rows="2" spellcheck="false">${escapeHtml(layer.textContent ?? TEXT_DEFAULTS.content)}</textarea>
           </div>
         `
         : `
-          <img class="layer-thumb" src="${layer.thumbDataUrl}" alt="">
-          <div class="layer-meta">
-            <div class="layer-name">${escapeHtml(layer.name)}</div>
-            <div class="layer-hint">${warn}<span>${statusLabel}</span></div>
+          <div class="layer-preview-tile" title="${escapeHtml(`${layer.name} (${statusLabel})`)}">
+            <img class="layer-thumb" src="${layer.thumbDataUrl}" alt="">
+            ${hasLowResolutionWarning ? '<span class="layer-preview-warn" title="Low resolution image at current size">⚠</span>' : ""}
           </div>
-        `;
+      `;
       el.innerHTML = `
-        ${topMarkup}
-        <div class="layer-actions">
-          <button class="layer-btn up" type="button" title="${moveBackTitle}" aria-label="${moveBackTitle}">${moveBackLabel}</button>
-          <button class="layer-btn down" type="button" title="${moveForwardTitle}" aria-label="${moveForwardTitle}">${moveForwardLabel}</button>
-          <button class="layer-btn hide ${layer.visible ? "" : "active"}" type="button" title="${layer.visible ? "Mute layer" : "Unmute layer"}">M</button>
-          <button class="layer-btn solo ${soloLayerId === layer.id ? "active" : ""}" type="button" title="${soloLayerId === layer.id ? "Exit solo mode" : "Solo this layer"}">S</button>
-          <button class="layer-btn duplicate" type="button" title="Duplicate layer"><img src="./svg/copy_2_line.svg" alt=""></button>
-        </div>
-        <div class="layer-tools">
-          <button class="layer-tool-btn fill" type="button" title="Fill canvas"><img src="./svg/fullscreen_2_line.svg" alt=""></button>
-          <button class="layer-tool-btn flipx" type="button" title="Flip horizontally"><img src="./svg/flip_vertical_line.svg" alt=""></button>
-          <button class="layer-tool-btn flipy" type="button" title="Flip vertically"><img src="./svg/flip_horizontal_line.svg" alt=""></button>
-          <button class="layer-tool-btn shadow ${layer.shadowEnabled ? "active" : ""}" type="button" title="Toggle shadow"><img src="./svg/background_line.svg" alt=""></button>
+        <div class="layer-grid">
+          ${topMarkup}
+          <button class="layer-btn layer-grid-btn hide ${layer.visible ? "" : "active"}" type="button" title="${visibilityTitle}" aria-label="${visibilityTitle}"><img src="${visibilityIcon}" alt=""></button>
+          <button class="layer-btn layer-grid-btn up" type="button" title="${moveBackTitle}" aria-label="${moveBackTitle}"><img src="${moveBackIcon}" alt=""></button>
+          <button class="layer-btn layer-grid-btn duplicate" type="button" title="Duplicate layer" aria-label="Duplicate layer"><img src="./svg/copy_2_line.svg" alt=""></button>
+          <button class="layer-btn layer-grid-btn down" type="button" title="${moveForwardTitle}" aria-label="${moveForwardTitle}"><img src="${moveForwardIcon}" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half fill" type="button" title="Fill canvas" aria-label="Fill canvas"><img src="./svg/fullscreen_2_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half flipx" type="button" title="Flip horizontally" aria-label="Flip horizontally"><img src="./svg/flip_vertical_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half flipy" type="button" title="Flip vertically" aria-label="Flip vertically"><img src="./svg/flip_horizontal_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half shadow ${layer.shadowEnabled ? "active" : ""}" type="button" title="Toggle shadow" aria-label="Toggle shadow"><img src="./svg/background_line.svg" alt=""></button>
           ${middleToolMarkup}
-          <button class="layer-tool-btn adjust ${layer.tuningOpen ? "active" : ""}" type="button" title="${adjustTitle}"><img src="./svg/settings_6_line.svg" alt=""></button>
-          <button class="layer-tool-btn reset" type="button" title="${resetTitle}"><img src="./svg/history_anticlockwise_line.svg" alt=""></button>
-          <button class="layer-tool-btn delete" type="button" title="Delete layer"><img src="./svg/delete_fill.svg" alt=""></button>
-          <div class="layer-more"${layer.tuningOpen ? "" : " hidden"}>
-            <div class="menu-title-bar layer-more-title-bar">
-              <div class="sidebar-section-title menu-title">${textLayer ? "Text" : "Tuning"}</div>
-            </div>
-            ${tuningMarkup}
+          <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row adjust ${layer.tuningOpen ? "active" : ""}" type="button" title="${adjustTitle}" aria-label="${adjustTitle}"><img src="./svg/settings_6_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row reset" type="button" title="${resetTitle}" aria-label="${resetTitle}"><img src="./svg/history_anticlockwise_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row delete" type="button" title="Delete layer" aria-label="Delete layer"><img src="./svg/delete_fill.svg" alt=""></button>
+        </div>
+        <div class="layer-more"${layer.tuningOpen ? "" : " hidden"}>
+          <div class="menu-title-bar layer-more-title-bar">
+            <div class="sidebar-section-title menu-title">${textLayer ? "Text" : "Tuning"}</div>
+            <button class="menu-title-close layer-more-close" type="button" title="Close ${textLayer ? "text settings" : "tuning"}" aria-label="Close ${textLayer ? "text settings" : "tuning"}">
+              <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+            </button>
           </div>
+          ${tuningMarkup}
         </div>
       `;
       listEl.appendChild(el);
@@ -2466,6 +2636,7 @@ export function createLayersTool(opts) {
       tuningOpen: false,
       visible: true,
       shadowEnabled: false,
+      opacity: OPACITY_MAX,
       x: 0,
       y: 0,
       scale: fillScale,
@@ -2594,6 +2765,7 @@ export function createLayersTool(opts) {
       layer.flipX = false;
       layer.flipY = false;
       layer.shadowEnabled = false;
+      layer.opacity = OPACITY_MAX;
       layer.baseScale = 1;
       layer.scale = 1;
       layer.x = 0;
@@ -2623,6 +2795,7 @@ export function createLayersTool(opts) {
     layer.flipX = false;
     layer.flipY = false;
     layer.shadowEnabled = false;
+    layer.opacity = OPACITY_MAX;
     const resetScale = Math.max(canvas.width / original.width, canvas.height / original.height);
     layer.baseScale = resetScale;
     layer.scale = resetScale;
@@ -2678,6 +2851,7 @@ export function createLayersTool(opts) {
           flipX: !!layer.flipX,
           flipY: !!layer.flipY,
           shadowEnabled: !!layer.shadowEnabled,
+          opacity: normalizeLayerOpacity(layer.opacity),
           textContent: normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content),
           textFontFamily: normalizeTextFontFamily(layer.textFontFamily ?? TEXT_DEFAULTS.fontFamily),
           textSize: normalizeTextSize(layer.textSize ?? TEXT_DEFAULTS.size),
@@ -2702,6 +2876,7 @@ export function createLayersTool(opts) {
         flipX: !!layer.flipX,
         flipY: !!layer.flipY,
         shadowEnabled: !!layer.shadowEnabled,
+        opacity: normalizeLayerOpacity(layer.opacity),
         wbTemp: Number(layer.wbTemp) || 0,
         wbTint: Number(layer.wbTint) || 0,
         wbBright: Number(layer.wbBright) || 0,
@@ -2771,6 +2946,7 @@ export function createLayersTool(opts) {
           rotationDeg: clamp(Number(entry.rotationDeg) || 0, -30, 30),
           visible: entry.visible !== false,
           shadowEnabled: !!entry.shadowEnabled,
+          opacity: normalizeLayerOpacity(entry.opacity),
           flipX: !!entry.flipX,
           flipY: !!entry.flipY
         });
@@ -2812,6 +2988,7 @@ export function createLayersTool(opts) {
         rotationDeg: clamp(Number(entry.rotationDeg) || 0, -30, 30),
         visible: entry.visible !== false,
         shadowEnabled: !!entry.shadowEnabled,
+        opacity: normalizeLayerOpacity(entry.opacity),
         x: Number.isFinite(Number(entry.x)) ? Number(entry.x) : 0,
         y: Number.isFinite(Number(entry.y)) ? Number(entry.y) : 0,
         scale: Number.isFinite(Number(entry.scale)) && Number(entry.scale) > 0.01 ? Number(entry.scale) : defaultFill,
@@ -2894,6 +3071,15 @@ export function createLayersTool(opts) {
       const raster = buildTextLayerRasterSource(layer, Number(layer.scale) || 1);
       if (raster?.source) parallaxTextRasters.set(layer.id, raster);
     });
+    const parallaxLayerRasters = motionType === "zoom" ? new Map() : null;
+    if (parallaxLayerRasters instanceof Map) {
+      state.layers.forEach((layer) => {
+        if (!layer.visible) return;
+        const textRaster = parallaxTextRasters.get(layer.id) || null;
+        const raster = buildParallaxLayerTrimRaster(layer, { textRaster });
+        if (raster?.source) parallaxLayerRasters.set(layer.id, raster);
+      });
+    }
 
     const gif = new GifCtor({
       workers: 2,
@@ -2911,7 +3097,17 @@ export function createLayersTool(opts) {
         : t;
       frameCtx.save();
       frameCtx.scale(qualityConfig.scale, qualityConfig.scale);
-      drawLayers(frameCtx, progress, true, motionType, intensity, lockTopLayer, true, parallaxTextRasters);
+      drawLayers(
+        frameCtx,
+        progress,
+        true,
+        motionType,
+        intensity,
+        lockTopLayer,
+        true,
+        parallaxTextRasters,
+        parallaxLayerRasters
+      );
       frameCtx.restore();
       if (watermarkImage) {
         const markW = clamp(Math.round(frameCanvas.width * 0.13), 54, 128);
@@ -2926,6 +3122,15 @@ export function createLayersTool(opts) {
       }
       gif.addFrame(frameCanvas, { copy: true, delay });
       onProgress?.({ stage: "render", progress: (i + 1) / frameCount });
+    }
+
+    if (parallaxLayerRasters instanceof Map) {
+      parallaxLayerRasters.forEach((entry) => {
+        if (!entry?.source) return;
+        entry.source.width = 1;
+        entry.source.height = 1;
+      });
+      parallaxLayerRasters.clear();
     }
 
     drawLayers(ctx, 0, false);
@@ -3016,6 +3221,10 @@ export function createLayersTool(opts) {
     event.preventDefault();
     const factor = event.deltaY < 0 ? 1.08 : 1 / 1.08;
     layer.scale = clamp(layer.scale * factor, 0.04, 12);
+    if (isTextLayer(layer)) {
+      fitTextLayerToCanvas(layer);
+      layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+    }
     refreshWarnings(layer);
     refreshList();
     render();
@@ -3063,6 +3272,14 @@ export function createLayersTool(opts) {
       layer.retroIntensity = RETRO_DEFAULT_INTENSITY;
       layer.retroGrain = RETRO_DEFAULT_GRAIN;
       rebuildLayerProcessed(layer);
+      refreshList();
+      render();
+      return;
+    }
+
+    if (event.target.closest(".layer-more-close")) {
+      if (!layer.tuningOpen) return;
+      layer.tuningOpen = false;
       refreshList();
       render();
       return;
@@ -3178,6 +3395,7 @@ export function createLayersTool(opts) {
     let needsFit = false;
     if (kind === "content") {
       layer.textContent = normalizeTextContent(control.value);
+      layer.textLegacyAutoWrapCleanup = false;
       needsFit = true;
     } else if (kind === "font") {
       layer.textFontFamily = normalizeTextFontFamily(control.value);
@@ -3218,17 +3436,10 @@ export function createLayersTool(opts) {
     }
     if (needsFit) {
       fitTextLayerToCanvas(layer);
-      const shouldRewriteContent = kind !== "content" || event.type === "change";
-      if (shouldRewriteContent) {
-        const wrappedText = normalizeTextContent(
-          (layer.textWrappedLines || textLinesForRender(layer.textContent))
-            .map(line => (line === " " ? "" : line))
-            .join("\n")
-        );
-        layer.textContent = wrappedText;
+      if (kind !== "content") {
         const contentInputs = item.querySelectorAll('[data-text-kind="content"]');
         contentInputs.forEach((inputEl) => {
-          if (inputEl.value !== wrappedText) inputEl.value = wrappedText;
+          if (inputEl.value !== layer.textContent) inputEl.value = layer.textContent;
         });
       }
     }
@@ -3280,6 +3491,8 @@ export function createLayersTool(opts) {
       if (isTextLayer(layer)) return;
       layer.wbContrast = clamp(Number(slider.value) || 0, -CONTRAST_LIMIT, CONTRAST_LIMIT);
       rebuildLayerProcessed(layer);
+    } else if (slider.dataset.kind === "opacity") {
+      layer.opacity = normalizeLayerOpacity(slider.value);
     } else if (slider.dataset.kind === "blur") {
       if (isTextLayer(layer)) return;
       layer.wbBlur = clamp(Number(slider.value) || 0, 0, BLUR_LIMIT);

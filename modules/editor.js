@@ -10,10 +10,12 @@ const CANVAS_DEFINITION_SCALES = {
 const ORIENTATION_PRESETS = {
   landscape43: { w: 1440, h: 1080, aspect: "4 / 3", maxWidth: "780px" },
   landscape169: { w: 1440, h: 810, aspect: "16 / 9", maxWidth: "780px" },
+  landscape219: { w: 1680, h: 720, aspect: "21 / 9", maxWidth: "780px" },
   landscape54: { w: 1350, h: 1080, aspect: "5 / 4", maxWidth: "760px" },
   portrait34: { w: 1080, h: 1440, aspect: "3 / 4", maxWidth: "560px" },
   portrait45: { w: 1080, h: 1350, aspect: "4 / 5", maxWidth: "560px" },
   portrait916: { w: 810, h: 1440, aspect: "9 / 16", maxWidth: "520px" },
+  portrait921: { w: 720, h: 1680, aspect: "9 / 21", maxWidth: "430px" },
   square11: { w: 1200, h: 1200, aspect: "1 / 1", maxWidth: "620px" }
 };
 
