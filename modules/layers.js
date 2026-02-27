@@ -1,4 +1,4 @@
-import { canvasToBlob } from "./shared.js";
+import { canvasToBlob, downloadBlob } from "./shared.js";
 import {
   removeBackground,
   preload
@@ -608,6 +608,9 @@ export function createLayersTool(opts) {
         <div class="layer-bg-head">
           <div class="menu-title-bar layer-bg-title-bar">
             <div class="sidebar-section-title menu-title">Cutting board</div>
+            <button class="menu-title-close" type="button" data-bg-title-close title="Cancel" aria-label="Cancel">
+              <img src="./svg/close_medium_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+            </button>
           </div>
           <div class="layer-bg-controls-row">
             <div class="pill-toggle layer-bg-brush-toggle" role="tablist" aria-label="Brush type">
@@ -639,9 +642,21 @@ export function createLayersTool(opts) {
           </div>
           <div class="layer-bg-actions layer-bg-actions-center">
             <button type="button" class="secondary-btn" data-bg-cutout title="Cutout" aria-label="Cutout"><img src="./svg/eraser_ai_line.svg" alt=""><span class="btn-label">Cutout</span></button>
-            <button type="button" class="secondary-btn" data-bg-chroma title="Color" aria-label="Color"><img src="./svg/color_picker_line.svg" alt=""><span class="btn-label">Color</span></button>
-            <button type="button" class="secondary-btn" data-bg-invert title="Invert mask" aria-label="Invert mask"><img src="./svg/subtract_fill.svg" alt=""><span class="btn-label">Invert mask</span></button>
-            <button type="button" class="secondary-btn" data-bg-reset title="Reset image" aria-label="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">Reset image</span></button>
+            <div class="layer-bg-more-wrap">
+              <button type="button" class="secondary-btn layer-bg-more-toggle-btn" data-bg-more-toggle title="More" aria-label="More" aria-expanded="false" aria-controls="layerBgMoreMenu"><img src="./svg/menu_line.svg" alt=""></button>
+              <div class="layer-bg-more-menu" id="layerBgMoreMenu" data-bg-more-menu hidden>
+                <div class="menu-title-bar layer-bg-more-title-bar">
+                  <div class="sidebar-section-title menu-title">Cut options</div>
+                  <button class="menu-title-close layer-bg-more-close" type="button" data-bg-more-close title="Close cut options" aria-label="Close cut options">
+                    <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+                  </button>
+                </div>
+                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-chroma title="Remove Color" aria-label="Remove Color"><img src="./svg/color_picker_line.svg" alt=""><span class="btn-label">Remove Color</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-invert title="Invert mask" aria-label="Invert mask"><img src="./svg/subtract_fill.svg" alt=""><span class="btn-label">Invert mask</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-reset title="Reset image" aria-label="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">Reset image</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-download title="Quick download PNG" aria-label="Quick download PNG"><img src="./svg/download_2_line.svg" alt=""><span class="btn-label">Quick download PNG</span></button>
+              </div>
+            </div>
           </div>
           <div class="layer-bg-actions layer-bg-actions-right">
             <button type="button" class="secondary-btn" data-bg-cancel>Cancel</button>
@@ -660,13 +675,18 @@ export function createLayersTool(opts) {
     const editModeButtons = Array.from(overlay.querySelectorAll("[data-bg-edit-mode]"));
     const brushModeButtons = Array.from(overlay.querySelectorAll("[data-bg-brush-mode]"));
     const editorBgButtons = Array.from(overlay.querySelectorAll("[data-editor-bg]"));
+    const btnTitleClose = overlay.querySelector("[data-bg-title-close]");
     const btnCutout = overlay.querySelector("[data-bg-cutout]");
+    const btnMoreToggle = overlay.querySelector("[data-bg-more-toggle]");
+    const moreMenuEl = overlay.querySelector("[data-bg-more-menu]");
+    const btnMoreClose = overlay.querySelector("[data-bg-more-close]");
     const btnChroma = overlay.querySelector("[data-bg-chroma]");
     const btnInvert = overlay.querySelector("[data-bg-invert]");
     const btnReset = overlay.querySelector("[data-bg-reset]");
+    const btnDownload = overlay.querySelector("[data-bg-download]");
     const btnCancel = overlay.querySelector("[data-bg-cancel]");
     const btnApply = overlay.querySelector("[data-bg-apply]");
-    [btnCutout, btnChroma, btnInvert, btnReset].forEach(btn => {
+    [btnCutout, btnChroma, btnInvert, btnReset, btnDownload].forEach(btn => {
       if (!btn) return;
       btn.dataset.labelHtml = btn.innerHTML;
     });
@@ -689,10 +709,15 @@ export function createLayersTool(opts) {
       editModeButtons,
       brushModeButtons,
       editorBgButtons,
+      btnTitleClose,
       btnCutout,
+      btnMoreToggle,
+      moreMenuEl,
+      btnMoreClose,
       btnChroma,
       btnInvert,
       btnReset,
+      btnDownload,
       btnCancel,
       btnApply,
       sourceCanvas,
@@ -723,6 +748,8 @@ export function createLayersTool(opts) {
       startPanY: 0,
       applyZoom: null,
       handleColorPick: null,
+      setMoreMenuOpen: null,
+      moreMenuOpen: false,
       outsidePickHandler: null,
       viewportSyncHandler: null,
       viewportResizeObserver: null,
@@ -743,6 +770,18 @@ export function createLayersTool(opts) {
       if (brushPreviewEl) brushPreviewEl.style.display = "none";
       updateModeButtons();
     }
+
+    function setMoreMenuOpen(nextOpen) {
+      const open = !!nextOpen;
+      bgEditor.moreMenuOpen = open;
+      if (moreMenuEl) moreMenuEl.hidden = !open;
+      if (btnMoreToggle) {
+        btnMoreToggle.setAttribute("aria-expanded", open ? "true" : "false");
+        btnMoreToggle.classList.toggle("is-active", open);
+      }
+    }
+
+    bgEditor.setMoreMenuOpen = setMoreMenuOpen;
 
     function updateModeButtons() {
       if (bgEditor.colorPickMode || bgEditor.colorPickBusy) {
@@ -1086,6 +1125,7 @@ export function createLayersTool(opts) {
     editor.brushModeButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.bgBrushMode === "erase"));
     editor.colorPickMode = false;
     editor.colorPickBusy = false;
+    editor.setMoreMenuOpen?.(false);
     editor.btnChroma.classList.remove("is-active");
     editor.canvasWrapEl.style.cursor = "none";
     editor.canvasEl.style.cursor = "none";
@@ -1157,6 +1197,10 @@ export function createLayersTool(opts) {
       return composed;
     }
 
+    function buildQuickDownloadName() {
+      return "blizlab-cutout.png";
+    }
+
     function intersectMask(nextMaskCanvas) {
       editor.maskCtx.save();
       editor.maskCtx.globalCompositeOperation = "destination-in";
@@ -1191,10 +1235,15 @@ export function createLayersTool(opts) {
 
     function setEditorBusy(flag) {
       const disabled = !!flag;
+      if (disabled) editor.setMoreMenuOpen?.(false);
+      if (editor.btnTitleClose) editor.btnTitleClose.disabled = disabled;
       editor.btnCutout.disabled = disabled;
+      if (editor.btnMoreToggle) editor.btnMoreToggle.disabled = disabled;
+      if (editor.btnMoreClose) editor.btnMoreClose.disabled = disabled;
       editor.btnChroma.disabled = disabled;
       editor.btnInvert.disabled = disabled;
       editor.btnReset.disabled = disabled;
+      editor.btnDownload.disabled = disabled;
       editor.btnCancel.disabled = disabled;
       editor.btnApply.disabled = disabled;
       editor.brushSizeEl.disabled = disabled;
@@ -1203,14 +1252,14 @@ export function createLayersTool(opts) {
       editor.canvasWrapEl.style.pointerEvents = disabled ? "none" : "auto";
       editor.canvasWrapEl.style.opacity = disabled ? "0.85" : "1";
       setBusyButton(editor.btnCutout, "Cutout", false);
-      setBusyButton(editor.btnChroma, "Color", false);
+      setBusyButton(editor.btnChroma, "Remove Color", false);
     }
 
     function setColorBusy(flag) {
       const disabled = !!flag;
       editor.btnChroma.disabled = disabled;
       editor.btnInvert.disabled = disabled;
-      setBusyButton(editor.btnChroma, disabled ? "Working..." : "Color", disabled);
+      setBusyButton(editor.btnChroma, disabled ? "Working..." : "Remove Color", disabled);
     }
 
     const closeHandler = () => {
@@ -1223,6 +1272,7 @@ export function createLayersTool(opts) {
       editor.pointerId = null;
       editor.canvasWrapEl.style.cursor = "default";
       editor.canvasEl.style.cursor = "default";
+      editor.setMoreMenuOpen?.(false);
       editor.overlay.hidden = true;
     };
 
@@ -1230,8 +1280,12 @@ export function createLayersTool(opts) {
       window.removeEventListener("pointerdown", editor.outsidePickHandler, true);
     }
     editor.outsidePickHandler = (evt) => {
-      if (!editor.colorPickMode) return;
       const target = evt.target;
+      if (editor.moreMenuOpen) {
+        const insideMoreMenu = editor.moreMenuEl?.contains(target) || editor.btnMoreToggle?.contains(target);
+        if (!insideMoreMenu) editor.setMoreMenuOpen?.(false);
+      }
+      if (!editor.colorPickMode) return;
       if (editor.canvasWrapEl.contains(target) || editor.btnChroma.contains(target)) return;
       editor.colorPickMode = false;
       editor.colorPickBusy = false;
@@ -1253,6 +1307,7 @@ export function createLayersTool(opts) {
     editor.btnCutout.onclick = async (event) => {
       event.preventDefault();
       event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
       try {
         setEditorBusy(true);
         setBusyButton(editor.btnCutout, "Working...", true);
@@ -1305,9 +1360,21 @@ export function createLayersTool(opts) {
         editor.updateModeButtons();
       }
     };
+    editor.btnMoreToggle.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (editor.btnMoreToggle.disabled) return;
+      editor.setMoreMenuOpen?.(!editor.moreMenuOpen);
+    };
+    editor.btnMoreClose.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
+    };
     editor.btnChroma.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
       editor.colorPickMode = !editor.colorPickMode;
       editor.painting = false;
       editor.panning = false;
@@ -1324,6 +1391,7 @@ export function createLayersTool(opts) {
     editor.btnInvert.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
       editor.colorPickMode = false;
       editor.colorPickBusy = false;
       editor.btnChroma.classList.remove("is-active");
@@ -1336,6 +1404,7 @@ export function createLayersTool(opts) {
     editor.btnReset.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
       const target = layerById(editor.layerId);
       const resetImage = target?.originalImage || editor.originalImage || image;
       if (!resetImage) return;
@@ -1365,15 +1434,39 @@ export function createLayersTool(opts) {
       renderFromSource();
       onStatus?.("Layer brush editor reset to original.");
     };
+    editor.btnDownload.onclick = async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      editor.setMoreMenuOpen?.(false);
+      try {
+        const composed = buildComposedSourceCanvas();
+        const blob = await canvasToBlob(composed, "image/png");
+        downloadBlob(blob, buildQuickDownloadName());
+        onStatus?.("Quick PNG downloaded.");
+      } catch (error) {
+        console.error(error);
+        onStatus?.("Quick PNG download failed.");
+      }
+    };
+    editor.btnTitleClose.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeHandler();
+    };
     editor.btnCancel.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
       closeHandler();
     };
+    editor.btnTitleClose.onpointerdown = event => event.stopPropagation();
     editor.btnReset.onpointerdown = event => event.stopPropagation();
     editor.btnCutout.onpointerdown = event => event.stopPropagation();
+    editor.btnMoreToggle.onpointerdown = event => event.stopPropagation();
+    editor.btnMoreClose.onpointerdown = event => event.stopPropagation();
+    editor.moreMenuEl.onpointerdown = event => event.stopPropagation();
     editor.btnChroma.onpointerdown = event => event.stopPropagation();
     editor.btnInvert.onpointerdown = event => event.stopPropagation();
+    editor.btnDownload.onpointerdown = event => event.stopPropagation();
     editor.btnApply.onpointerdown = event => event.stopPropagation();
     editor.btnCancel.onpointerdown = event => event.stopPropagation();
     editor.overlay.onclick = null;
@@ -3055,6 +3148,7 @@ export function createLayersTool(opts) {
     const lockTopLayer = !!options.lockTopLayer;
     const loopMode = options.loopMode === "linear" ? "linear" : "pingpong";
     const motionType = ["zoom", "panx", "pany"].includes(options.motionType) ? options.motionType : "zoom";
+    const includeWatermark = options.includeWatermark !== false;
     const frameCount = Math.max(2, Math.round(durationSec * fps));
     const delay = Math.round(1000 / fps);
 
@@ -3064,7 +3158,7 @@ export function createLayersTool(opts) {
     const frameCtx = frameCanvas.getContext("2d");
     frameCtx.imageSmoothingEnabled = true;
     frameCtx.imageSmoothingQuality = "high";
-    const watermarkImage = await loadParallaxWatermark();
+    const watermarkImage = includeWatermark ? await loadParallaxWatermark() : null;
     const parallaxTextRasters = new Map();
     state.layers.forEach((layer) => {
       if (!layer.visible || !isTextLayer(layer)) return;

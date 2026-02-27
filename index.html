@@ -42,7 +42,7 @@
   </script>
 
   <link rel="icon" type="image/svg+xml" href="./assets/svg/fabicon.svg">
-  <link rel="stylesheet" href="retrocut.css?v=20260224b">
+  <link rel="stylesheet" href="blizlab.css?v=20260227h">
 </head>
 
 <body>
@@ -53,11 +53,6 @@
       <span class="logo-sparks" id="logoSparks" aria-hidden="true"></span>
     </h1>
     <div class="topbar-actions">
-      <button class="topbar-menu-btn" id="aboutToggleBtn" type="button" aria-expanded="true" aria-controls="appAboutPanel">
-        <span>About</span>
-        <img class="menu-icon-up" src="./svg/up_line.svg" alt="" width="14" height="14" aria-hidden="true">
-        <img class="menu-icon-down" src="./svg/down_line.svg" alt="" width="14" height="14" aria-hidden="true">
-      </button>
       <div class="topbar-more-wrap">
         <button class="topbar-menu-btn topbar-icon-btn" id="moreToggleBtn" type="button" aria-expanded="false" aria-controls="moreMenu" aria-label="Open menu" title="Menu">
           <img class="menu-main-icon" src="./svg/menu_line.svg" alt="" width="18" height="18" aria-hidden="true">
@@ -105,6 +100,10 @@
             <input type="checkbox" id="restoreLastProjectToggle" checked>
             <span>Restore last project on startup</span>
           </label>
+          <label class="setting-toggle" for="addWatermarkExportsToggle">
+            <input type="checkbox" id="addWatermarkExportsToggle" checked>
+            <span>Add watermark on exports</span>
+          </label>
           <div class="setting-inline-row">
             <label class="setting-label" for="jpgQualitySelect">JPG quality</label>
             <select id="jpgQualitySelect" class="setting-select" aria-label="JPG quality">
@@ -123,66 +122,6 @@
       </div>
     </div>
   </header>
-
-  <section class="about-panel" id="appAboutPanel">
-    <div class="about-panel-inner">
-      <section class="hero-carousel" id="heroCarousel" aria-label="Blizlab feature scenes">
-        <div class="hero-parallax" aria-hidden="true">
-          <div class="hero-parallax-layer hero-parallax-back"></div>
-          <div class="hero-parallax-layer hero-parallax-mid"></div>
-          <div class="hero-parallax-layer hero-parallax-front"></div>
-          <div class="hero-parallax-shade"></div>
-        </div>
-        <div class="hero-head">
-          <h2>Chop, stack<br>and make it move<span class="hero-tilt-exclaim">!</span></h2>
-        </div>
-        <div class="hero-scenes-window">
-          <div class="hero-scenes-track" id="heroScenesTrack">
-            <article class="hero-scene">
-              <div class="hero-scene-content">
-                <figure class="hero-scene-visual">
-                  <img src="./assets/images/hero-scene-01.gif" alt="Hero scene 1 preview">
-                </figure>
-                <p class="hero-scene-copy">Import, paste, and layer visuals quickly so ideas move from draft to polished composition without context switching.</p>
-              </div>
-            </article>
-            <article class="hero-scene">
-              <div class="hero-scene-content">
-                <figure class="hero-scene-visual">
-                  <img src="./assets/images/hero-scene-02.jpg" alt="Hero scene 2 preview">
-                </figure>
-                <p class="hero-scene-copy">Full background removal kit with brush and adjustment controls on each layer for fast and easy matching.</p>
-              </div>
-            </article>
-            <article class="hero-scene">
-              <div class="hero-scene-content">
-                <figure class="hero-scene-visual">
-                  <img src="./assets/images/hero-scene-03.gif" alt="Hero scene 3 preview">
-                </figure>
-                <p class="hero-scene-copy">Create GIF animations ready to share, or pack all the layers in high quality PNG for your video editor.</p>
-              </div>
-            </article>
-          </div>
-        </div>
-        <div class="hero-scene-controls">
-          <button class="hero-scene-arrow" id="heroPrevBtn" type="button" aria-label="Previous scene">
-            <img src="./svg/left_line.svg" alt="" width="14" height="14" aria-hidden="true">
-          </button>
-          <div class="hero-scene-dots" id="heroSceneDots" role="tablist" aria-label="Hero scenes">
-            <button class="hero-scene-dot is-active" type="button" role="tab" aria-selected="true" aria-label="Go to scene 1" data-hero-scene="0"></button>
-            <button class="hero-scene-dot" type="button" role="tab" aria-selected="false" aria-label="Go to scene 2" data-hero-scene="1"></button>
-            <button class="hero-scene-dot" type="button" role="tab" aria-selected="false" aria-label="Go to scene 3" data-hero-scene="2"></button>
-          </div>
-          <button class="hero-scene-arrow" id="heroNextBtn" type="button" aria-label="Next scene">
-            <img src="./svg/right_line.svg" alt="" width="14" height="14" aria-hidden="true">
-          </button>
-        </div>
-        <div class="about-actions">
-          <button class="about-start-btn" id="aboutStartBtn" type="button">Start using Blizlab</button>
-        </div>
-      </section>
-    </div>
-  </section>
 
   <main class="page-main">
     <div class="app-layout imagestudio-main">
@@ -463,8 +402,8 @@
                       </select>
                     </label>
                     <label class="parallax-row parallax-row-toggle" for="parallaxLockTop">
-                      <span>Lock top layer</span>
                       <input type="checkbox" id="parallaxLockTop">
+                      <span>Lock top layer</span>
                     </label>
                   </div>
                   <div class="handoff-row">
@@ -504,9 +443,55 @@
             <div class="layers-canvas-wrap" id="layersCanvasWrap">
               <canvas id="layersCanvas"></canvas>
               <div class="layers-empty-state" id="layersOverlayMsg">
-                <div class="layers-empty-content">
-                  <img class="layers-empty-icon" src="./assets/svg/blizlab-bolt.svg" alt="" width="38" height="38">
-                  <p>Drop or insert image to start</p>
+                <div class="layers-empty-onboarding">
+                  <section class="layers-empty-carousel" id="heroCarousel" aria-label="Blizlab feature scenes">
+                    <div class="layers-empty-scenes-window">
+                      <div class="layers-empty-scenes-track" id="heroScenesTrack">
+                        <article class="layers-empty-scene">
+                          <div class="layers-empty-scene-content">
+                            <figure class="layers-empty-scene-visual">
+                              <img src="./assets/images/hero-scene-01.gif" alt="Import and layer images quickly">
+                            </figure>
+                            <p class="layers-empty-scene-copy">Import, paste, and layer visuals quickly.</p>
+                          </div>
+                        </article>
+                        <article class="layers-empty-scene">
+                          <div class="layers-empty-scene-content">
+                            <figure class="layers-empty-scene-visual">
+                              <img src="./assets/images/hero-scene-02.jpg" alt="Background removal and brush tools">
+                            </figure>
+                            <p class="layers-empty-scene-copy">Cut backgrounds and tune each layer fast.</p>
+                          </div>
+                        </article>
+                        <article class="layers-empty-scene">
+                          <div class="layers-empty-scene-content">
+                            <figure class="layers-empty-scene-visual">
+                              <img src="./assets/images/hero-scene-03.gif" alt="Export ready-to-share animations">
+                            </figure>
+                            <p class="layers-empty-scene-copy">Export PNG, JPG, GIF, or full layer packs.</p>
+                          </div>
+                        </article>
+                        <article class="layers-empty-scene">
+                          <div class="layers-empty-scene-content">
+                            <figure class="layers-empty-scene-visual">
+                              <img src="./assets/images/wrong_meme.gif" alt="Don't use it for evil">
+                            </figure>
+                            <p class="layers-empty-scene-copy">Don't use it for evil...</p>
+                          </div>
+                        </article>
+                      </div>
+                    </div>
+                    <button class="layers-empty-scene-arrow layers-empty-scene-arrow-edge is-prev" id="heroPrevBtn" type="button" aria-label="Previous scene">
+                      <img src="./svg/left_line.svg" alt="" width="14" height="14" aria-hidden="true">
+                    </button>
+                    <button class="layers-empty-scene-arrow layers-empty-scene-arrow-edge is-next" id="heroNextBtn" type="button" aria-label="Next scene">
+                      <img src="./svg/right_line.svg" alt="" width="14" height="14" aria-hidden="true">
+                    </button>
+                    <button class="layers-empty-start-btn" id="btnLayersEmptyStart" type="button" title="Start a new project">
+                      <span>Create new project</span>
+                      <img src="./svg/pic_ai_line.svg" alt="" width="16" height="16" aria-hidden="true">
+                    </button>
+                  </section>
                 </div>
               </div>
             </div>
@@ -582,7 +567,7 @@
   <div class="preview-overlay" id="parallaxPreviewOverlay" hidden>
     <div class="preview-modal" role="dialog" aria-modal="true" aria-labelledby="parallaxPreviewTitle">
       <div class="preview-head">
-        <h3 id="parallaxPreviewTitle">Parallax Animation</h3>
+        <h3 id="parallaxPreviewTitle">Export Parallax Animation GIF</h3>
       </div>
       <div class="preview-body">
         <img id="parallaxPreviewImage" alt="Parallax animation preview">
@@ -620,18 +605,18 @@
   <div class="confirm-overlay" id="supportOverlay" hidden>
     <div class="confirm-modal support-modal" role="dialog" aria-modal="true" aria-labelledby="supportDialogTitle" aria-describedby="supportDialogMessage">
       <div class="menu-title-bar confirm-title-bar">
-        <div class="menu-title" id="supportDialogTitle">Support Blizlab</div>
+        <div class="menu-title" id="supportDialogTitle">Support Blizlab ❤️</div>
       </div>
       <div class="confirm-body support-body">
-        <p id="supportDialogMessage">Thank you for using Blizlab. This is a passion project, and I'm actively working on new and improved features. Your support means a lot.</p>
+        <p id="supportDialogMessage">I hope you're enjoying Blizlab. This is a passion project, and I'm actively working on new and improved features. Your support means a lot.</p>
         <p class="support-link-row">
           Support Blizlab on <img class="support-link-icon" src="./assets/svg/ko-fi.svg" alt="" width="14" height="14" aria-hidden="true"><a href="https://ko-fi.com/blizky" target="_blank" rel="noopener noreferrer">https://ko-fi.com/blizky</a>.
         </p>
       </div>
       <div class="confirm-actions">
+        <button class="support-dismiss-text" id="btnSupportAlreadySupported" type="button">I already supported</button>
         <div class="confirm-actions-right">
           <button class="secondary-btn" id="btnSupportClose" type="button">Not now</button>
-          <button class="secondary-btn confirm-accept-btn" id="btnSupportDismissForever" type="button">I supported</button>
         </div>
       </div>
     </div>
@@ -649,6 +634,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
-  <script type="module" src="imagestudio.js?v=20260224c"></script>
+  <script type="module" src="blizlab.js?v=20260226a"></script>
 </body>
 </html>
