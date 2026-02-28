@@ -4993,6 +4993,20 @@ button.main img { filter: brightness(0) invert(1); }
   .imagestudio-main.is-layers .layers-right-rail .layers-panel-head {
     z-index: 3;
   }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open {
+    isolation: auto;
+  }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layers-panel-head {
+    z-index: 2;
+  }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layers-list {
+    z-index: 40;
+  }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layer-more,
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layer-mobile-tools {
+    z-index: 2147483640;
+    transform: translateZ(0);
+  }
   .imagestudio-main.is-layers .layers-right-rail .layers-list {
     flex: 0 0 auto;
     display: flex;
