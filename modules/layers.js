@@ -515,7 +515,12 @@ export function createLayersTool(opts) {
     startX: 0,
     startY: 0,
     startLayerX: 0,
-    startLayerY: 0
+    startLayerY: 0,
+    pointers: new Map(),
+    pinching: false,
+    pinchStartDistance: 0,
+    pinchStartScale: 1,
+    pinchLayerId: null
   };
 
   let layerSeed = 0;
@@ -644,17 +649,17 @@ export function createLayersTool(opts) {
             <button type="button" class="secondary-btn" data-bg-cutout title="Cutout" aria-label="Cutout"><img src="./svg/eraser_ai_line.svg" alt=""><span class="btn-label">Cutout</span></button>
             <div class="layer-bg-more-wrap">
               <button type="button" class="secondary-btn layer-bg-more-toggle-btn" data-bg-more-toggle title="More" aria-label="More" aria-expanded="false" aria-controls="layerBgMoreMenu"><img src="./svg/menu_line.svg" alt=""></button>
-              <div class="layer-bg-more-menu" id="layerBgMoreMenu" data-bg-more-menu hidden>
-                <div class="menu-title-bar layer-bg-more-title-bar">
+              <div class="layer-bg-more-menu menu-surface" id="layerBgMoreMenu" data-bg-more-menu hidden>
+                <div class="menu-title-bar layer-bg-more-title-bar menu-surface-title-bar">
                   <div class="sidebar-section-title menu-title">Cut options</div>
-                  <button class="menu-title-close layer-bg-more-close" type="button" data-bg-more-close title="Close cut options" aria-label="Close cut options">
+                  <button class="menu-title-close layer-bg-more-close menu-surface-title-close" type="button" data-bg-more-close title="Close cut options" aria-label="Close cut options">
                     <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
                   </button>
                 </div>
-                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-chroma title="Remove Color" aria-label="Remove Color"><img src="./svg/color_picker_line.svg" alt=""><span class="btn-label">Remove Color</span></button>
-                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-invert title="Invert mask" aria-label="Invert mask"><img src="./svg/subtract_fill.svg" alt=""><span class="btn-label">Invert mask</span></button>
-                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-reset title="Reset image" aria-label="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">Reset image</span></button>
-                <button type="button" class="secondary-btn layer-bg-more-item" data-bg-download title="Quick download PNG" aria-label="Quick download PNG"><img src="./svg/download_2_line.svg" alt=""><span class="btn-label">Quick download PNG</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item menu-surface-item" data-bg-chroma title="Remove Color" aria-label="Remove Color"><img src="./svg/color_picker_line.svg" alt=""><span class="btn-label">Remove Color</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item menu-surface-item" data-bg-invert title="Invert mask" aria-label="Invert mask"><img src="./svg/subtract_fill.svg" alt=""><span class="btn-label">Invert mask</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item menu-surface-item" data-bg-reset title="Reset image" aria-label="Reset image"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">Reset image</span></button>
+                <button type="button" class="secondary-btn layer-bg-more-item menu-surface-item" data-bg-download title="Quick download PNG" aria-label="Quick download PNG"><img src="./svg/download_2_line.svg" alt=""><span class="btn-label">Quick download PNG</span></button>
               </div>
             </div>
           </div>
@@ -1573,6 +1578,7 @@ export function createLayersTool(opts) {
       id: `layer-${layerSeed}`,
       name: truncateName(`${source.name} copy`),
       tuningOpen: false,
+      mobileMenuOpen: false,
       processing: false,
       visible: soloLayerId ? false : source.visible
     };
@@ -1791,6 +1797,7 @@ export function createLayersTool(opts) {
       rotationDeg: 0,
       processing: false,
       tuningOpen: false,
+      mobileMenuOpen: false,
       visible: soloLayerId ? false : true,
       shadowEnabled: false,
       opacity: OPACITY_MAX,
@@ -1829,6 +1836,7 @@ export function createLayersTool(opts) {
       rotationDeg: 0,
       processing: false,
       tuningOpen: false,
+      mobileMenuOpen: false,
       visible: options.visible === false ? false : (soloLayerId ? false : true),
       shadowEnabled: false,
       opacity: normalizeLayerOpacity(options.opacity),
@@ -2515,6 +2523,7 @@ export function createLayersTool(opts) {
         : '<button class="layer-tool-btn layer-grid-btn bottom-half cutout" type="button" title="Background tools" aria-label="Background tools"><img src="./svg/scissors_line.svg" alt=""></button>';
       const adjustTitle = textLayer ? "Text options" : "Adjust layer";
       const resetTitle = textLayer ? "Reset text layer" : "Reset image";
+      const mobileMenuToggleTitle = layer.mobileMenuOpen ? "Close layer actions" : "More layer actions";
       const tuningMarkup = textLayer ? buildTextTuningMarkup(layer) : buildImageTuningMarkup(layer);
       const topMarkup = textLayer
         ? `
@@ -2541,6 +2550,7 @@ export function createLayersTool(opts) {
           <button class="layer-tool-btn layer-grid-btn bottom-half shadow ${layer.shadowEnabled ? "active" : ""}" type="button" title="Toggle shadow" aria-label="Toggle shadow"><img src="./svg/background_line.svg" alt=""></button>
           ${middleToolMarkup}
           <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row adjust ${layer.tuningOpen ? "active" : ""}" type="button" title="${adjustTitle}" aria-label="${adjustTitle}"><img src="./svg/settings_6_line.svg" alt=""></button>
+          <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row mobile-more-toggle ${layer.mobileMenuOpen ? "active" : ""}" type="button" title="${mobileMenuToggleTitle}" aria-label="${mobileMenuToggleTitle}" aria-expanded="${layer.mobileMenuOpen ? "true" : "false"}" aria-haspopup="true"><img src="./svg/menu_line.svg" alt=""></button>
           <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row reset" type="button" title="${resetTitle}" aria-label="${resetTitle}"><img src="./svg/history_anticlockwise_line.svg" alt=""></button>
           <button class="layer-tool-btn layer-grid-btn bottom-half bottom-row delete" type="button" title="Delete layer" aria-label="Delete layer"><img src="./svg/delete_fill.svg" alt=""></button>
         </div>
@@ -2553,15 +2563,36 @@ export function createLayersTool(opts) {
           </div>
           ${tuningMarkup}
         </div>
+        <div class="layer-mobile-tools menu-surface"${layer.mobileMenuOpen ? "" : " hidden"}>
+          <div class="menu-title-bar layer-mobile-tools-title-bar menu-surface-title-bar">
+            <div class="sidebar-section-title menu-title">Option</div>
+            <button class="menu-title-close layer-mobile-tools-close menu-surface-title-close" type="button" title="Close layer actions" aria-label="Close layer actions">
+              <img src="./svg/close_small_fill.svg" alt="" width="14" height="14" aria-hidden="true">
+            </button>
+          </div>
+          <button class="secondary-btn layer-mobile-tools-item menu-surface-item" type="button" data-layer-mobile-action="fill" title="Fill canvas" aria-label="Fill canvas"><img src="./svg/fullscreen_2_line.svg" alt=""><span class="btn-label">Fill canvas</span></button>
+          <button class="secondary-btn layer-mobile-tools-item menu-surface-item" type="button" data-layer-mobile-action="flipx" title="Flip horizontally" aria-label="Flip horizontally"><img src="./svg/flip_vertical_line.svg" alt=""><span class="btn-label">Flip horizontally</span></button>
+          <button class="secondary-btn layer-mobile-tools-item menu-surface-item" type="button" data-layer-mobile-action="flipy" title="Flip vertically" aria-label="Flip vertically"><img src="./svg/flip_horizontal_line.svg" alt=""><span class="btn-label">Flip vertically</span></button>
+          <button class="secondary-btn layer-mobile-tools-item menu-surface-item ${layer.shadowEnabled ? "is-active" : ""}" type="button" data-layer-mobile-action="shadow" title="Toggle shadow" aria-label="Toggle shadow"><img src="./svg/background_line.svg" alt=""><span class="btn-label">Toggle shadow</span></button>
+          <button class="secondary-btn layer-mobile-tools-item menu-surface-item" type="button" data-layer-mobile-action="reset" title="${resetTitle}" aria-label="${resetTitle}"><img src="./svg/history_anticlockwise_line.svg" alt=""><span class="btn-label">${resetTitle}</span></button>
+        </div>
       `;
       listEl.appendChild(el);
     });
+    const hasOpenLayerMenu = state.layers.some(layer => layer.tuningOpen || layer.mobileMenuOpen);
+    listEl.classList.toggle("menus-overlay-open", hasOpenLayerMenu);
     updateOverlay();
     onChange?.();
     const openLayer = state.layers.find(layer => layer.tuningOpen);
     if (openLayer) {
       requestAnimationFrame(() => {
         positionOpenTuningPanel(openLayer.id);
+      });
+    }
+    const openMobileMenuLayer = state.layers.find(layer => layer.mobileMenuOpen);
+    if (openMobileMenuLayer) {
+      requestAnimationFrame(() => {
+        positionOpenMobileMenu(openMobileMenuLayer.id);
       });
     }
   }
@@ -2595,6 +2626,20 @@ export function createLayersTool(opts) {
     return changed;
   }
 
+  function closeAllMobileToolMenus({ refresh = true } = {}) {
+    let changed = false;
+    state.layers.forEach((layer) => {
+      if (!layer.mobileMenuOpen) return;
+      layer.mobileMenuOpen = false;
+      changed = true;
+    });
+    if (changed && refresh) {
+      refreshList();
+      render();
+    }
+    return changed;
+  }
+
   function positionOpenTuningPanel(layerId) {
     const row = listEl?.querySelector(`.layer-item[data-layer-id="${layerId}"]`);
     if (!row) return;
@@ -2610,19 +2655,47 @@ export function createLayersTool(opts) {
     let left = btnRect.left + btnRect.width / 2 - panelWidth / 2;
     left = clamp(left, margin, window.innerWidth - panelWidth - margin);
 
-    let top = btnRect.bottom + 8;
-    if (top + panelHeight > window.innerHeight - margin) {
-      top = btnRect.top - panelHeight - 8;
+    let top = btnRect.top - panelHeight - 8;
+    if (top < margin) {
+      top = btnRect.bottom + 8;
     }
-    top = Math.max(margin, top);
+    top = clamp(top, margin, window.innerHeight - panelHeight - margin);
 
     panel.style.left = `${Math.round(left)}px`;
     panel.style.top = `${Math.round(top)}px`;
   }
 
+  function positionOpenMobileMenu(layerId) {
+    const row = listEl?.querySelector(`.layer-item[data-layer-id="${layerId}"]`);
+    if (!row) return;
+    const toggleBtn = row.querySelector(".layer-tool-btn.mobile-more-toggle");
+    const menu = row.querySelector(".layer-mobile-tools:not([hidden])");
+    if (!toggleBtn || !menu) return;
+
+    const margin = 8;
+    const btnRect = toggleBtn.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth || 220;
+    const menuHeight = menu.offsetHeight || 190;
+
+    let left = btnRect.left + btnRect.width / 2 - menuWidth / 2;
+    left = clamp(left, margin, window.innerWidth - menuWidth - margin);
+
+    let top = btnRect.top - menuHeight - 8;
+    if (top < margin) {
+      top = btnRect.bottom + 8;
+    }
+    top = clamp(top, margin, window.innerHeight - menuHeight - margin);
+
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.top = `${Math.round(top)}px`;
+  }
+
   function selectLayer(layerId) {
     state.activeLayerId = layerId;
-    state.layers.forEach(layer => { layer.tuningOpen = false; });
+    state.layers.forEach((layer) => {
+      layer.tuningOpen = false;
+      layer.mobileMenuOpen = false;
+    });
     refreshList();
     render();
   }
@@ -2727,6 +2800,7 @@ export function createLayersTool(opts) {
       rotationDeg: 0,
       processing: false,
       tuningOpen: false,
+      mobileMenuOpen: false,
       visible: true,
       shadowEnabled: false,
       opacity: OPACITY_MAX,
@@ -3263,32 +3337,94 @@ export function createLayersTool(opts) {
     return activeLayer();
   }
 
+  function pointerDistance(a, b) {
+    if (!a || !b) return 0;
+    const dx = (Number(a.x) || 0) - (Number(b.x) || 0);
+    const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
+    return Math.hypot(dx, dy);
+  }
+
+  function firstTwoPointers() {
+    const entries = Array.from(interaction.pointers.values());
+    if (entries.length < 2) return null;
+    return [entries[0], entries[1]];
+  }
+
+  function beginPinch(layer) {
+    const pair = firstTwoPointers();
+    if (!pair || !layer) return false;
+    const distance = pointerDistance(pair[0], pair[1]);
+    if (!(distance > 0.0001)) return false;
+    interaction.pinching = true;
+    interaction.pinchLayerId = layer.id;
+    interaction.pinchStartDistance = distance;
+    interaction.pinchStartScale = Math.max(0.04, Number(layer.scale) || 1);
+    interaction.dragging = false;
+    interaction.pointerId = null;
+    return true;
+  }
+
   function pointerDown(event) {
     if (!hasLayers()) return;
     const point = getCanvasPoint(event);
+    interaction.pointers.set(event.pointerId, point);
     let picked = activeLayer();
     if (!picked) {
       picked = pickTopLayerAt(point);
     }
-    if (!picked) return;
-    interaction.dragging = true;
-    interaction.pointerId = event.pointerId;
-    interaction.startX = point.x;
-    interaction.startY = point.y;
-    interaction.startLayerX = picked.x;
-    interaction.startLayerY = picked.y;
+    if (!picked) {
+      interaction.pointers.delete(event.pointerId);
+      return;
+    }
+    const prevActive = state.activeLayerId;
     state.activeLayerId = picked.id;
     canvas.setPointerCapture(event.pointerId);
-    refreshList();
+    if (interaction.pointers.size >= 2) {
+      beginPinch(picked);
+    } else {
+      interaction.pinching = false;
+      interaction.pinchLayerId = null;
+      interaction.pinchStartDistance = 0;
+      interaction.dragging = true;
+      interaction.pointerId = event.pointerId;
+      interaction.startX = point.x;
+      interaction.startY = point.y;
+      interaction.startLayerX = picked.x;
+      interaction.startLayerY = picked.y;
+    }
+    if (prevActive !== state.activeLayerId) {
+      refreshList();
+    }
     render();
     event.preventDefault();
   }
 
   function pointerMove(event) {
-    if (!interaction.dragging) return;
+    const point = getCanvasPoint(event);
+    if (interaction.pointers.has(event.pointerId)) {
+      interaction.pointers.set(event.pointerId, point);
+    }
+    if (interaction.pinching) {
+      const layer = layerById(interaction.pinchLayerId) || activeLayer();
+      const pair = firstTwoPointers();
+      if (!layer || !pair || interaction.pointers.size < 2 || interaction.pinchStartDistance <= 0.0001) {
+        return;
+      }
+      const distance = pointerDistance(pair[0], pair[1]);
+      const factor = distance / interaction.pinchStartDistance;
+      layer.scale = clamp(interaction.pinchStartScale * factor, 0.04, 12);
+      if (isTextLayer(layer)) {
+        fitTextLayerToCanvas(layer);
+        layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+      }
+      refreshWarnings(layer);
+      render();
+      event.preventDefault();
+      return;
+    }
+    if (!interaction.dragging || event.pointerId !== interaction.pointerId) return;
     const layer = activeLayer();
     if (!layer) return;
-    const point = getCanvasPoint(event);
     const dx = point.x - interaction.startX;
     const dy = point.y - interaction.startY;
     layer.x = interaction.startLayerX + dx;
@@ -3298,14 +3434,54 @@ export function createLayersTool(opts) {
   }
 
   function pointerEnd(event) {
-    if (!interaction.dragging) return;
-    interaction.dragging = false;
-    if (interaction.pointerId !== null) {
-      canvas.releasePointerCapture(interaction.pointerId);
+    if (interaction.pointers.has(event.pointerId)) {
+      interaction.pointers.delete(event.pointerId);
     }
-    interaction.pointerId = null;
-    refreshList();
-    render();
+    try {
+      canvas.releasePointerCapture(event.pointerId);
+    } catch (_error) {
+      // Ignore when capture is already released.
+    }
+
+    if (interaction.pinching && interaction.pointers.size < 2) {
+      interaction.pinching = false;
+      interaction.pinchStartDistance = 0;
+      interaction.pinchStartScale = 1;
+      const layer = layerById(interaction.pinchLayerId) || activeLayer();
+      interaction.pinchLayerId = null;
+      if (layer && interaction.pointers.size === 1) {
+        const [nextPointerId, nextPoint] = interaction.pointers.entries().next().value || [];
+        if (nextPointerId != null && nextPoint) {
+          interaction.dragging = true;
+          interaction.pointerId = nextPointerId;
+          interaction.startX = nextPoint.x;
+          interaction.startY = nextPoint.y;
+          interaction.startLayerX = layer.x;
+          interaction.startLayerY = layer.y;
+        }
+      }
+    }
+
+    if (interaction.dragging && event.pointerId === interaction.pointerId) {
+      interaction.dragging = false;
+      interaction.pointerId = null;
+      if (interaction.pointers.size === 1) {
+        const layer = activeLayer();
+        const [nextPointerId, nextPoint] = interaction.pointers.entries().next().value || [];
+        if (layer && nextPointerId != null && nextPoint) {
+          interaction.dragging = true;
+          interaction.pointerId = nextPointerId;
+          interaction.startX = nextPoint.x;
+          interaction.startY = nextPoint.y;
+          interaction.startLayerX = layer.x;
+          interaction.startLayerY = layer.y;
+        }
+      }
+    }
+    if (!interaction.dragging && !interaction.pinching) {
+      refreshList();
+      render();
+    }
     event.preventDefault();
   }
 
@@ -3379,9 +3555,56 @@ export function createLayersTool(opts) {
       return;
     }
 
+    if (event.target.closest(".layer-mobile-tools-close")) {
+      if (!layer.mobileMenuOpen) return;
+      layer.mobileMenuOpen = false;
+      refreshList();
+      render();
+      return;
+    }
+
+    if (event.target.closest(".layer-mobile-tools-item")) {
+      const actionButton = event.target.closest(".layer-mobile-tools-item");
+      const action = actionButton?.dataset?.layerMobileAction || "";
+      if (!action) return;
+      closeAllMobileToolMenus({ refresh: false });
+      state.activeLayerId = layerId;
+      if (action === "fill") {
+        fillSelectedLayer();
+        onStatus?.("Layer filled.");
+        return;
+      }
+      if (action === "reset") {
+        if (resetSelectedLayer()) {
+          onStatus?.("Selected layer reset.");
+        }
+        return;
+      }
+      if (action === "flipx") {
+        layer.flipX = !layer.flipX;
+      } else if (action === "flipy") {
+        layer.flipY = !layer.flipY;
+      } else if (action === "shadow") {
+        layer.shadowEnabled = !layer.shadowEnabled;
+      }
+      refreshList();
+      render();
+      return;
+    }
+
     if (event.target.closest(".layer-tool-btn")) {
       const button = event.target.closest(".layer-tool-btn");
       state.activeLayerId = layerId;
+      if (button.classList.contains("mobile-more-toggle")) {
+        const next = !layer.mobileMenuOpen;
+        state.layers.forEach((entry) => {
+          entry.mobileMenuOpen = entry.id === layerId ? next : false;
+        });
+        refreshList();
+        render();
+        return;
+      }
+      closeAllMobileToolMenus({ refresh: false });
       if (button.classList.contains("fill")) {
         fillSelectedLayer();
         onStatus?.("Layer filled.");
@@ -3436,6 +3659,7 @@ export function createLayersTool(opts) {
 
     if (event.target.closest(".layer-btn")) {
       const button = event.target.closest(".layer-btn");
+      closeAllMobileToolMenus({ refresh: false });
       const index = state.layers.findIndex(entry => entry.id === layerId);
       let reordered = false;
       if (button.classList.contains("up") && index < state.layers.length - 1) {
@@ -3471,6 +3695,10 @@ export function createLayersTool(opts) {
     }
 
     if (event.target.closest(".layer-more")) {
+      return;
+    }
+
+    if (event.target.closest(".layer-mobile-tools")) {
       return;
     }
 
@@ -3622,10 +3850,15 @@ export function createLayersTool(opts) {
   });
 
   document.addEventListener("click", event => {
-    if (!state.layers.some(layer => layer.tuningOpen)) return;
-    if (event.target.closest(".layer-more")) return;
-    if (event.target.closest(".layer-tool-btn.adjust")) return;
-    closeAllTuningPanels();
+    if (state.layers.some(layer => layer.tuningOpen)) {
+      if (!event.target.closest(".layer-more") && !event.target.closest(".layer-tool-btn.adjust")) {
+        closeAllTuningPanels();
+      }
+    }
+    if (!state.layers.some(layer => layer.mobileMenuOpen)) return;
+    if (event.target.closest(".layer-mobile-tools")) return;
+    if (event.target.closest(".layer-tool-btn.mobile-more-toggle")) return;
+    closeAllMobileToolMenus();
   });
 
   window.addEventListener("resize", () => {
@@ -3636,6 +3869,8 @@ export function createLayersTool(opts) {
   listEl.addEventListener("scroll", () => {
     const openLayer = state.layers.find(layer => layer.tuningOpen);
     if (openLayer) positionOpenTuningPanel(openLayer.id);
+    const openMobileMenuLayer = state.layers.find(layer => layer.mobileMenuOpen);
+    if (openMobileMenuLayer) positionOpenMobileMenu(openMobileMenuLayer.id);
   });
 
   ratioButtons.forEach(button => {
