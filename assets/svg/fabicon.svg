@@ -1,12 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Blizlab favicon">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffcc33"/>
-      <stop offset="74%" stop-color="#AF29A4"/>
-      <stop offset="100%" stop-color="#0099cc"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="100" height="100" rx="20" ry="20" fill="url(#bg)"/>
+  <rect x="0" y="0" width="100" height="100" rx="20" ry="20" fill="#0099cc"/>
   <path
     fill="#ffcc33"
     stroke="rgba(0, 0, 0, 0.35)"

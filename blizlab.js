@@ -248,6 +248,7 @@ let newProjectFlatEmptyState = false;
 let aboutCloseTimer = 0;
 let incomingProjectOpenRequestId = readIncomingProjectOpenRequestId();
 let layersBackgroundMenuOpen = false;
+let layersBgMenuTouchFocusGuardUntil = 0;
 let sidebarManualCollapsed = false;
 let sidebarAutoCollapseActive = false;
 let confirmDialogResolve = null;
@@ -1151,10 +1152,65 @@ function syncLayersBackgroundMenuInputs() {
   updateLayersBackgroundButtonState();
 }
 
+function isSmallTouchViewport() {
+  return !!window.matchMedia?.(MOBILE_BLOCKER_QUERY)?.matches;
+}
+
+function blurActiveEditableElement() {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || active === document.body) return;
+  if (active.matches("input, textarea, [contenteditable=''], [contenteditable='true']")) {
+    active.blur();
+  }
+}
+
+function layersBgMenuFocusGuardActive() {
+  const now = window.performance?.now?.() || Date.now();
+  return isSmallTouchViewport() && now < layersBgMenuTouchFocusGuardUntil;
+}
+
+function setLayersBgHexInputLocked(locked) {
+  if (!layersBgHexInput) return;
+  if (locked) {
+    layersBgHexInput.setAttribute("readonly", "readonly");
+    layersBgHexInput.setAttribute("aria-readonly", "true");
+    return;
+  }
+  layersBgHexInput.removeAttribute("readonly");
+  layersBgHexInput.setAttribute("aria-readonly", "false");
+}
+
 function setLayersBackgroundMenuOpen(open) {
   const next = !!open;
   layersBackgroundMenuOpen = next;
   if (layersBackgroundMenu) layersBackgroundMenu.hidden = !next;
+  if (next && isSmallTouchViewport()) {
+    setLayersBgHexInputLocked(true);
+    layersBgMenuTouchFocusGuardUntil = (window.performance?.now?.() || Date.now()) + 450;
+    blurActiveEditableElement();
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && layersBackgroundMenu?.contains(active)) {
+        active.blur();
+      }
+    }, 0);
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && layersBackgroundMenu?.contains(active)) {
+        active.blur();
+      }
+    }, 220);
+  } else {
+    setLayersBgHexInputLocked(false);
+  }
+  if (!next) {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && layersBackgroundMenu?.contains(active)) {
+      active.blur();
+    }
+    setLayersBgHexInputLocked(false);
+    layersBgMenuTouchFocusGuardUntil = 0;
+  }
   updateLayersBackgroundButtonState();
 }
 
@@ -1191,8 +1247,11 @@ function initLayersBackgroundMenu() {
     setLayersBackgroundMenuOpen(!layersBackgroundMenuOpen);
     if (layersBackgroundMenuOpen) {
       syncLayersBackgroundMenuInputs();
-      layersBgHexInput?.focus();
-      layersBgHexInput?.select();
+      const isSmallTouchViewport = !!window.matchMedia?.(MOBILE_BLOCKER_QUERY)?.matches;
+      if (!isSmallTouchViewport) {
+        layersBgHexInput?.focus();
+        layersBgHexInput?.select();
+      }
     }
   });
 
@@ -1211,6 +1270,34 @@ function initLayersBackgroundMenu() {
     event.preventDefault();
     const nextColor = layersBgHexInput.value || layersBgColorInput?.value || "";
     applyLayersSolidBackground(nextColor);
+  });
+
+  layersBgHexInput?.addEventListener("pointerdown", (event) => {
+    if (!layersBackgroundMenuOpen || !isSmallTouchViewport()) return;
+    if (!layersBgHexInput.hasAttribute("readonly")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    layersBgMenuTouchFocusGuardUntil = 0;
+    setLayersBgHexInputLocked(false);
+    requestAnimationFrame(() => {
+      layersBgHexInput.focus();
+      try {
+        const end = layersBgHexInput.value.length;
+        layersBgHexInput.setSelectionRange(end, end);
+      } catch (_error) {
+        // Ignore selection errors if the control is not ready yet.
+      }
+    });
+  });
+
+  layersBgHexInput?.addEventListener("focus", () => {
+    if (!layersBackgroundMenuOpen) return;
+    if (layersBgHexInput.hasAttribute("readonly")) {
+      layersBgHexInput.blur();
+      return;
+    }
+    if (!layersBgMenuFocusGuardActive()) return;
+    layersBgHexInput.blur();
   });
 
   if (layersBgColorPresets.length > 0) {

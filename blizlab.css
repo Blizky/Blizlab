@@ -3604,6 +3604,12 @@ button.main img { filter: brightness(0) invert(1); }
   letter-spacing: 0.03em;
 }
 
+@media (max-width: 900px) and (pointer: coarse) {
+  #layersBgHexInput {
+    font-size: 16px;
+  }
+}
+
 .layers-bg-row input[type="text"]:focus,
 .layers-bg-row input[type="color"]:focus {
   outline: 2px solid rgba(0, 153, 204, 0.35);
@@ -3804,6 +3810,13 @@ button.main img { filter: brightness(0) invert(1); }
 .layer-item.is-text .layer-text-inline-input:focus {
   outline: 2px solid rgba(0, 153, 204, 0.45);
   outline-offset: 1px;
+}
+
+@media (max-width: 900px) and (pointer: coarse) {
+  .layer-item.is-text .layer-text-inline-input.is-mobile-text-dialog {
+    font-size: 16px;
+    cursor: pointer;
+  }
 }
 
 .layer-wb {
@@ -4972,6 +4985,12 @@ button.main img { filter: brightness(0) invert(1); }
     border-left: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 0 6px 10px;
+  }
+  .imagestudio-main.is-layers .layers-right-rail .layers-panel-head {
+    z-index: 320;
+  }
+  .imagestudio-main.is-layers .layers-right-rail .layers-head-menu {
+    z-index: 2147483600;
   }
   .imagestudio-main.is-layers .layers-right-rail .layers-list {
     flex: 0 0 auto;

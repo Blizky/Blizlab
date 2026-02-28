@@ -437,6 +437,12 @@ const PARALLAX_QUALITY_PRESETS = {
 const PARALLAX_WATERMARK_SRC = "./assets/images/blizlab_logo_white.png";
 let parallaxWatermarkPromise = null;
 const LAYERS_HORIZONTAL_UI_QUERY = "(max-width: 900px)";
+const MOBILE_NATIVE_TEXT_DIALOG_QUERY = "(max-width: 900px) and (pointer: coarse)";
+
+function shouldUseNativeTextDialog() {
+  if (!window.matchMedia) return false;
+  return window.matchMedia(MOBILE_NATIVE_TEXT_DIALOG_QUERY).matches;
+}
 
 function loadParallaxWatermark() {
   if (parallaxWatermarkPromise) return parallaxWatermarkPromise;
@@ -2524,11 +2530,12 @@ export function createLayersTool(opts) {
       const adjustTitle = textLayer ? "Text options" : "Adjust layer";
       const resetTitle = textLayer ? "Reset text layer" : "Reset image";
       const mobileMenuToggleTitle = layer.mobileMenuOpen ? "Close layer actions" : "More layer actions";
+      const useNativeTextDialog = textLayer && shouldUseNativeTextDialog();
       const tuningMarkup = textLayer ? buildTextTuningMarkup(layer) : buildImageTuningMarkup(layer);
       const topMarkup = textLayer
         ? `
           <div class="layer-preview-tile layer-text-inline-wrap" title="${statusLabel}">
-            <textarea class="layer-text-inline-input" data-text-kind="content" rows="2" spellcheck="false">${escapeHtml(layer.textContent ?? TEXT_DEFAULTS.content)}</textarea>
+            <textarea class="layer-text-inline-input${useNativeTextDialog ? " is-mobile-text-dialog" : ""}" data-text-kind="content" rows="2" spellcheck="false"${useNativeTextDialog ? ' readonly aria-readonly="true"' : ""}>${escapeHtml(layer.textContent ?? TEXT_DEFAULTS.content)}</textarea>
           </div>
         `
         : `
@@ -3514,6 +3521,22 @@ export function createLayersTool(opts) {
     if (!layer) return;
 
     if (event.target.closest(".layer-text-inline-wrap")) {
+      if (isTextLayer(layer) && shouldUseNativeTextDialog()) {
+        const currentPromptValue = normalizeTextContent(layer.textContent ?? TEXT_DEFAULTS.content).replace(/\n/g, "\\n");
+        const promptValue = window.prompt("Edit text (use \\n for new line)", currentPromptValue);
+        if (promptValue !== null) {
+          const nextText = normalizeTextContent(String(promptValue).replace(/\\n/g, "\n"));
+          if (nextText !== layer.textContent) {
+            layer.textContent = nextText;
+            fitTextLayerToCanvas(layer);
+            layer.thumbDataUrl = makeLayerThumbDataUrl(layer);
+            refreshWarnings(layer);
+            refreshList();
+            render();
+            onStatus?.("Text updated.");
+          }
+        }
+      }
       return;
     }
 
