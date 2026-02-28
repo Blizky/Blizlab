@@ -77,6 +77,7 @@ export function createCutoutTool(opts) {
   let zoomPercent = 100;
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
+  const useTouchGestureFallback = typeof window !== "undefined" && !("PointerEvent" in window);
 
   function isTextEntryTarget(target) {
     const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
@@ -712,12 +713,6 @@ export function createCutoutTool(opts) {
     if (!hasImage || working) return;
     canvas.focus({ preventScroll: true });
     if (isMoveActive()) {
-      if (evt.pointerType === "touch") {
-        // Move-mode touch gestures are handled via touch events to avoid
-        // pointer/touch race conditions on iOS.
-        evt.preventDefault();
-        return;
-      }
       captureMovePointer(evt.pointerId);
       movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
       if (movePointers.size >= 2) {
@@ -745,10 +740,6 @@ export function createCutoutTool(opts) {
 
   function movePaint(evt) {
     if (isMoveActive()) {
-      if (evt.pointerType === "touch") {
-        evt.preventDefault();
-        return;
-      }
       if (movePointers.has(evt.pointerId)) {
         movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
       }
@@ -784,7 +775,7 @@ export function createCutoutTool(opts) {
 
   function endPaint(evt) {
     if (isMoveActive()) {
-      if (!evt || evt.pointerType === "touch") {
+      if (!evt) {
         evt && evt.preventDefault();
         return;
       }
@@ -886,7 +877,9 @@ export function createCutoutTool(opts) {
   canvas.addEventListener("pointerup", endPaint, { passive: false });
   canvas.addEventListener("pointercancel", endPaint, { passive: false });
   canvas.addEventListener("pointerleave", e => {
-    endPaint(e);
+    if (!isMoveActive()) {
+      endPaint(e);
+    }
     hideBrushPreview();
   });
   canvas.addEventListener("pointerenter", e => {
@@ -917,64 +910,28 @@ export function createCutoutTool(opts) {
     endPaint(evt);
   }, { passive: false });
 
-  // iOS fallback: explicit touch gesture handling for move-mode pinch/pan.
-  canvasWrap.addEventListener("touchstart", (event) => {
-    if (!hasImage || working || !isMoveActive()) return;
-    if (!event.touches || event.touches.length === 0) return;
-    touchGestureActive = true;
-    movePointerId = null;
-    movePointers.clear();
-    moving = false;
-    pinching = false;
-    pinchStartDistance = 0;
-    pinchStartZoom = zoomPercent;
+  // Touch fallback for very old browsers without Pointer Events.
+  if (useTouchGestureFallback) {
+    canvasWrap.addEventListener("touchstart", (event) => {
+      if (!hasImage || working || !isMoveActive()) return;
+      if (!event.touches || event.touches.length === 0) return;
+      touchGestureActive = true;
+      movePointerId = null;
+      movePointers.clear();
+      moving = false;
+      pinching = false;
+      pinchStartDistance = 0;
+      pinchStartZoom = zoomPercent;
 
-    if (event.touches.length >= 2) {
-      const a = event.touches[0];
-      const b = event.touches[1];
-      touchPinchActive = true;
-      touchPanActive = false;
-      touchStartDistance = touchDistance(a, b);
-      touchStartZoom = zoomPercent;
-    } else {
-      const t = event.touches[0];
-      touchPinchActive = false;
-      touchPanActive = true;
-      touchPanStartClientX = t.clientX;
-      touchPanStartClientY = t.clientY;
-      touchStartScrollLeft = canvasWrap.scrollLeft;
-      touchStartScrollTop = canvasWrap.scrollTop;
-    }
-
-    event.preventDefault();
-  }, { passive: false });
-
-  canvasWrap.addEventListener("touchmove", (event) => {
-    if (!hasImage || working || !isMoveActive() || !touchGestureActive) return;
-    if (!event.touches || event.touches.length === 0) return;
-
-    if (event.touches.length >= 2) {
-      const a = event.touches[0];
-      const b = event.touches[1];
-      if (!touchPinchActive || touchStartDistance <= 0.0001) {
+      if (event.touches.length >= 2) {
+        const a = event.touches[0];
+        const b = event.touches[1];
         touchPinchActive = true;
         touchPanActive = false;
         touchStartDistance = touchDistance(a, b);
         touchStartZoom = zoomPercent;
-      }
-      if (touchStartDistance > 0.0001) {
-        const distance = touchDistance(a, b);
-        const factor = distance / touchStartDistance;
-        const midpoint = touchMidpoint(a, b);
-        applyZoom(touchStartZoom * factor, midpoint.x, midpoint.y);
-      }
-      event.preventDefault();
-      return;
-    }
-
-    if (event.touches.length === 1) {
-      const t = event.touches[0];
-      if (touchPinchActive || !touchPanActive) {
+      } else {
+        const t = event.touches[0];
         touchPinchActive = false;
         touchPanActive = true;
         touchPanStartClientX = t.clientX;
@@ -982,57 +939,95 @@ export function createCutoutTool(opts) {
         touchStartScrollLeft = canvasWrap.scrollLeft;
         touchStartScrollTop = canvasWrap.scrollTop;
       }
-      const dx = t.clientX - touchPanStartClientX;
-      const dy = t.clientY - touchPanStartClientY;
-      canvasWrap.scrollLeft = touchStartScrollLeft - dx;
-      canvasWrap.scrollTop = touchStartScrollTop - dy;
-      event.preventDefault();
-    }
-  }, { passive: false });
 
-  function endTouchGesture(event) {
-    if (!touchGestureActive) return;
-    if (!isMoveActive() || working || !hasImage) {
+      event.preventDefault();
+    }, { passive: false });
+
+    canvasWrap.addEventListener("touchmove", (event) => {
+      if (!hasImage || working || !isMoveActive() || !touchGestureActive) return;
+      if (!event.touches || event.touches.length === 0) return;
+
+      if (event.touches.length >= 2) {
+        const a = event.touches[0];
+        const b = event.touches[1];
+        if (!touchPinchActive || touchStartDistance <= 0.0001) {
+          touchPinchActive = true;
+          touchPanActive = false;
+          touchStartDistance = touchDistance(a, b);
+          touchStartZoom = zoomPercent;
+        }
+        if (touchStartDistance > 0.0001) {
+          const distance = touchDistance(a, b);
+          const factor = distance / touchStartDistance;
+          const midpoint = touchMidpoint(a, b);
+          applyZoom(touchStartZoom * factor, midpoint.x, midpoint.y);
+        }
+        event.preventDefault();
+        return;
+      }
+
+      if (event.touches.length === 1) {
+        const t = event.touches[0];
+        if (touchPinchActive || !touchPanActive) {
+          touchPinchActive = false;
+          touchPanActive = true;
+          touchPanStartClientX = t.clientX;
+          touchPanStartClientY = t.clientY;
+          touchStartScrollLeft = canvasWrap.scrollLeft;
+          touchStartScrollTop = canvasWrap.scrollTop;
+        }
+        const dx = t.clientX - touchPanStartClientX;
+        const dy = t.clientY - touchPanStartClientY;
+        canvasWrap.scrollLeft = touchStartScrollLeft - dx;
+        canvasWrap.scrollTop = touchStartScrollTop - dy;
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    function endTouchGesture(event) {
+      if (!touchGestureActive) return;
+      if (!isMoveActive() || working || !hasImage) {
+        touchGestureActive = false;
+        touchPanActive = false;
+        touchPinchActive = false;
+        return;
+      }
+
+      const touches = event.touches || [];
+      if (touches.length >= 2) {
+        const a = touches[0];
+        const b = touches[1];
+        touchPinchActive = true;
+        touchPanActive = false;
+        touchStartDistance = touchDistance(a, b);
+        touchStartZoom = zoomPercent;
+        event.preventDefault();
+        return;
+      }
+
+      if (touches.length === 1) {
+        const t = touches[0];
+        touchPinchActive = false;
+        touchPanActive = true;
+        touchPanStartClientX = t.clientX;
+        touchPanStartClientY = t.clientY;
+        touchStartScrollLeft = canvasWrap.scrollLeft;
+        touchStartScrollTop = canvasWrap.scrollTop;
+        event.preventDefault();
+        return;
+      }
+
       touchGestureActive = false;
       touchPanActive = false;
       touchPinchActive = false;
-      return;
-    }
-
-    const touches = event.touches || [];
-    if (touches.length >= 2) {
-      const a = touches[0];
-      const b = touches[1];
-      touchPinchActive = true;
-      touchPanActive = false;
-      touchStartDistance = touchDistance(a, b);
+      touchStartDistance = 0;
       touchStartZoom = zoomPercent;
       event.preventDefault();
-      return;
     }
 
-    if (touches.length === 1) {
-      const t = touches[0];
-      touchPinchActive = false;
-      touchPanActive = true;
-      touchPanStartClientX = t.clientX;
-      touchPanStartClientY = t.clientY;
-      touchStartScrollLeft = canvasWrap.scrollLeft;
-      touchStartScrollTop = canvasWrap.scrollTop;
-      event.preventDefault();
-      return;
-    }
-
-    touchGestureActive = false;
-    touchPanActive = false;
-    touchPinchActive = false;
-    touchStartDistance = 0;
-    touchStartZoom = zoomPercent;
-    event.preventDefault();
+    canvasWrap.addEventListener("touchend", endTouchGesture, { passive: false });
+    canvasWrap.addEventListener("touchcancel", endTouchGesture, { passive: false });
   }
-
-  canvasWrap.addEventListener("touchend", endTouchGesture, { passive: false });
-  canvasWrap.addEventListener("touchcancel", endTouchGesture, { passive: false });
 
   canvasWrap.addEventListener("wheel", (event) => {
     if (!isMoveActive()) return;
