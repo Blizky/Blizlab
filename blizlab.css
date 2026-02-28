@@ -2638,9 +2638,8 @@ button.main img { filter: brightness(0) invert(1); }
 }
 
 #cutoutWrap {
-  overflow: auto;
-  scrollbar-width: thin;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  overscroll-behavior: none;
   touch-action: none;
 }
 

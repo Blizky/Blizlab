@@ -58,8 +58,8 @@ export function createCutoutTool(opts) {
   let spaceMove = false;
   let moveStartClientX = 0;
   let moveStartClientY = 0;
-  let moveStartScrollLeft = 0;
-  let moveStartScrollTop = 0;
+  let moveStartPanX = 0;
+  let moveStartPanY = 0;
   let movePointerId = null;
   const movePointers = new Map();
   let pinching = false;
@@ -72,11 +72,13 @@ export function createCutoutTool(opts) {
   let touchStartZoom = 100;
   let touchPanStartClientX = 0;
   let touchPanStartClientY = 0;
-  let touchStartScrollLeft = 0;
-  let touchStartScrollTop = 0;
+  let touchStartPanX = 0;
+  let touchStartPanY = 0;
   let safariGestureActive = false;
   let safariGestureStartZoom = 100;
   let zoomPercent = 100;
+  let panX = 0;
+  let panY = 0;
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
   const useTouchGestureFallback = typeof window !== "undefined" && !("PointerEvent" in window);
@@ -588,38 +590,47 @@ export function createCutoutTool(opts) {
     movePointerId = pointerId;
     moveStartClientX = pointer.clientX;
     moveStartClientY = pointer.clientY;
-    moveStartScrollLeft = canvasWrap.scrollLeft;
-    moveStartScrollTop = canvasWrap.scrollTop;
+    moveStartPanX = panX;
+    moveStartPanY = panY;
     return true;
   }
 
+  function applyViewportTransform() {
+    const scale = zoomPercent / 100;
+    canvas.style.width = "auto";
+    canvas.style.height = "auto";
+    canvas.style.maxWidth = "100%";
+    canvas.style.maxHeight = "100%";
+    canvas.style.transformOrigin = "center center";
+    canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  }
+
   function applyZoom(nextPercent, anchorClientX = null, anchorClientY = null) {
-    const previous = zoomPercent;
-    zoomPercent = clamp(nextPercent, ZOOM_MIN, ZOOM_MAX);
-    if (zoomPercent <= 100) {
-      canvas.style.width = "auto";
-      canvas.style.height = "auto";
-      canvas.style.maxWidth = "100%";
-      canvas.style.maxHeight = "100%";
-      canvasWrap.scrollLeft = 0;
-      canvasWrap.scrollTop = 0;
-      return;
+    const nextZoom = clamp(nextPercent, ZOOM_MIN, ZOOM_MAX);
+    const prevScale = Math.max(0.0001, zoomPercent / 100);
+    const nextScale = nextZoom / 100;
+    let nextPanX = panX;
+    let nextPanY = panY;
+
+    if (nextZoom <= 100) {
+      nextPanX = 0;
+      nextPanY = 0;
+    } else if (anchorClientX != null && anchorClientY != null) {
+      const wrapRect = canvasWrap.getBoundingClientRect();
+      const centerClientX = wrapRect.left + wrapRect.width / 2;
+      const centerClientY = wrapRect.top + wrapRect.height / 2;
+      const anchorOffsetX = anchorClientX - centerClientX;
+      const anchorOffsetY = anchorClientY - centerClientY;
+      const localX = (anchorOffsetX - panX) / prevScale;
+      const localY = (anchorOffsetY - panY) / prevScale;
+      nextPanX = anchorOffsetX - localX * nextScale;
+      nextPanY = anchorOffsetY - localY * nextScale;
     }
 
-    const wrapRect = canvasWrap.getBoundingClientRect();
-    const localX = anchorClientX == null ? wrapRect.width / 2 : (anchorClientX - wrapRect.left);
-    const localY = anchorClientY == null ? wrapRect.height / 2 : (anchorClientY - wrapRect.top);
-    const anchorX = canvasWrap.scrollLeft + localX;
-    const anchorY = canvasWrap.scrollTop + localY;
-
-    canvas.style.width = `${zoomPercent}%`;
-    canvas.style.height = "auto";
-    canvas.style.maxWidth = "none";
-    canvas.style.maxHeight = "none";
-
-    const ratio = zoomPercent / Math.max(1, previous);
-    canvasWrap.scrollLeft = anchorX * ratio - localX;
-    canvasWrap.scrollTop = anchorY * ratio - localY;
+    zoomPercent = nextZoom;
+    panX = nextPanX;
+    panY = nextPanY;
+    applyViewportTransform();
   }
 
   function setViewMode(mode) {
@@ -761,8 +772,9 @@ export function createCutoutTool(opts) {
       if (!moving || evt.pointerId !== movePointerId) return;
       const dx = evt.clientX - moveStartClientX;
       const dy = evt.clientY - moveStartClientY;
-      canvasWrap.scrollLeft = moveStartScrollLeft - dx;
-      canvasWrap.scrollTop = moveStartScrollTop - dy;
+      panX = moveStartPanX + dx;
+      panY = moveStartPanY + dy;
+      applyViewportTransform();
       evt.preventDefault();
       return;
     }
@@ -940,8 +952,8 @@ export function createCutoutTool(opts) {
         touchPanActive = true;
         touchPanStartClientX = t.clientX;
         touchPanStartClientY = t.clientY;
-        touchStartScrollLeft = canvasWrap.scrollLeft;
-        touchStartScrollTop = canvasWrap.scrollTop;
+        touchStartPanX = panX;
+        touchStartPanY = panY;
       }
 
       event.preventDefault();
@@ -977,13 +989,14 @@ export function createCutoutTool(opts) {
           touchPanActive = true;
           touchPanStartClientX = t.clientX;
           touchPanStartClientY = t.clientY;
-          touchStartScrollLeft = canvasWrap.scrollLeft;
-          touchStartScrollTop = canvasWrap.scrollTop;
+          touchStartPanX = panX;
+          touchStartPanY = panY;
         }
         const dx = t.clientX - touchPanStartClientX;
         const dy = t.clientY - touchPanStartClientY;
-        canvasWrap.scrollLeft = touchStartScrollLeft - dx;
-        canvasWrap.scrollTop = touchStartScrollTop - dy;
+        panX = touchStartPanX + dx;
+        panY = touchStartPanY + dy;
+        applyViewportTransform();
         event.preventDefault();
       }
     }, { passive: false });
@@ -1015,8 +1028,8 @@ export function createCutoutTool(opts) {
         touchPanActive = true;
         touchPanStartClientX = t.clientX;
         touchPanStartClientY = t.clientY;
-        touchStartScrollLeft = canvasWrap.scrollLeft;
-        touchStartScrollTop = canvasWrap.scrollTop;
+        touchStartPanX = panX;
+        touchStartPanY = panY;
         event.preventDefault();
         return;
       }
@@ -1270,8 +1283,8 @@ export function createCutoutTool(opts) {
     touchPinchActive = false;
     touchStartDistance = 0;
     touchStartZoom = 100;
-    canvasWrap.scrollLeft = 0;
-    canvasWrap.scrollTop = 0;
+    panX = 0;
+    panY = 0;
     applyZoom(100);
     overlayMsg.style.display = "grid";
     hideBrushPreview();
@@ -1285,7 +1298,9 @@ export function createCutoutTool(opts) {
       brushSize: Number(brushSizeEl?.value || 28),
       brushMode,
       viewMode,
-      zoomPercent
+      zoomPercent,
+      panX,
+      panY
     };
   }
 
@@ -1316,6 +1331,14 @@ export function createCutoutTool(opts) {
     const nextZoom = Number(projectState.zoomPercent);
     if (Number.isFinite(nextZoom)) {
       applyZoom(nextZoom);
+    }
+
+    const nextPanX = Number(projectState.panX);
+    const nextPanY = Number(projectState.panY);
+    if (zoomPercent > 100 && Number.isFinite(nextPanX) && Number.isFinite(nextPanY)) {
+      panX = nextPanX;
+      panY = nextPanY;
+      applyViewportTransform();
     }
   }
 
