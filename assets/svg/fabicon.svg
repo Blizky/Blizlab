@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Blizlab favicon">
   <rect x="0" y="0" width="100" height="100" rx="20" ry="20" fill="#0099cc"/>
   <path
-    fill="#ffcc33"
-    stroke="rgba(0, 0, 0, 0.35)"
+    fill="#FFCC33"
+    stroke="#FFCC33"
     stroke-width="2.2"
     stroke-linejoin="round"
     d="M25.68 23.951a.93.93 0 0 1 .855-.551h26.467a.95.95 0 0 1 .798.437l20.349 32.3a.931.931 0 0 1-.779 1.463H58.797L71.66 82.775a.988.988 0 0 1-.874 1.425h-5.7a.95.95 0 0 1-.703-.304L31 47.815a.95.95 0 0 1 .703-1.615h12.806L25.832 24.958a.93.93 0 0 1-.152-1.007"/>

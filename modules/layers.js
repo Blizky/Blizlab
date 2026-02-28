@@ -2588,6 +2588,10 @@ export function createLayersTool(opts) {
     });
     const hasOpenLayerMenu = state.layers.some(layer => layer.tuningOpen || layer.mobileMenuOpen);
     listEl.classList.toggle("menus-overlay-open", hasOpenLayerMenu);
+    const layersRailEl = listEl.closest(".layers-right-rail");
+    if (layersRailEl) {
+      layersRailEl.classList.toggle("layer-menus-overlay-open", hasOpenLayerMenu);
+    }
     updateOverlay();
     onChange?.();
     const openLayer = state.layers.find(layer => layer.tuningOpen);

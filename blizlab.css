@@ -2640,6 +2640,8 @@ button.main img { filter: brightness(0) invert(1); }
 #cutoutWrap {
   overflow: auto;
   scrollbar-width: thin;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 #cutoutWrap[data-bg="checker"]::before {
@@ -2680,6 +2682,9 @@ button.main img { filter: brightness(0) invert(1); }
   height: auto;
   flex: 0 0 auto;
   image-rendering: smooth;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .cutout-view-controls {
@@ -3497,7 +3502,7 @@ button.main img { filter: brightness(0) invert(1); }
   color: #12202a;
   box-shadow: 0 14px 26px rgba(0, 0, 0, 0.24);
   padding: 10px;
-  z-index: 2147483002;
+  z-index: 30;
 }
 
 .layers-right-rail .layers-head-menu {
@@ -3917,7 +3922,7 @@ button.main img { filter: brightness(0) invert(1); }
 
 .layer-more {
   position: fixed;
-  z-index: 2147483001;
+  z-index: 34;
   top: 0;
   left: 0;
   transform: none;
@@ -3956,7 +3961,7 @@ button.main img { filter: brightness(0) invert(1); }
 
 .layer-mobile-tools {
   position: fixed;
-  z-index: 2147483003;
+  z-index: 35;
   left: 0;
   top: 0;
   width: 220px;
@@ -4977,7 +4982,6 @@ button.main img { filter: brightness(0) invert(1); }
     display: flex;
     position: relative;
     z-index: 280;
-    isolation: isolate;
     width: 100%;
     min-width: 0;
     min-height: 0;
@@ -4987,10 +4991,7 @@ button.main img { filter: brightness(0) invert(1); }
     padding: 0 6px 10px;
   }
   .imagestudio-main.is-layers .layers-right-rail .layers-panel-head {
-    z-index: 320;
-  }
-  .imagestudio-main.is-layers .layers-right-rail .layers-head-menu {
-    z-index: 2147483600;
+    z-index: 3;
   }
   .imagestudio-main.is-layers .layers-right-rail .layers-list {
     flex: 0 0 auto;
@@ -5006,11 +5007,18 @@ button.main img { filter: brightness(0) invert(1); }
     padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
-    z-index: 6;
+    z-index: 1;
   }
   .imagestudio-main.is-layers .layers-right-rail .layers-list.menus-overlay-open {
     overflow: visible;
     -webkit-overflow-scrolling: auto;
+    z-index: 6;
+  }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layers-panel-head {
+    z-index: 2;
+  }
+  .imagestudio-main.is-layers .layers-right-rail.layer-menus-overlay-open .layers-list {
+    z-index: 6;
   }
   .imagestudio-main.is-layers .layers-right-rail .layer-item {
     flex: 0 0 180px;

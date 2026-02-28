@@ -60,6 +60,20 @@ export function createCutoutTool(opts) {
   let moveStartClientY = 0;
   let moveStartScrollLeft = 0;
   let moveStartScrollTop = 0;
+  let movePointerId = null;
+  const movePointers = new Map();
+  let pinching = false;
+  let pinchStartDistance = 0;
+  let pinchStartZoom = 100;
+  let touchGestureActive = false;
+  let touchPanActive = false;
+  let touchPinchActive = false;
+  let touchStartDistance = 0;
+  let touchStartZoom = 100;
+  let touchPanStartClientX = 0;
+  let touchPanStartClientY = 0;
+  let touchStartScrollLeft = 0;
+  let touchStartScrollTop = 0;
   let zoomPercent = 100;
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
@@ -93,6 +107,16 @@ export function createCutoutTool(opts) {
   function releaseSpaceMove() {
     if (!spaceMove && !moving) return;
     spaceMove = false;
+    pinching = false;
+    pinchStartDistance = 0;
+    pinchStartZoom = zoomPercent;
+    movePointerId = null;
+    movePointers.clear();
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    touchStartDistance = 0;
+    touchStartZoom = zoomPercent;
     moving = false;
     updateViewModeUI();
   }
@@ -476,13 +500,94 @@ export function createCutoutTool(opts) {
       viewModeMoveBtn.setAttribute("aria-selected", brushActive ? "false" : "true");
     }
     if (moveActive) {
-      canvas.style.cursor = moving ? "grabbing" : "grab";
+      canvas.style.cursor = (moving || pinching) ? "grabbing" : "grab";
     } else if (hasImage && brushActive) {
       canvas.style.cursor = "none";
     } else {
       canvas.style.cursor = "default";
     }
     if (!brushActive || moveActive) hideBrushPreview();
+  }
+
+  function pointerDistance(a, b) {
+    if (!a || !b) return 0;
+    const dx = (Number(a.clientX) || 0) - (Number(b.clientX) || 0);
+    const dy = (Number(a.clientY) || 0) - (Number(b.clientY) || 0);
+    return Math.hypot(dx, dy);
+  }
+
+  function touchDistance(a, b) {
+    if (!a || !b) return 0;
+    const dx = (Number(a.clientX) || 0) - (Number(b.clientX) || 0);
+    const dy = (Number(a.clientY) || 0) - (Number(b.clientY) || 0);
+    return Math.hypot(dx, dy);
+  }
+
+  function touchMidpoint(a, b) {
+    return {
+      x: ((Number(a?.clientX) || 0) + (Number(b?.clientX) || 0)) / 2,
+      y: ((Number(a?.clientY) || 0) + (Number(b?.clientY) || 0)) / 2
+    };
+  }
+
+  function firstTwoMovePointers() {
+    const entries = Array.from(movePointers.values());
+    if (entries.length < 2) return null;
+    return [entries[0], entries[1]];
+  }
+
+  function beginPinch() {
+    const pair = firstTwoMovePointers();
+    if (!pair) return false;
+    const distance = pointerDistance(pair[0], pair[1]);
+    if (!(distance > 0.0001)) return false;
+    pinching = true;
+    moving = false;
+    movePointerId = null;
+    pinchStartDistance = distance;
+    pinchStartZoom = zoomPercent;
+    return true;
+  }
+
+  function captureMovePointer(pointerId) {
+    if (pointerId == null) return;
+    try {
+      canvasWrap.setPointerCapture(pointerId);
+      return;
+    } catch (_error) {
+      // Fallback below.
+    }
+    try {
+      canvas.setPointerCapture(pointerId);
+    } catch (_error) {
+      // Ignore when capture is unavailable.
+    }
+  }
+
+  function releaseMovePointer(pointerId) {
+    if (pointerId == null) return;
+    try {
+      canvasWrap.releasePointerCapture(pointerId);
+    } catch (_error) {
+      // Fallback below.
+    }
+    try {
+      canvas.releasePointerCapture(pointerId);
+    } catch (_error) {
+      // Ignore when capture is already released.
+    }
+  }
+
+  function continuePanWithPointer(pointerId, pointer) {
+    if (pointerId == null || !pointer) return false;
+    moving = true;
+    pinching = false;
+    movePointerId = pointerId;
+    moveStartClientX = pointer.clientX;
+    moveStartClientY = pointer.clientY;
+    moveStartScrollLeft = canvasWrap.scrollLeft;
+    moveStartScrollTop = canvasWrap.scrollTop;
+    return true;
   }
 
   function applyZoom(nextPercent, anchorClientX = null, anchorClientY = null) {
@@ -516,6 +621,16 @@ export function createCutoutTool(opts) {
 
   function setViewMode(mode) {
     viewMode = mode === "move" ? "move" : "brush";
+    pinching = false;
+    pinchStartDistance = 0;
+    pinchStartZoom = zoomPercent;
+    movePointerId = null;
+    movePointers.clear();
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    touchStartDistance = 0;
+    touchStartZoom = zoomPercent;
     moving = false;
     updateViewModeUI();
   }
@@ -595,14 +710,22 @@ export function createCutoutTool(opts) {
 
   function startPaint(evt) {
     if (!hasImage || working) return;
+    if (touchGestureActive && evt.pointerType === "touch") {
+      evt.preventDefault();
+      return;
+    }
     canvas.focus({ preventScroll: true });
     if (isMoveActive()) {
-      moving = true;
-      moveStartClientX = evt.clientX;
-      moveStartClientY = evt.clientY;
-      moveStartScrollLeft = canvasWrap.scrollLeft;
-      moveStartScrollTop = canvasWrap.scrollTop;
-      canvas.setPointerCapture(evt.pointerId);
+      captureMovePointer(evt.pointerId);
+      movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
+      if (movePointers.size >= 2) {
+        beginPinch();
+      } else {
+        pinching = false;
+        pinchStartDistance = 0;
+        pinchStartZoom = zoomPercent;
+        continuePanWithPointer(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
+      }
       updateViewModeUI();
       evt.preventDefault();
       return;
@@ -620,7 +743,25 @@ export function createCutoutTool(opts) {
 
   function movePaint(evt) {
     if (isMoveActive()) {
-      if (!moving) return;
+      if (touchGestureActive && evt.pointerType === "touch") {
+        evt.preventDefault();
+        return;
+      }
+      if (movePointers.has(evt.pointerId)) {
+        movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
+      }
+      if (pinching) {
+        const pair = firstTwoMovePointers();
+        if (!pair || movePointers.size < 2 || pinchStartDistance <= 0.0001) return;
+        const distance = pointerDistance(pair[0], pair[1]);
+        const factor = distance / pinchStartDistance;
+        const anchorX = (pair[0].clientX + pair[1].clientX) / 2;
+        const anchorY = (pair[0].clientY + pair[1].clientY) / 2;
+        applyZoom(pinchStartZoom * factor, anchorX, anchorY);
+        evt.preventDefault();
+        return;
+      }
+      if (!moving || evt.pointerId !== movePointerId) return;
       const dx = evt.clientX - moveStartClientX;
       const dy = evt.clientY - moveStartClientY;
       canvasWrap.scrollLeft = moveStartScrollLeft - dx;
@@ -640,8 +781,51 @@ export function createCutoutTool(opts) {
   }
 
   function endPaint(evt) {
-    if (moving) {
-      moving = false;
+    if (isMoveActive()) {
+      if (touchGestureActive && (!evt || evt.pointerType === "touch")) {
+        evt && evt.preventDefault();
+        return;
+      }
+      if (evt && movePointers.has(evt.pointerId)) {
+        movePointers.delete(evt.pointerId);
+      }
+      if (evt && evt.pointerId != null) {
+        releaseMovePointer(evt.pointerId);
+      }
+
+      if (pinching && movePointers.size < 2) {
+        pinching = false;
+        pinchStartDistance = 0;
+        pinchStartZoom = zoomPercent;
+        if (movePointers.size === 1) {
+          const [nextPointerId, nextPointer] = movePointers.entries().next().value || [];
+          continuePanWithPointer(nextPointerId, nextPointer);
+        } else {
+          moving = false;
+          movePointerId = null;
+        }
+        updateViewModeUI();
+        evt && evt.preventDefault();
+        return;
+      }
+
+      if (moving && evt && evt.pointerId === movePointerId) {
+        moving = false;
+        movePointerId = null;
+        if (movePointers.size >= 2) {
+          beginPinch();
+        } else if (movePointers.size === 1) {
+          const [nextPointerId, nextPointer] = movePointers.entries().next().value || [];
+          continuePanWithPointer(nextPointerId, nextPointer);
+        }
+        updateViewModeUI();
+        evt && evt.preventDefault();
+        return;
+      }
+
+      if (!pinching && !moving && movePointers.size >= 2) {
+        beginPinch();
+      }
       updateViewModeUI();
       evt && evt.preventDefault();
       return;
@@ -712,6 +896,122 @@ export function createCutoutTool(opts) {
   if (!canvas.hasAttribute("tabindex")) {
     canvas.setAttribute("tabindex", "0");
   }
+
+  // In move mode, support pointers starting in wrapper padding/margins on mobile.
+  canvasWrap.addEventListener("pointerdown", (evt) => {
+    if (!isMoveActive() || evt.target === canvas) return;
+    startPaint(evt);
+  }, { passive: false });
+  canvasWrap.addEventListener("pointermove", (evt) => {
+    if (!isMoveActive() || evt.target === canvas) return;
+    movePaint(evt);
+  }, { passive: false });
+  canvasWrap.addEventListener("pointerup", (evt) => {
+    if (!isMoveActive() || evt.target === canvas) return;
+    endPaint(evt);
+  }, { passive: false });
+  canvasWrap.addEventListener("pointercancel", (evt) => {
+    if (!isMoveActive() || evt.target === canvas) return;
+    endPaint(evt);
+  }, { passive: false });
+
+  // iOS fallback: explicit touch gesture handling for move-mode pinch/pan.
+  canvasWrap.addEventListener("touchstart", (event) => {
+    if (!hasImage || working || !isMoveActive()) return;
+    if (!event.touches || event.touches.length === 0) return;
+    touchGestureActive = true;
+
+    if (event.touches.length >= 2) {
+      const a = event.touches[0];
+      const b = event.touches[1];
+      touchPinchActive = true;
+      touchPanActive = false;
+      touchStartDistance = touchDistance(a, b);
+      touchStartZoom = zoomPercent;
+    } else {
+      const t = event.touches[0];
+      touchPinchActive = false;
+      touchPanActive = true;
+      touchPanStartClientX = t.clientX;
+      touchPanStartClientY = t.clientY;
+      touchStartScrollLeft = canvasWrap.scrollLeft;
+      touchStartScrollTop = canvasWrap.scrollTop;
+    }
+
+    event.preventDefault();
+  }, { passive: false });
+
+  canvasWrap.addEventListener("touchmove", (event) => {
+    if (!hasImage || working || !isMoveActive() || !touchGestureActive) return;
+    if (!event.touches || event.touches.length === 0) return;
+
+    if (touchPinchActive && event.touches.length >= 2) {
+      const a = event.touches[0];
+      const b = event.touches[1];
+      if (touchStartDistance > 0.0001) {
+        const distance = touchDistance(a, b);
+        const factor = distance / touchStartDistance;
+        const midpoint = touchMidpoint(a, b);
+        applyZoom(touchStartZoom * factor, midpoint.x, midpoint.y);
+      }
+      event.preventDefault();
+      return;
+    }
+
+    if (touchPanActive && event.touches.length === 1) {
+      const t = event.touches[0];
+      const dx = t.clientX - touchPanStartClientX;
+      const dy = t.clientY - touchPanStartClientY;
+      canvasWrap.scrollLeft = touchStartScrollLeft - dx;
+      canvasWrap.scrollTop = touchStartScrollTop - dy;
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  function endTouchGesture(event) {
+    if (!touchGestureActive) return;
+    if (!isMoveActive() || working || !hasImage) {
+      touchGestureActive = false;
+      touchPanActive = false;
+      touchPinchActive = false;
+      return;
+    }
+
+    const touches = event.touches || [];
+    if (touches.length >= 2) {
+      const a = touches[0];
+      const b = touches[1];
+      touchPinchActive = true;
+      touchPanActive = false;
+      touchStartDistance = touchDistance(a, b);
+      touchStartZoom = zoomPercent;
+      event.preventDefault();
+      return;
+    }
+
+    if (touches.length === 1) {
+      const t = touches[0];
+      touchPinchActive = false;
+      touchPanActive = true;
+      touchPanStartClientX = t.clientX;
+      touchPanStartClientY = t.clientY;
+      touchStartScrollLeft = canvasWrap.scrollLeft;
+      touchStartScrollTop = canvasWrap.scrollTop;
+      event.preventDefault();
+      return;
+    }
+
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    touchStartDistance = 0;
+    touchStartZoom = zoomPercent;
+    event.preventDefault();
+  }
+
+  canvasWrap.addEventListener("touchend", endTouchGesture, { passive: false });
+  canvasWrap.addEventListener("touchcancel", endTouchGesture, { passive: false });
+
   canvasWrap.addEventListener("wheel", (event) => {
     if (!isMoveActive()) return;
     event.preventDefault();
@@ -902,6 +1202,16 @@ export function createCutoutTool(opts) {
     originalCanvas.height = 1;
     canvas.width = 1;
     canvas.height = 1;
+    pinching = false;
+    pinchStartDistance = 0;
+    pinchStartZoom = 100;
+    movePointerId = null;
+    movePointers.clear();
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    touchStartDistance = 0;
+    touchStartZoom = 100;
     canvasWrap.scrollLeft = 0;
     canvasWrap.scrollTop = 0;
     applyZoom(100);
@@ -958,6 +1268,16 @@ export function createCutoutTool(opts) {
       if (spaceMove) return;
       document.activeElement?.blur?.();
       spaceMove = true;
+      pinching = false;
+      pinchStartDistance = 0;
+      pinchStartZoom = zoomPercent;
+      movePointerId = null;
+      movePointers.clear();
+      touchGestureActive = false;
+      touchPanActive = false;
+      touchPinchActive = false;
+      touchStartDistance = 0;
+      touchStartZoom = zoomPercent;
       moving = false;
       updateViewModeUI();
       e.preventDefault();
