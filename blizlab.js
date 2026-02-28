@@ -1,5 +1,5 @@
 import { createEditor } from "./modules/editor.js?v=20260221d";
-import { createCutoutTool } from "./modules/cutout.js?v=20260228d";
+import { createCutoutTool } from "./modules/cutout.js?v=20260228e";
 import { createLayersTool } from "./modules/layers.js?v=20260227f";
 import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
 import { APP_VERSION } from "./modules/version.js";

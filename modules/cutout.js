@@ -81,7 +81,13 @@ export function createCutoutTool(opts) {
   let panY = 0;
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
-  const useTouchGestureFallback = typeof window !== "undefined" && !("PointerEvent" in window);
+  const hasTouchInput = typeof window !== "undefined"
+    && ("ontouchstart" in window || Number(navigator?.maxTouchPoints || 0) > 0);
+  const isIOSLike = typeof navigator !== "undefined" && (
+    /iPad|iPhone|iPod/i.test(navigator.userAgent || "")
+    || (navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1)
+  );
+  const useTouchGestureFallback = hasTouchInput && (isIOSLike || !("PointerEvent" in window));
 
   function isTextEntryTarget(target) {
     const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
@@ -728,6 +734,11 @@ export function createCutoutTool(opts) {
     if (!hasImage || working) return;
     canvas.focus({ preventScroll: true });
     if (isMoveActive()) {
+      if (useTouchGestureFallback && evt.pointerType === "touch") {
+        // On iOS/touch fallback path, move gestures are handled in touch handlers.
+        evt.preventDefault();
+        return;
+      }
       captureMovePointer(evt.pointerId);
       movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
       if (movePointers.size >= 2) {
@@ -755,6 +766,10 @@ export function createCutoutTool(opts) {
 
   function movePaint(evt) {
     if (isMoveActive()) {
+      if (useTouchGestureFallback && evt.pointerType === "touch") {
+        evt.preventDefault();
+        return;
+      }
       if (movePointers.has(evt.pointerId)) {
         movePointers.set(evt.pointerId, { clientX: evt.clientX, clientY: evt.clientY });
       }
@@ -791,6 +806,10 @@ export function createCutoutTool(opts) {
 
   function endPaint(evt) {
     if (isMoveActive()) {
+      if (useTouchGestureFallback && evt && evt.pointerType === "touch") {
+        evt.preventDefault();
+        return;
+      }
       if (!evt) {
         evt && evt.preventDefault();
         return;
