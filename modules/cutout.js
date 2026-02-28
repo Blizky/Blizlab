@@ -74,6 +74,8 @@ export function createCutoutTool(opts) {
   let touchPanStartClientY = 0;
   let touchStartScrollLeft = 0;
   let touchStartScrollTop = 0;
+  let safariGestureActive = false;
+  let safariGestureStartZoom = 100;
   let zoomPercent = 100;
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
@@ -625,6 +627,8 @@ export function createCutoutTool(opts) {
     pinching = false;
     pinchStartDistance = 0;
     pinchStartZoom = zoomPercent;
+    safariGestureActive = false;
+    safariGestureStartZoom = zoomPercent;
     movePointerId = null;
     movePointers.clear();
     touchGestureActive = false;
@@ -1036,6 +1040,41 @@ export function createCutoutTool(opts) {
     applyZoom(zoomPercent * factor, event.clientX, event.clientY);
   }, { passive: false });
 
+  // Safari iOS fallback: gesture events can be more reliable than multi-pointer
+  // streams in some touch contexts.
+  canvasWrap.addEventListener("gesturestart", (event) => {
+    if (!hasImage || working || !isMoveActive()) return;
+    safariGestureActive = true;
+    safariGestureStartZoom = zoomPercent;
+    moving = false;
+    pinching = true;
+    movePointerId = null;
+    movePointers.clear();
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    updateViewModeUI();
+    event.preventDefault();
+  }, { passive: false });
+
+  canvasWrap.addEventListener("gesturechange", (event) => {
+    if (!safariGestureActive || !hasImage || working || !isMoveActive()) return;
+    const scale = Number(event.scale);
+    if (!Number.isFinite(scale) || scale <= 0) return;
+    const anchorX = Number.isFinite(Number(event.clientX)) ? event.clientX : null;
+    const anchorY = Number.isFinite(Number(event.clientY)) ? event.clientY : null;
+    applyZoom(safariGestureStartZoom * scale, anchorX, anchorY);
+    event.preventDefault();
+  }, { passive: false });
+
+  canvasWrap.addEventListener("gestureend", (event) => {
+    if (!safariGestureActive) return;
+    safariGestureActive = false;
+    pinching = false;
+    updateViewModeUI();
+    event.preventDefault();
+  }, { passive: false });
+
   btnReloadModel.addEventListener("click", async () => {
     if (!modelNoteEl) return;
     modelNoteEl.textContent = "Downloading or refreshing AI model…";
@@ -1222,6 +1261,8 @@ export function createCutoutTool(opts) {
     pinching = false;
     pinchStartDistance = 0;
     pinchStartZoom = 100;
+    safariGestureActive = false;
+    safariGestureStartZoom = 100;
     movePointerId = null;
     movePointers.clear();
     touchGestureActive = false;
@@ -1288,6 +1329,8 @@ export function createCutoutTool(opts) {
       pinching = false;
       pinchStartDistance = 0;
       pinchStartZoom = zoomPercent;
+      safariGestureActive = false;
+      safariGestureStartZoom = zoomPercent;
       movePointerId = null;
       movePointers.clear();
       touchGestureActive = false;
