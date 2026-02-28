@@ -903,19 +903,6 @@ export function createCutoutTool(opts) {
   bindViewModeButton(viewModeBrushBtn, "brush");
   bindViewModeButton(viewModeMoveBtn, "move");
 
-  brushSizeEl.addEventListener("pointerdown", (event) => {
-    event.stopPropagation();
-    if (viewModeMoveBtn?.getAttribute("aria-selected") === "true" && viewMode !== "move") {
-      setViewMode("move");
-    }
-  });
-  brushSizeEl.addEventListener("touchstart", (event) => {
-    event.stopPropagation();
-    if (viewModeMoveBtn?.getAttribute("aria-selected") === "true" && viewMode !== "move") {
-      setViewMode("move");
-    }
-  }, { passive: true });
-
   brushSizeEl.addEventListener("input", () => {
     const raw = Number(brushSizeEl.value);
     if (viewMode === "move") {

@@ -105,6 +105,10 @@ const MAX_LAYERS = 6;
 const MODEL_READY_KEY = "bgoneModelReady";
 const RETRO_DEFAULT_INTENSITY = 50;
 const RETRO_DEFAULT_GRAIN = 15;
+const BG_EDITOR_BRUSH_SIZE_MIN = 4;
+const BG_EDITOR_BRUSH_SIZE_MAX = 140;
+const BG_EDITOR_ZOOM_MIN = 25;
+const BG_EDITOR_ZOOM_MAX = 400;
 
 function mix(a, b, t) {
   return a + (b - a) * t;
@@ -629,8 +633,8 @@ export function createLayersTool(opts) {
               <button type="button" data-bg-brush-mode="restore" title="Restore" aria-label="Restore"><img src="./svg/paint_brush_line.svg" alt=""><span class="mode-label">Restore</span></button>
             </div>
             <label class="layer-bg-brush-size">
-              <span>Size</span>
-              <input type="range" min="4" max="140" value="50" data-bg-brush-size>
+              <span data-bg-brush-size-label>Size</span>
+              <input type="range" min="${BG_EDITOR_BRUSH_SIZE_MIN}" max="${BG_EDITOR_BRUSH_SIZE_MAX}" value="50" data-bg-brush-size>
               <span data-bg-brush-size-value>50</span>
             </label>
             <div class="pill-toggle layer-bg-edit-toggle" role="tablist" aria-label="Edit mode">
@@ -681,6 +685,7 @@ export function createLayersTool(opts) {
     const canvasWrapEl = overlay.querySelector("[data-bg-canvas-wrap]");
     const canvasEl = overlay.querySelector("[data-bg-canvas]");
     const brushPreviewEl = overlay.querySelector("[data-bg-brush-preview]");
+    const brushSizeLabelEl = overlay.querySelector("[data-bg-brush-size-label]");
     const brushSizeEl = overlay.querySelector("[data-bg-brush-size]");
     const brushSizeValueEl = overlay.querySelector("[data-bg-brush-size-value]");
     const editModeButtons = Array.from(overlay.querySelectorAll("[data-bg-edit-mode]"));
@@ -714,6 +719,7 @@ export function createLayersTool(opts) {
       overlay,
       canvasWrapEl,
       canvasEl,
+      brushSizeLabelEl,
       brushSizeEl,
       brushSizeValueEl,
       brushPreviewEl,
@@ -743,7 +749,7 @@ export function createLayersTool(opts) {
       zoom: 100,
       editMode: "brush",
       brushMode: "erase",
-      brushSize: Number(brushSizeEl.value || 50),
+      brushSize: clamp(Number(brushSizeEl.value || 50), BG_EDITOR_BRUSH_SIZE_MIN, BG_EDITOR_BRUSH_SIZE_MAX),
       colorPickMode: false,
       colorPickBusy: false,
       painting: false,
@@ -794,7 +800,28 @@ export function createLayersTool(opts) {
 
     bgEditor.setMoreMenuOpen = setMoreMenuOpen;
 
+    function updateSizeControl() {
+      const moveActive = isMoveActive();
+      if (brushSizeLabelEl) {
+        brushSizeLabelEl.textContent = moveActive ? "Zoom" : "Size";
+      }
+      if (moveActive) {
+        brushSizeEl.min = String(BG_EDITOR_ZOOM_MIN);
+        brushSizeEl.max = String(BG_EDITOR_ZOOM_MAX);
+        brushSizeEl.step = "1";
+        brushSizeEl.value = String(Math.round(clamp(bgEditor.zoom, BG_EDITOR_ZOOM_MIN, BG_EDITOR_ZOOM_MAX)));
+        if (brushSizeValueEl) brushSizeValueEl.textContent = `${Math.round(bgEditor.zoom)}%`;
+        return;
+      }
+      brushSizeEl.min = String(BG_EDITOR_BRUSH_SIZE_MIN);
+      brushSizeEl.max = String(BG_EDITOR_BRUSH_SIZE_MAX);
+      brushSizeEl.step = "1";
+      brushSizeEl.value = String(Math.round(clamp(bgEditor.brushSize, BG_EDITOR_BRUSH_SIZE_MIN, BG_EDITOR_BRUSH_SIZE_MAX)));
+      if (brushSizeValueEl) brushSizeValueEl.textContent = String(Math.round(bgEditor.brushSize));
+    }
+
     function updateModeButtons() {
+      updateSizeControl();
       if (bgEditor.colorPickMode || bgEditor.colorPickBusy) {
         canvasWrapEl.classList.add("is-color-pick");
         canvasWrapEl.style.cursor = "crosshair";
@@ -857,11 +884,12 @@ export function createLayersTool(opts) {
       const anchorY = clientY == null ? rect.height / 2 : (clientY - rect.top);
       const imageX = (anchorX - bgEditor.panX) / prevScale;
       const imageY = (anchorY - bgEditor.panY) / prevScale;
-      bgEditor.zoom = clamp(nextZoom, 25, 400);
+      bgEditor.zoom = clamp(nextZoom, BG_EDITOR_ZOOM_MIN, BG_EDITOR_ZOOM_MAX);
       const nextScale = getScale();
       bgEditor.panX = anchorX - imageX * nextScale;
       bgEditor.panY = anchorY - imageY * nextScale;
       applyTransform();
+      if (isMoveActive()) updateSizeControl();
     }
 
     function renderEditor() {
@@ -1057,13 +1085,13 @@ export function createLayersTool(opts) {
       });
     });
 
-    brushSizeEl.addEventListener("pointerdown", () => {
-      activateBrushModeFromControl();
-    }, { passive: true });
-
     brushSizeEl.addEventListener("input", () => {
-      activateBrushModeFromControl();
-      bgEditor.brushSize = Number(brushSizeEl.value || 50);
+      const raw = Number(brushSizeEl.value);
+      if (isMoveActive()) {
+        applyZoom(raw);
+        return;
+      }
+      bgEditor.brushSize = clamp(raw, BG_EDITOR_BRUSH_SIZE_MIN, BG_EDITOR_BRUSH_SIZE_MAX);
       if (brushSizeValueEl) brushSizeValueEl.textContent = String(Math.round(bgEditor.brushSize));
     });
 
@@ -1111,7 +1139,7 @@ export function createLayersTool(opts) {
     editor.overlay.hidden = false;
     editor.editMode = "brush";
     editor.brushMode = "erase";
-    editor.brushSize = Number(editor.brushSizeEl.value || 50);
+    editor.brushSize = clamp(Number(editor.brushSize || 50), BG_EDITOR_BRUSH_SIZE_MIN, BG_EDITOR_BRUSH_SIZE_MAX);
     editor.zoom = 100;
     editor.sourceCanvas.width = renderedSource.width;
     editor.sourceCanvas.height = renderedSource.height;
