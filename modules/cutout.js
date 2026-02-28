@@ -20,6 +20,7 @@ export function createCutoutTool(opts) {
     btnRemoveChroma,
     btnUndo,
     btnRedo,
+    brushSizeLabelEl,
     brushValueEl,
     brushSizeEl,
     aiStrengthEl,
@@ -58,8 +59,8 @@ export function createCutoutTool(opts) {
   let spaceMove = false;
   let moveStartClientX = 0;
   let moveStartClientY = 0;
-  let moveStartPanX = 0;
-  let moveStartPanY = 0;
+  let moveStartScrollLeft = 0;
+  let moveStartScrollTop = 0;
   let movePointerId = null;
   const movePointers = new Map();
   let pinching = false;
@@ -72,22 +73,19 @@ export function createCutoutTool(opts) {
   let touchStartZoom = 100;
   let touchPanStartClientX = 0;
   let touchPanStartClientY = 0;
-  let touchStartPanX = 0;
-  let touchStartPanY = 0;
-  let safariGestureActive = false;
-  let safariGestureStartZoom = 100;
+  let touchStartScrollLeft = 0;
+  let touchStartScrollTop = 0;
   let zoomPercent = 100;
-  let panX = 0;
-  let panY = 0;
+  const BRUSH_SIZE_MIN = 5;
+  const BRUSH_SIZE_MAX = 120;
+  const DEFAULT_BRUSH_SIZE = 28;
+  let brushSizeValue = clamp(
+    Number(brushSizeEl?.value || DEFAULT_BRUSH_SIZE),
+    BRUSH_SIZE_MIN,
+    BRUSH_SIZE_MAX
+  );
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
-  const hasTouchInput = typeof window !== "undefined"
-    && ("ontouchstart" in window || Number(navigator?.maxTouchPoints || 0) > 0);
-  const isIOSLike = typeof navigator !== "undefined" && (
-    /iPad|iPhone|iPod/i.test(navigator.userAgent || "")
-    || (navigator.platform === "MacIntel" && Number(navigator.maxTouchPoints || 0) > 1)
-  );
-  const useTouchGestureFallback = hasTouchInput && (isIOSLike || !("PointerEvent" in window));
 
   function isTextEntryTarget(target) {
     const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
@@ -499,6 +497,27 @@ export function createCutoutTool(opts) {
     return viewMode === "move" || spaceMove;
   }
 
+  function updateSizeSliderUI() {
+    if (!brushSizeEl || !brushValueEl) return;
+    const isMoveSelected = viewMode === "move";
+    if (brushSizeLabelEl) {
+      brushSizeLabelEl.textContent = isMoveSelected ? "Zoom" : "Brush size";
+    }
+    if (isMoveSelected) {
+      brushSizeEl.min = String(ZOOM_MIN);
+      brushSizeEl.max = String(ZOOM_MAX);
+      brushSizeEl.step = "1";
+      brushSizeEl.value = String(Math.round(zoomPercent));
+      brushValueEl.textContent = `${Math.round(zoomPercent)}%`;
+      return;
+    }
+    brushSizeEl.min = String(BRUSH_SIZE_MIN);
+    brushSizeEl.max = String(BRUSH_SIZE_MAX);
+    brushSizeEl.step = "1";
+    brushSizeEl.value = String(Math.round(brushSizeValue));
+    brushValueEl.textContent = String(Math.round(brushSizeValue));
+  }
+
   function updateViewModeUI() {
     const brushActive = viewMode === "brush";
     const moveActive = hasImage && isMoveActive();
@@ -518,6 +537,7 @@ export function createCutoutTool(opts) {
       canvas.style.cursor = "default";
     }
     if (!brushActive || moveActive) hideBrushPreview();
+    updateSizeSliderUI();
   }
 
   function pointerDistance(a, b) {
@@ -596,56 +616,52 @@ export function createCutoutTool(opts) {
     movePointerId = pointerId;
     moveStartClientX = pointer.clientX;
     moveStartClientY = pointer.clientY;
-    moveStartPanX = panX;
-    moveStartPanY = panY;
+    moveStartScrollLeft = canvasWrap.scrollLeft;
+    moveStartScrollTop = canvasWrap.scrollTop;
     return true;
   }
 
-  function applyViewportTransform() {
-    const scale = zoomPercent / 100;
-    canvas.style.width = "auto";
-    canvas.style.height = "auto";
-    canvas.style.maxWidth = "100%";
-    canvas.style.maxHeight = "100%";
-    canvas.style.transformOrigin = "center center";
-    canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-  }
-
   function applyZoom(nextPercent, anchorClientX = null, anchorClientY = null) {
-    const nextZoom = clamp(nextPercent, ZOOM_MIN, ZOOM_MAX);
-    const prevScale = Math.max(0.0001, zoomPercent / 100);
-    const nextScale = nextZoom / 100;
-    let nextPanX = panX;
-    let nextPanY = panY;
-
-    if (nextZoom <= 100) {
-      nextPanX = 0;
-      nextPanY = 0;
-    } else if (anchorClientX != null && anchorClientY != null) {
-      const wrapRect = canvasWrap.getBoundingClientRect();
-      const centerClientX = wrapRect.left + wrapRect.width / 2;
-      const centerClientY = wrapRect.top + wrapRect.height / 2;
-      const anchorOffsetX = anchorClientX - centerClientX;
-      const anchorOffsetY = anchorClientY - centerClientY;
-      const localX = (anchorOffsetX - panX) / prevScale;
-      const localY = (anchorOffsetY - panY) / prevScale;
-      nextPanX = anchorOffsetX - localX * nextScale;
-      nextPanY = anchorOffsetY - localY * nextScale;
+    const previous = zoomPercent;
+    zoomPercent = clamp(nextPercent, ZOOM_MIN, ZOOM_MAX);
+    if (zoomPercent <= 100) {
+      canvas.style.width = "auto";
+      canvas.style.height = "auto";
+      canvas.style.maxWidth = "100%";
+      canvas.style.maxHeight = "100%";
+      canvasWrap.scrollLeft = 0;
+      canvasWrap.scrollTop = 0;
+      if (viewMode === "move") updateSizeSliderUI();
+      return;
     }
 
-    zoomPercent = nextZoom;
-    panX = nextPanX;
-    panY = nextPanY;
-    applyViewportTransform();
+    const wrapRect = canvasWrap.getBoundingClientRect();
+    const localX = anchorClientX == null ? wrapRect.width / 2 : (anchorClientX - wrapRect.left);
+    const localY = anchorClientY == null ? wrapRect.height / 2 : (anchorClientY - wrapRect.top);
+    const anchorX = canvasWrap.scrollLeft + localX;
+    const anchorY = canvasWrap.scrollTop + localY;
+
+    canvas.style.width = `${zoomPercent}%`;
+    canvas.style.height = "auto";
+    canvas.style.maxWidth = "none";
+    canvas.style.maxHeight = "none";
+
+    const ratio = zoomPercent / Math.max(1, previous);
+    canvasWrap.scrollLeft = anchorX * ratio - localX;
+    canvasWrap.scrollTop = anchorY * ratio - localY;
+    if (viewMode === "move") updateSizeSliderUI();
   }
 
   function setViewMode(mode) {
-    viewMode = mode === "move" ? "move" : "brush";
+    const nextMode = mode === "move" ? "move" : "brush";
+    if (viewMode === nextMode && !spaceMove) {
+      updateViewModeUI();
+      return;
+    }
+    viewMode = nextMode;
     pinching = false;
     pinchStartDistance = 0;
     pinchStartZoom = zoomPercent;
-    safariGestureActive = false;
-    safariGestureStartZoom = zoomPercent;
     movePointerId = null;
     movePointers.clear();
     touchGestureActive = false;
@@ -655,6 +671,17 @@ export function createCutoutTool(opts) {
     touchStartZoom = zoomPercent;
     moving = false;
     updateViewModeUI();
+  }
+
+  function bindViewModeButton(button, mode) {
+    if (!button) return;
+    const activate = (event) => {
+      event?.preventDefault?.();
+      setViewMode(mode);
+    };
+    button.addEventListener("click", activate);
+    button.addEventListener("pointerdown", activate, { passive: false });
+    button.addEventListener("touchstart", activate, { passive: false });
   }
 
   function getCanvasPointer(evt) {
@@ -671,7 +698,7 @@ export function createCutoutTool(opts) {
   }
 
   function getBrushRadiusScreenPx() {
-    return Math.max(1, parseInt(brushSizeEl.value, 10) || 1);
+    return Math.max(1, Math.round(brushSizeValue) || 1);
   }
 
   function getBrushRadiusCanvasPx() {
@@ -734,8 +761,9 @@ export function createCutoutTool(opts) {
     if (!hasImage || working) return;
     canvas.focus({ preventScroll: true });
     if (isMoveActive()) {
-      if (useTouchGestureFallback && evt.pointerType === "touch") {
-        // On iOS/touch fallback path, move gestures are handled in touch handlers.
+      if (evt.pointerType === "touch") {
+        // Move-mode touch gestures are handled via touch events to avoid
+        // pointer/touch race conditions on iOS.
         evt.preventDefault();
         return;
       }
@@ -766,7 +794,7 @@ export function createCutoutTool(opts) {
 
   function movePaint(evt) {
     if (isMoveActive()) {
-      if (useTouchGestureFallback && evt.pointerType === "touch") {
+      if (evt.pointerType === "touch") {
         evt.preventDefault();
         return;
       }
@@ -787,9 +815,8 @@ export function createCutoutTool(opts) {
       if (!moving || evt.pointerId !== movePointerId) return;
       const dx = evt.clientX - moveStartClientX;
       const dy = evt.clientY - moveStartClientY;
-      panX = moveStartPanX + dx;
-      panY = moveStartPanY + dy;
-      applyViewportTransform();
+      canvasWrap.scrollLeft = moveStartScrollLeft - dx;
+      canvasWrap.scrollTop = moveStartScrollTop - dy;
       evt.preventDefault();
       return;
     }
@@ -806,11 +833,7 @@ export function createCutoutTool(opts) {
 
   function endPaint(evt) {
     if (isMoveActive()) {
-      if (useTouchGestureFallback && evt && evt.pointerType === "touch") {
-        evt.preventDefault();
-        return;
-      }
-      if (!evt) {
+      if (!evt || evt.pointerType === "touch") {
         evt && evt.preventDefault();
         return;
       }
@@ -877,11 +900,30 @@ export function createCutoutTool(opts) {
 
   modeEraseBtn.addEventListener("click", () => setBrushMode("erase"));
   modeRestoreBtn.addEventListener("click", () => setBrushMode("restore"));
-  viewModeBrushBtn?.addEventListener("click", () => setViewMode("brush"));
-  viewModeMoveBtn?.addEventListener("click", () => setViewMode("move"));
+  bindViewModeButton(viewModeBrushBtn, "brush");
+  bindViewModeButton(viewModeMoveBtn, "move");
+
+  brushSizeEl.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    if (viewModeMoveBtn?.getAttribute("aria-selected") === "true" && viewMode !== "move") {
+      setViewMode("move");
+    }
+  });
+  brushSizeEl.addEventListener("touchstart", (event) => {
+    event.stopPropagation();
+    if (viewModeMoveBtn?.getAttribute("aria-selected") === "true" && viewMode !== "move") {
+      setViewMode("move");
+    }
+  }, { passive: true });
 
   brushSizeEl.addEventListener("input", () => {
-    brushValueEl.textContent = brushSizeEl.value;
+    const raw = Number(brushSizeEl.value);
+    if (viewMode === "move") {
+      applyZoom(raw);
+      return;
+    }
+    brushSizeValue = clamp(raw, BRUSH_SIZE_MIN, BRUSH_SIZE_MAX);
+    brushValueEl.textContent = String(Math.round(brushSizeValue));
   });
   brushSizeEl.addEventListener("change", () => {
     if (document.activeElement === brushSizeEl) {
@@ -912,9 +954,7 @@ export function createCutoutTool(opts) {
   canvas.addEventListener("pointerup", endPaint, { passive: false });
   canvas.addEventListener("pointercancel", endPaint, { passive: false });
   canvas.addEventListener("pointerleave", e => {
-    if (!isMoveActive()) {
-      endPaint(e);
-    }
+    endPaint(e);
     hideBrushPreview();
   });
   canvas.addEventListener("pointerenter", e => {
@@ -945,166 +985,128 @@ export function createCutoutTool(opts) {
     endPaint(evt);
   }, { passive: false });
 
-  // Touch fallback for very old browsers without Pointer Events.
-  if (useTouchGestureFallback) {
-    canvasWrap.addEventListener("touchstart", (event) => {
-      if (!hasImage || working || !isMoveActive()) return;
-      if (!event.touches || event.touches.length === 0) return;
-      touchGestureActive = true;
-      movePointerId = null;
-      movePointers.clear();
-      moving = false;
-      pinching = false;
-      pinchStartDistance = 0;
-      pinchStartZoom = zoomPercent;
+  // iOS fallback: explicit touch gesture handling for move-mode pinch/pan.
+  canvasWrap.addEventListener("touchstart", (event) => {
+    if (!hasImage || working || !isMoveActive()) return;
+    if (!event.touches || event.touches.length === 0) return;
+    touchGestureActive = true;
+    movePointerId = null;
+    movePointers.clear();
+    moving = false;
+    pinching = false;
+    pinchStartDistance = 0;
+    pinchStartZoom = zoomPercent;
 
-      if (event.touches.length >= 2) {
-        const a = event.touches[0];
-        const b = event.touches[1];
+    if (event.touches.length >= 2) {
+      const a = event.touches[0];
+      const b = event.touches[1];
+      touchPinchActive = true;
+      touchPanActive = false;
+      touchStartDistance = touchDistance(a, b);
+      touchStartZoom = zoomPercent;
+    } else {
+      const t = event.touches[0];
+      touchPinchActive = false;
+      touchPanActive = true;
+      touchPanStartClientX = t.clientX;
+      touchPanStartClientY = t.clientY;
+      touchStartScrollLeft = canvasWrap.scrollLeft;
+      touchStartScrollTop = canvasWrap.scrollTop;
+    }
+
+    event.preventDefault();
+  }, { passive: false });
+
+  canvasWrap.addEventListener("touchmove", (event) => {
+    if (!hasImage || working || !isMoveActive() || !touchGestureActive) return;
+    if (!event.touches || event.touches.length === 0) return;
+
+    if (event.touches.length >= 2) {
+      const a = event.touches[0];
+      const b = event.touches[1];
+      if (!touchPinchActive || touchStartDistance <= 0.0001) {
         touchPinchActive = true;
         touchPanActive = false;
         touchStartDistance = touchDistance(a, b);
         touchStartZoom = zoomPercent;
-      } else {
-        const t = event.touches[0];
-        touchPinchActive = false;
-        touchPanActive = true;
-        touchPanStartClientX = t.clientX;
-        touchPanStartClientY = t.clientY;
-        touchStartPanX = panX;
-        touchStartPanY = panY;
       }
-
+      if (touchStartDistance > 0.0001) {
+        const distance = touchDistance(a, b);
+        const factor = distance / touchStartDistance;
+        const midpoint = touchMidpoint(a, b);
+        applyZoom(touchStartZoom * factor, midpoint.x, midpoint.y);
+      }
       event.preventDefault();
-    }, { passive: false });
+      return;
+    }
 
-    canvasWrap.addEventListener("touchmove", (event) => {
-      if (!hasImage || working || !isMoveActive() || !touchGestureActive) return;
-      if (!event.touches || event.touches.length === 0) return;
-
-      if (event.touches.length >= 2) {
-        const a = event.touches[0];
-        const b = event.touches[1];
-        if (!touchPinchActive || touchStartDistance <= 0.0001) {
-          touchPinchActive = true;
-          touchPanActive = false;
-          touchStartDistance = touchDistance(a, b);
-          touchStartZoom = zoomPercent;
-        }
-        if (touchStartDistance > 0.0001) {
-          const distance = touchDistance(a, b);
-          const factor = distance / touchStartDistance;
-          const midpoint = touchMidpoint(a, b);
-          applyZoom(touchStartZoom * factor, midpoint.x, midpoint.y);
-        }
-        event.preventDefault();
-        return;
-      }
-
-      if (event.touches.length === 1) {
-        const t = event.touches[0];
-        if (touchPinchActive || !touchPanActive) {
-          touchPinchActive = false;
-          touchPanActive = true;
-          touchPanStartClientX = t.clientX;
-          touchPanStartClientY = t.clientY;
-          touchStartPanX = panX;
-          touchStartPanY = panY;
-        }
-        const dx = t.clientX - touchPanStartClientX;
-        const dy = t.clientY - touchPanStartClientY;
-        panX = touchStartPanX + dx;
-        panY = touchStartPanY + dy;
-        applyViewportTransform();
-        event.preventDefault();
-      }
-    }, { passive: false });
-
-    function endTouchGesture(event) {
-      if (!touchGestureActive) return;
-      if (!isMoveActive() || working || !hasImage) {
-        touchGestureActive = false;
-        touchPanActive = false;
-        touchPinchActive = false;
-        return;
-      }
-
-      const touches = event.touches || [];
-      if (touches.length >= 2) {
-        const a = touches[0];
-        const b = touches[1];
-        touchPinchActive = true;
-        touchPanActive = false;
-        touchStartDistance = touchDistance(a, b);
-        touchStartZoom = zoomPercent;
-        event.preventDefault();
-        return;
-      }
-
-      if (touches.length === 1) {
-        const t = touches[0];
+    if (event.touches.length === 1) {
+      const t = event.touches[0];
+      if (touchPinchActive || !touchPanActive) {
         touchPinchActive = false;
         touchPanActive = true;
         touchPanStartClientX = t.clientX;
         touchPanStartClientY = t.clientY;
-        touchStartPanX = panX;
-        touchStartPanY = panY;
-        event.preventDefault();
-        return;
+        touchStartScrollLeft = canvasWrap.scrollLeft;
+        touchStartScrollTop = canvasWrap.scrollTop;
       }
+      const dx = t.clientX - touchPanStartClientX;
+      const dy = t.clientY - touchPanStartClientY;
+      canvasWrap.scrollLeft = touchStartScrollLeft - dx;
+      canvasWrap.scrollTop = touchStartScrollTop - dy;
+      event.preventDefault();
+    }
+  }, { passive: false });
 
+  function endTouchGesture(event) {
+    if (!touchGestureActive) return;
+    if (!isMoveActive() || working || !hasImage) {
       touchGestureActive = false;
       touchPanActive = false;
       touchPinchActive = false;
-      touchStartDistance = 0;
-      touchStartZoom = zoomPercent;
-      event.preventDefault();
+      return;
     }
 
-    canvasWrap.addEventListener("touchend", endTouchGesture, { passive: false });
-    canvasWrap.addEventListener("touchcancel", endTouchGesture, { passive: false });
+    const touches = event.touches || [];
+    if (touches.length >= 2) {
+      const a = touches[0];
+      const b = touches[1];
+      touchPinchActive = true;
+      touchPanActive = false;
+      touchStartDistance = touchDistance(a, b);
+      touchStartZoom = zoomPercent;
+      event.preventDefault();
+      return;
+    }
+
+    if (touches.length === 1) {
+      const t = touches[0];
+      touchPinchActive = false;
+      touchPanActive = true;
+      touchPanStartClientX = t.clientX;
+      touchPanStartClientY = t.clientY;
+      touchStartScrollLeft = canvasWrap.scrollLeft;
+      touchStartScrollTop = canvasWrap.scrollTop;
+      event.preventDefault();
+      return;
+    }
+
+    touchGestureActive = false;
+    touchPanActive = false;
+    touchPinchActive = false;
+    touchStartDistance = 0;
+    touchStartZoom = zoomPercent;
+    event.preventDefault();
   }
+
+  canvasWrap.addEventListener("touchend", endTouchGesture, { passive: false });
+  canvasWrap.addEventListener("touchcancel", endTouchGesture, { passive: false });
 
   canvasWrap.addEventListener("wheel", (event) => {
     if (!isMoveActive()) return;
     event.preventDefault();
     const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
     applyZoom(zoomPercent * factor, event.clientX, event.clientY);
-  }, { passive: false });
-
-  // Safari iOS fallback: gesture events can be more reliable than multi-pointer
-  // streams in some touch contexts.
-  canvasWrap.addEventListener("gesturestart", (event) => {
-    if (!hasImage || working || !isMoveActive()) return;
-    safariGestureActive = true;
-    safariGestureStartZoom = zoomPercent;
-    moving = false;
-    pinching = true;
-    movePointerId = null;
-    movePointers.clear();
-    touchGestureActive = false;
-    touchPanActive = false;
-    touchPinchActive = false;
-    updateViewModeUI();
-    event.preventDefault();
-  }, { passive: false });
-
-  canvasWrap.addEventListener("gesturechange", (event) => {
-    if (!safariGestureActive || !hasImage || working || !isMoveActive()) return;
-    const scale = Number(event.scale);
-    if (!Number.isFinite(scale) || scale <= 0) return;
-    const anchorX = Number.isFinite(Number(event.clientX)) ? event.clientX : null;
-    const anchorY = Number.isFinite(Number(event.clientY)) ? event.clientY : null;
-    applyZoom(safariGestureStartZoom * scale, anchorX, anchorY);
-    event.preventDefault();
-  }, { passive: false });
-
-  canvasWrap.addEventListener("gestureend", (event) => {
-    if (!safariGestureActive) return;
-    safariGestureActive = false;
-    pinching = false;
-    updateViewModeUI();
-    event.preventDefault();
   }, { passive: false });
 
   btnReloadModel.addEventListener("click", async () => {
@@ -1293,8 +1295,6 @@ export function createCutoutTool(opts) {
     pinching = false;
     pinchStartDistance = 0;
     pinchStartZoom = 100;
-    safariGestureActive = false;
-    safariGestureStartZoom = 100;
     movePointerId = null;
     movePointers.clear();
     touchGestureActive = false;
@@ -1302,11 +1302,12 @@ export function createCutoutTool(opts) {
     touchPinchActive = false;
     touchStartDistance = 0;
     touchStartZoom = 100;
-    panX = 0;
-    panY = 0;
+    canvasWrap.scrollLeft = 0;
+    canvasWrap.scrollTop = 0;
     applyZoom(100);
     overlayMsg.style.display = "grid";
     hideBrushPreview();
+    updateSizeSliderUI();
     setEnabled(false);
     setWorking(false);
   }
@@ -1314,12 +1315,10 @@ export function createCutoutTool(opts) {
   function getProjectState() {
     return {
       aiStrength,
-      brushSize: Number(brushSizeEl?.value || 28),
+      brushSize: Number(brushSizeValue || DEFAULT_BRUSH_SIZE),
       brushMode,
       viewMode,
-      zoomPercent,
-      panX,
-      panY
+      zoomPercent
     };
   }
 
@@ -1335,10 +1334,8 @@ export function createCutoutTool(opts) {
     }
 
     const nextBrushSize = Number(projectState.brushSize);
-    if (Number.isFinite(nextBrushSize) && brushSizeEl) {
-      const clamped = clamp(nextBrushSize, 5, 120);
-      brushSizeEl.value = String(Math.round(clamped));
-      if (brushValueEl) brushValueEl.textContent = brushSizeEl.value;
+    if (Number.isFinite(nextBrushSize)) {
+      brushSizeValue = clamp(nextBrushSize, BRUSH_SIZE_MIN, BRUSH_SIZE_MAX);
     }
 
     const nextBrushMode = projectState.brushMode === "restore" ? "restore" : "erase";
@@ -1351,14 +1348,7 @@ export function createCutoutTool(opts) {
     if (Number.isFinite(nextZoom)) {
       applyZoom(nextZoom);
     }
-
-    const nextPanX = Number(projectState.panX);
-    const nextPanY = Number(projectState.panY);
-    if (zoomPercent > 100 && Number.isFinite(nextPanX) && Number.isFinite(nextPanY)) {
-      panX = nextPanX;
-      panY = nextPanY;
-      applyViewportTransform();
-    }
+    updateSizeSliderUI();
   }
 
   const onWindowKeyDown = (e) => {
@@ -1371,8 +1361,6 @@ export function createCutoutTool(opts) {
       pinching = false;
       pinchStartDistance = 0;
       pinchStartZoom = zoomPercent;
-      safariGestureActive = false;
-      safariGestureStartZoom = zoomPercent;
       movePointerId = null;
       movePointers.clear();
       touchGestureActive = false;

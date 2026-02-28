@@ -2638,8 +2638,9 @@ button.main img { filter: brightness(0) invert(1); }
 }
 
 #cutoutWrap {
-  overflow: hidden;
-  overscroll-behavior: none;
+  overflow: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
   touch-action: none;
 }
 
@@ -2665,7 +2666,6 @@ button.main img { filter: brightness(0) invert(1); }
   position: absolute;
   inset: 14px;
   border-radius: 8px;
-  pointer-events: none;
   background-image:
     linear-gradient(45deg, #d8d9de 25%, transparent 25%, transparent 75%, #d8d9de 75%, #d8d9de),
     linear-gradient(45deg, #d8d9de 25%, transparent 25%, transparent 75%, #d8d9de 75%, #d8d9de);
@@ -2765,7 +2765,6 @@ button.main img { filter: brightness(0) invert(1); }
   background: rgba(255, 255, 255, 0.92);
   font-size: 0.8rem;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
-  pointer-events: none;
 }
 
 .brush-preview {

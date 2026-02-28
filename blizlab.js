@@ -1,5 +1,5 @@
 import { createEditor } from "./modules/editor.js?v=20260221d";
-import { createCutoutTool } from "./modules/cutout.js?v=20260228e";
+import { createCutoutTool } from "./modules/cutout.js?v=20260228g";
 import { createLayersTool } from "./modules/layers.js?v=20260227f";
 import { canvasToBlob, constrainImageLongSide, downloadBlob, loadImageFromBlob, loadImageFromFile } from "./modules/shared.js?v=20260221d";
 import { APP_VERSION } from "./modules/version.js";
@@ -89,6 +89,7 @@ const btnRemove = document.getElementById("btnRemove");
 const btnRemoveChroma = document.getElementById("btnRemoveChroma");
 const btnUndo = document.getElementById("btnUndo");
 const btnRedo = document.getElementById("btnRedo");
+const brushSizeLabelEl = document.getElementById("brushSizeLabel");
 const brushValueEl = document.getElementById("brushValue");
 const brushSizeEl = document.getElementById("brushSize");
 const aiStrengthEl = document.getElementById("aiStrength");
@@ -1691,6 +1692,7 @@ const cutout = createCutoutTool({
   btnRemoveChroma,
   btnUndo,
   btnRedo,
+  brushSizeLabelEl,
   brushValueEl,
   brushSizeEl,
   aiStrengthEl,
