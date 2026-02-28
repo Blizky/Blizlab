@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Blizlab favicon">
-  <rect x="0" y="0" width="100" height="100" rx="20" ry="20" fill="#0099cc"/>
-  <path
-    fill="#FFCC99"
-    stroke="#FFCC99"
-    stroke-width="2.2"
-    stroke-linejoin="round"
-    d="M25.68 23.951a.93.93 0 0 1 .855-.551h26.467a.95.95 0 0 1 .798.437l20.349 32.3a.931.931 0 0 1-.779 1.463H58.797L71.66 82.775a.988.988 0 0 1-.874 1.425h-5.7a.95.95 0 0 1-.703-.304L31 47.815a.95.95 0 0 1 .703-1.615h12.806L25.832 24.958a.93.93 0 0 1-.152-1.007"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" role="img" aria-label="Blizlab favicon">
+  <circle cx="18" cy="18" r="18" fill="#0099cc"/>
+  <g transform="translate(18 18) scale(0.82) translate(-18 -18)">
+    <g transform="translate(36,0) scale(-1,1)">
+      <path fill="#FFCC33" d="M30.8 2.29a.49.49 0 0 0-.45-.29H16.42a.5.5 0 0 0-.42.23l-10.71 17a.49.49 0 0 0 .41.77h7.67L6.6 33.25a.52.52 0 0 0 .46.75h3a.5.5 0 0 0 .37-.16L28 14.85a.5.5 0 0 0-.37-.85h-6.74l9.83-11.18a.49.49 0 0 0 .08-.53"/>
+    </g>
+  </g>
 </svg>
